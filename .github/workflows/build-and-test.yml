@@ -169,10 +169,13 @@ jobs:
           !define APP_NAME "Card Collection Manager 3"
           !define APP_DIR "Card Collection Manager 3"
           !define APP_EXE "ccm3.exe"
+          !define APP_ICON_EXE "build\bin\ccm3.exe"
           !define REG_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\Card Collection Manager 3"
+          !define APP_PATHS_KEY "Software\Microsoft\Windows\CurrentVersion\App Paths\ccm3.exe"
 
           Name "${APP_NAME}"
           OutFile "ccm3-windows-installer.exe"
+          Icon "${APP_ICON_EXE}"
           InstallDir "$PROGRAMFILES64\${APP_DIR}"
           RequestExecutionLevel admin
 
@@ -188,24 +191,36 @@ jobs:
           Section "Install"
             SetOutPath "$INSTDIR"
             File /r "build\bin\*.*"
+            UninstallIcon "$INSTDIR\${APP_EXE}"
 
             CreateDirectory "$SMPROGRAMS\${APP_DIR}"
+            CreateShortcut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
             CreateShortcut "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
+            CreateShortcut "$SMPROGRAMS\${APP_DIR}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe"
             CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
 
             WriteUninstaller "$INSTDIR\Uninstall.exe"
             WriteRegStr HKLM "${REG_KEY}" "DisplayName" "${APP_NAME}"
+            WriteRegStr HKLM "${REG_KEY}" "DisplayIcon" "$INSTDIR\${APP_EXE}"
             WriteRegStr HKLM "${REG_KEY}" "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
+            WriteRegStr HKLM "${REG_KEY}" "QuietUninstallString" "$\"$INSTDIR\Uninstall.exe$\" /S"
             WriteRegStr HKLM "${REG_KEY}" "InstallLocation" "$INSTDIR"
+            WriteRegDWORD HKLM "${REG_KEY}" "NoModify" 1
+            WriteRegDWORD HKLM "${REG_KEY}" "NoRepair" 1
+            WriteRegStr HKLM "${APP_PATHS_KEY}" "" "$INSTDIR\${APP_EXE}"
+            WriteRegStr HKLM "${APP_PATHS_KEY}" "Path" "$INSTDIR"
           SectionEnd
 
           Section "Uninstall"
             Delete "$DESKTOP\${APP_NAME}.lnk"
+            Delete "$SMPROGRAMS\${APP_NAME}.lnk"
             Delete "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk"
+            Delete "$SMPROGRAMS\${APP_DIR}\Uninstall ${APP_NAME}.lnk"
             RMDir "$SMPROGRAMS\${APP_DIR}"
 
             RMDir /r "$INSTDIR"
             DeleteRegKey HKLM "${REG_KEY}"
+            DeleteRegKey HKLM "${APP_PATHS_KEY}"
           SectionEnd
           EOF
 
@@ -227,6 +242,6 @@ jobs:
       - name: Upload Windows installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ccm3-windows-installer.exe
+          name: ccm3-windows-installer
           path: ccm3-windows-installer.exe
           if-no-files-found: error
