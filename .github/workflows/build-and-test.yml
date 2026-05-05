@@ -168,6 +168,8 @@ jobs:
 
       - name: Build Windows installer
         run: |
+          cp "app/resources/ccm.ico" "installer_icon.ico"
+
           cat > installer.nsi <<'EOF'
           Unicode True
           !include "MUI2.nsh"
@@ -175,7 +177,7 @@ jobs:
           !define APP_NAME "Card Collection Manager 3"
           !define APP_DIR "Card Collection Manager 3"
           !define APP_EXE "ccm3.exe"
-          !define APP_ICON "app\resources\ccm.ico"
+          !define APP_ICON "installer_icon.ico"
           !define REG_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\Card Collection Manager 3"
           !define APP_PATHS_KEY "Software\Microsoft\Windows\CurrentVersion\App Paths\ccm3.exe"
 
@@ -188,6 +190,7 @@ jobs:
 
           !insertmacro MUI_PAGE_WELCOME
           !insertmacro MUI_PAGE_DIRECTORY
+          !insertmacro MUI_PAGE_COMPONENTS
           !insertmacro MUI_PAGE_INSTFILES
           !insertmacro MUI_PAGE_FINISH
 
@@ -195,17 +198,10 @@ jobs:
           !insertmacro MUI_UNPAGE_INSTFILES
           !insertmacro MUI_LANGUAGE "English"
 
-          Section "Install"
-            SetShellVarContext all
+          Section "!Core files (required)"
             SetOutPath "$INSTDIR"
             File /r "build\bin\*.*"
-
-            CreateDirectory "$SMPROGRAMS\${APP_DIR}"
-            CreateShortcut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\${APP_EXE}" 0
-            CreateShortcut "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\${APP_EXE}" 0
-            CreateShortcut "$SMPROGRAMS\${APP_DIR}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe"
-            CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\${APP_EXE}" 0
-
+            SectionIn RO
             WriteUninstaller "$INSTDIR\Uninstall.exe"
             WriteRegStr HKLM "${REG_KEY}" "DisplayName" "${APP_NAME}"
             WriteRegStr HKLM "${REG_KEY}" "DisplayIcon" "$INSTDIR\${APP_EXE}"
@@ -216,6 +212,19 @@ jobs:
             WriteRegDWORD HKLM "${REG_KEY}" "NoRepair" 1
             WriteRegStr HKLM "${APP_PATHS_KEY}" "" "$INSTDIR\${APP_EXE}"
             WriteRegStr HKLM "${APP_PATHS_KEY}" "Path" "$INSTDIR"
+          SectionEnd
+
+          Section "Start Menu shortcuts"
+            SetShellVarContext all
+            CreateDirectory "$SMPROGRAMS\${APP_DIR}"
+            CreateShortcut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\${APP_EXE}" 0
+            CreateShortcut "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\${APP_EXE}" 0
+            CreateShortcut "$SMPROGRAMS\${APP_DIR}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe"
+          SectionEnd
+
+          Section "Desktop shortcut"
+            SetShellVarContext all
+            CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\${APP_EXE}" 0
           SectionEnd
 
           Section "Uninstall"
