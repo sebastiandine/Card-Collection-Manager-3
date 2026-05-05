@@ -3,6 +3,8 @@
 // ImageViewerDialog: full-size image viewer with prev/next navigation.
 
 #include <wx/dialog.h>
+#include <wx/event.h>
+#include <wx/panel.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 

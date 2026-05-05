@@ -4,6 +4,7 @@
 #include <wx/button.h>
 #include <wx/dcclient.h>
 #include <wx/image.h>
+#include <wx/panel.h>
 #include <wx/sizer.h>
 
 namespace ccm::ui {
