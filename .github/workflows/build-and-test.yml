@@ -182,6 +182,7 @@ jobs:
           Name "${APP_NAME}"
           OutFile "ccm3-windows-installer.exe"
           Icon "${APP_ICON}"
+          UninstallIcon "${APP_ICON}"
           InstallDir "$PROGRAMFILES64\${APP_DIR}"
           RequestExecutionLevel admin
 
@@ -197,7 +198,6 @@ jobs:
           Section "Install"
             SetOutPath "$INSTDIR"
             File /r "build\bin\*.*"
-            UninstallIcon "$INSTDIR\${APP_EXE}"
 
             CreateDirectory "$SMPROGRAMS\${APP_DIR}"
             CreateShortcut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
