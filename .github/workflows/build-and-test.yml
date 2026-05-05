@@ -24,24 +24,39 @@ jobs:
           ninja-build
           pkg-config
           libgtk-3-dev
+          libwxgtk3.2-dev
 
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCCM_BUILD_TESTS=ON
+        run: cmake -S . -B build -G Ninja -DCCM_BUILD_TESTS=ON -DCCM_USE_SYSTEM_WX=ON
 
       - name: Build
-        run: cmake --build build --parallel 2
+        run: cmake --build build --parallel 3
 
       - name: Run unit tests
         run: ctest --test-dir build --output-on-failure
 
-      - name: Create Linux artifact zip
-        run: cmake -E tar cfv ccm-linux.zip --format=zip build/bin
+      - name: Remove test executable from bundle
+        run: rm -f build/bin/ccm_core_tests
+
+      - name: Verify runtime dependencies are resolved
+        run: |
+          for f in build/bin/*; do
+            [ -f "$f" ] || continue
+            if file "$f" | grep -q "ELF"; then
+              echo "Checking $f"
+              ldd "$f"
+              if ldd "$f" | grep -q "not found"; then
+                echo "Missing runtime dependency detected in $f"
+                exit 1
+              fi
+            fi
+          done
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ccm-linux
-          path: ccm-linux.zip
+          name: ccm3-linux
+          path: build/bin/*
           if-no-files-found: error
 
   build-windows:
@@ -100,12 +115,12 @@ jobs:
             fi
           done
 
-      - name: Create Windows artifact zip
-        run: cmake -E tar cfv ccm-windows.zip --format=zip build/bin
+      - name: Remove test executable from bundle
+        run: rm -f build/bin/ccm_core_tests.exe build/bin/ccm_core_tests
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ccm-windows
-          path: ccm-windows.zip
+          name: ccm3-windows
+          path: build/bin/*
           if-no-files-found: error
