@@ -196,14 +196,15 @@ jobs:
           !insertmacro MUI_LANGUAGE "English"
 
           Section "Install"
+            SetShellVarContext all
             SetOutPath "$INSTDIR"
             File /r "build\bin\*.*"
 
             CreateDirectory "$SMPROGRAMS\${APP_DIR}"
-            CreateShortcut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
-            CreateShortcut "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
+            CreateShortcut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\${APP_EXE}" 0
+            CreateShortcut "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\${APP_EXE}" 0
             CreateShortcut "$SMPROGRAMS\${APP_DIR}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe"
-            CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
+            CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\${APP_EXE}" 0
 
             WriteUninstaller "$INSTDIR\Uninstall.exe"
             WriteRegStr HKLM "${REG_KEY}" "DisplayName" "${APP_NAME}"
@@ -218,6 +219,7 @@ jobs:
           SectionEnd
 
           Section "Uninstall"
+            SetShellVarContext all
             Delete "$DESKTOP\${APP_NAME}.lnk"
             Delete "$SMPROGRAMS\${APP_NAME}.lnk"
             Delete "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk"
