@@ -1,0 +1,88 @@
+name: Build, Test, and Package
+
+on:
+  push:
+    branches-ignore:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  build-linux:
+    name: Linux build + tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCCM_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run unit tests
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Create Linux artifact zip
+        run: cmake -E tar cfv ccm-linux.zip --format=zip build/bin
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccm-linux
+          path: ccm-linux.zip
+          if-no-files-found: error
+
+  build-windows:
+    name: Windows build + tests
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSYS2 (MinGW-w64 UCRT64)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-make
+
+      - name: Configure
+        run: cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCCM_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run unit tests
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Copy MinGW runtime DLLs
+        run: |
+          cp /ucrt64/bin/libgcc_s_seh-1.dll build/bin/
+          cp /ucrt64/bin/libstdc++-6.dll build/bin/
+          cp /ucrt64/bin/libwinpthread-1.dll build/bin/
+
+      - name: Create Windows artifact zip
+        run: cmake -E tar cfv ccm-windows.zip --format=zip build/bin
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccm-windows
+          path: ccm-windows.zip
+          if-no-files-found: error
