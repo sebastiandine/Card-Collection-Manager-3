@@ -18,13 +18,18 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install build tools
-        run: sudo apt-get update && sudo apt-get install -y ninja-build
+        run: >
+          sudo apt-get update &&
+          sudo apt-get install -y
+          ninja-build
+          pkg-config
+          libgtk-3-dev
 
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCCM_BUILD_TESTS=ON
 
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel 2
 
       - name: Run unit tests
         run: ctest --test-dir build --output-on-failure
@@ -66,7 +71,7 @@ jobs:
         run: cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCCM_BUILD_TESTS=ON
 
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel 1
 
       - name: Run unit tests
         run: ctest --test-dir build --output-on-failure
