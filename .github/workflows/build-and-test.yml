@@ -86,7 +86,7 @@ jobs:
     name: Windows build + tests
     runs-on: windows-latest
     env:
-      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_DIR_WIN: ${{ github.workspace }}\.ccache
 
     defaults:
       run:
@@ -113,11 +113,17 @@ jobs:
       - name: Restore Windows compiler cache
         uses: actions/cache@v4
         with:
-          path: ${{ env.CCACHE_DIR }}
-          key: ccache-windows-${{ github.ref_name }}-v1
+          path: ${{ env.CCACHE_DIR_WIN }}
+          key: ccache-windows-${{ github.ref_name }}-v2
           restore-keys: |
             ccache-windows-${{ github.ref_name }}-
             ccache-windows-
+
+      - name: Configure MSYS2 ccache directory
+        run: |
+          CCACHE_DIR_POSIX="$(cygpath -u "$CCACHE_DIR_WIN")"
+          echo "CCACHE_DIR=${CCACHE_DIR_POSIX}" >> "$GITHUB_ENV"
+          mkdir -p "$CCACHE_DIR_POSIX"
 
       - name: Configure
         run: >
@@ -169,13 +175,13 @@ jobs:
           !define APP_NAME "Card Collection Manager 3"
           !define APP_DIR "Card Collection Manager 3"
           !define APP_EXE "ccm3.exe"
-          !define APP_ICON_EXE "build\bin\ccm3.exe"
+          !define APP_ICON "app\resources\ccm.ico"
           !define REG_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\Card Collection Manager 3"
           !define APP_PATHS_KEY "Software\Microsoft\Windows\CurrentVersion\App Paths\ccm3.exe"
 
           Name "${APP_NAME}"
           OutFile "ccm3-windows-installer.exe"
-          Icon "${APP_ICON_EXE}"
+          Icon "${APP_ICON}"
           InstallDir "$PROGRAMFILES64\${APP_DIR}"
           RequestExecutionLevel admin
 
