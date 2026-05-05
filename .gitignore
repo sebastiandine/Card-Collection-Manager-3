@@ -1,0 +1,42 @@
+# Build output
+build/
+build-*/
+out/
+cmake-build-*/
+
+# CMake metadata in-source (in case of accidental in-tree configure)
+CMakeFiles/
+CMakeCache.txt
+CTestTestfile.cmake
+cmake_install.cmake
+Makefile
+*.cmake.in.user
+
+# IDE / editor
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Compiled artifacts
+*.o
+*.obj
+*.exe
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.a
+*.so
+*.dll
+*.dylib
+
+# CCM runtime data
+config.json
+
+# Top-level build logs (Tee-Object output from local build runs)
+configure.log
+build.log
+test.log
