@@ -108,6 +108,7 @@ jobs:
             mingw-w64-ucrt-x86_64-make
             mingw-w64-ucrt-x86_64-ccache
             mingw-w64-ucrt-x86_64-wxwidgets3.2-msw
+            mingw-w64-ucrt-x86_64-nsis
 
       - name: Restore Windows compiler cache
         uses: actions/cache@v4
@@ -159,6 +160,57 @@ jobs:
       - name: Remove test executable from bundle
         run: rm -f build/bin/ccm_core_tests.exe build/bin/ccm_core_tests
 
+      - name: Build Windows installer
+        run: |
+          cat > installer.nsi <<'EOF'
+          Unicode True
+          !include "MUI2.nsh"
+
+          !define APP_NAME "Card Collection Manager 3"
+          !define APP_DIR "Card Collection Manager 3"
+          !define APP_EXE "ccm3.exe"
+          !define REG_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\Card Collection Manager 3"
+
+          Name "${APP_NAME}"
+          OutFile "ccm3-windows-installer.exe"
+          InstallDir "$PROGRAMFILES64\${APP_DIR}"
+          RequestExecutionLevel admin
+
+          !insertmacro MUI_PAGE_WELCOME
+          !insertmacro MUI_PAGE_DIRECTORY
+          !insertmacro MUI_PAGE_INSTFILES
+          !insertmacro MUI_PAGE_FINISH
+
+          !insertmacro MUI_UNPAGE_CONFIRM
+          !insertmacro MUI_UNPAGE_INSTFILES
+          !insertmacro MUI_LANGUAGE "English"
+
+          Section "Install"
+            SetOutPath "$INSTDIR"
+            File /r "build\bin\*.*"
+
+            CreateDirectory "$SMPROGRAMS\${APP_DIR}"
+            CreateShortcut "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
+            CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
+
+            WriteUninstaller "$INSTDIR\Uninstall.exe"
+            WriteRegStr HKLM "${REG_KEY}" "DisplayName" "${APP_NAME}"
+            WriteRegStr HKLM "${REG_KEY}" "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
+            WriteRegStr HKLM "${REG_KEY}" "InstallLocation" "$INSTDIR"
+          SectionEnd
+
+          Section "Uninstall"
+            Delete "$DESKTOP\${APP_NAME}.lnk"
+            Delete "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk"
+            RMDir "$SMPROGRAMS\${APP_DIR}"
+
+            RMDir /r "$INSTDIR"
+            DeleteRegKey HKLM "${REG_KEY}"
+          SectionEnd
+          EOF
+
+          makensis installer.nsi
+
       - name: Stage Windows artifact folder
         run: |
           rm -rf dist/ccm3-windows
@@ -170,4 +222,11 @@ jobs:
         with:
           name: ccm3-windows.zip
           path: dist/ccm3-windows
+          if-no-files-found: error
+
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccm3-windows-installer.exe
+          path: ccm3-windows-installer.exe
           if-no-files-found: error
