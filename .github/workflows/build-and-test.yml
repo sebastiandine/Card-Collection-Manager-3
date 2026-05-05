@@ -66,21 +66,39 @@ jobs:
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-make
+            mingw-w64-ucrt-x86_64-wxwidgets3.2-msw
 
       - name: Configure
-        run: cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCCM_BUILD_TESTS=ON
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCCM_BUILD_TESTS=ON -DCCM_USE_SYSTEM_WX=ON
 
       - name: Build
-        run: cmake --build build --parallel 1
+        run: cmake --build build --parallel 3
 
       - name: Run unit tests
         run: ctest --test-dir build --output-on-failure
 
-      - name: Copy MinGW runtime DLLs
+      - name: Collect runtime DLL dependencies
         run: |
-          cp /ucrt64/bin/libgcc_s_seh-1.dll build/bin/
-          cp /ucrt64/bin/libstdc++-6.dll build/bin/
-          cp /ucrt64/bin/libwinpthread-1.dll build/bin/
+          rm -f deps.txt
+          for f in build/bin/*.exe build/bin/*.dll; do
+            [ -e "$f" ] || continue
+            ldd "$f" | awk '/\/ucrt64\/bin\// { print $3 }' >> deps.txt
+          done
+          sort -u deps.txt | while read -r dep; do
+            [ -f "$dep" ] && cp -n "$dep" build/bin/
+          done
+
+      - name: Verify runtime dependencies are resolved
+        run: |
+          for f in build/bin/*.exe build/bin/*.dll; do
+            [ -e "$f" ] || continue
+            echo "Checking $f"
+            ldd "$f"
+            if ldd "$f" | grep -q "not found"; then
+              echo "Missing runtime dependency detected in $f"
+              exit 1
+            fi
+          done
 
       - name: Create Windows artifact zip
         run: cmake -E tar cfv ccm-windows.zip --format=zip build/bin
