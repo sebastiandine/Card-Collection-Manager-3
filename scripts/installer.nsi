@@ -26,9 +26,9 @@ RequestExecutionLevel admin
 !insertmacro MUI_LANGUAGE "English"
 
 Section "!Core files (required)"
+  SectionIn RO
   SetOutPath "$INSTDIR"
   File /r "..\build\bin\*.*"
-  SectionIn RO
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   WriteRegStr HKLM "${REG_KEY}" "DisplayName" "${APP_NAME}"
   WriteRegStr HKLM "${REG_KEY}" "DisplayIcon" "$INSTDIR\${APP_EXE}"
