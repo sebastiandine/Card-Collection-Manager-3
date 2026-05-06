@@ -4,7 +4,7 @@ Unicode True
 !define APP_NAME "Card Collection Manager 3"
 !define APP_DIR "Card Collection Manager 3"
 !define APP_EXE "ccm3.exe"
-!define APP_ICON "${__FILEDIR__}\installer_icon.ico"
+!define APP_ICON "installer_icon.ico"
 !define REG_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\Card Collection Manager 3"
 !define APP_PATHS_KEY "Software\Microsoft\Windows\CurrentVersion\App Paths\ccm3.exe"
 
