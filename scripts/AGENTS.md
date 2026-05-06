@@ -18,4 +18,5 @@ Utility scripts and CI helper assets live in this folder.
 - `installer.nsi` path semantics:
   - `installer_icon.ico` is resolved relative to `scripts/`.
   - build payload is loaded from `..\build\bin\*.*` (project root build output).
+  - installer output is written to `..\ccm3-windows-installer.exe` so CI upload paths can stay root-based.
 - If a script depends on generated files, document those expectations in the script or workflow step that creates them.

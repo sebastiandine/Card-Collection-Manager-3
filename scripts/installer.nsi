@@ -9,7 +9,7 @@ Unicode True
 !define APP_PATHS_KEY "Software\Microsoft\Windows\CurrentVersion\App Paths\ccm3.exe"
 
 Name "${APP_NAME}"
-OutFile "ccm3-windows-installer.exe"
+OutFile "..\ccm3-windows-installer.exe"
 Icon "${APP_ICON}"
 UninstallIcon "${APP_ICON}"
 InstallDir "$PROGRAMFILES64\${APP_DIR}"
