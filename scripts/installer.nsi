@@ -27,7 +27,7 @@ RequestExecutionLevel admin
 
 Section "!Core files (required)"
   SetOutPath "$INSTDIR"
-  File /r "build\bin\*.*"
+  File /r "..\build\bin\*.*"
   SectionIn RO
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   WriteRegStr HKLM "${REG_KEY}" "DisplayName" "${APP_NAME}"
