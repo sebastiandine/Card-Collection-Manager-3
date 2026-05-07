@@ -126,6 +126,19 @@ public:
         return std::nullopt;
     }
 
+    // Ensure the selected row is actively focused so Windows uses the active
+    // highlight color (blue in light mode), keeping selected-row icons legible.
+    void activateSelection() {
+        if (list_ == nullptr || list_->GetItemCount() <= 0) return;
+        long row = list_->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+        if (row < 0) row = 0;
+        list_->SetItemState(row,
+                            wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED,
+                            wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED);
+        list_->EnsureVisible(row);
+        list_->SetFocus();
+    }
+
 protected:
     // Column descriptor types -------------------------------------------------
 

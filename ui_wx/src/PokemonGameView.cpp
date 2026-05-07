@@ -52,6 +52,7 @@ void PokemonGameView::refreshCollection() {
         return;
     }
     listPanel_->setCards(std::move(loaded).value());
+    listPanel_->activateSelection();
     if (selectedPanel_) selectedPanel_->setCard(listPanel_->selected());
 }
 
