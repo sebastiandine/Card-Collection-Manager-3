@@ -24,6 +24,24 @@ PokemonGameView::PokemonGameView(ConfigService&                         config,
       cardPreview_(cardPreview),
       module_(module) {}
 
+void PokemonGameView::ensureSetsLoaded() {
+    if (attemptedInitialSetLoad_) return;
+    attemptedInitialSetLoad_ = true;
+
+    auto cached = sets_.getSets(Game::Pokemon);
+    if (cached) {
+        setsCache_ = std::move(cached).value();
+        if (!setsCache_.empty()) return;
+    } else {
+        setsCache_.clear();
+    }
+
+    auto refreshed = sets_.updateSets(Game::Pokemon);
+    if (refreshed) {
+        setsCache_ = std::move(refreshed).value();
+    }
+}
+
 wxPanel* PokemonGameView::listPanel(wxWindow* parent) {
     if (listPanel_ == nullptr) {
         listPanel_ = new PokemonCardListPanel(parent);
@@ -57,6 +75,7 @@ void PokemonGameView::refreshCollection() {
 }
 
 const std::vector<Set>& PokemonGameView::setsForDialog() {
+    ensureSetsLoaded();
     if (!setsCache_.empty()) return setsCache_;
     auto loaded = sets_.getSets(Game::Pokemon);
     if (loaded) setsCache_ = std::move(loaded).value();

@@ -48,6 +48,7 @@ public:
     [[nodiscard]] std::string updateSetsMenuLabel() const override { return "Update Pokemon"; }
 
 private:
+    void ensureSetsLoaded();
     const std::vector<Set>& setsForDialog();
 
     ConfigService&                  config_;
@@ -60,6 +61,7 @@ private:
     PokemonCardListPanel*     listPanel_{nullptr};
     PokemonSelectedCardPanel* selectedPanel_{nullptr};
     std::vector<Set>          setsCache_;
+    bool                      attemptedInitialSetLoad_{false};
 };
 
 }  // namespace ccm::ui

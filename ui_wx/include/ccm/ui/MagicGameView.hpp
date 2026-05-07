@@ -48,6 +48,7 @@ public:
     [[nodiscard]] std::string updateSetsMenuLabel() const override { return "Update Magic"; }
 
 private:
+    void ensureSetsLoaded();
     const std::vector<Set>& setsForDialog();
 
     ConfigService&                config_;
@@ -60,6 +61,7 @@ private:
     MagicCardListPanel*     listPanel_{nullptr};
     MagicSelectedCardPanel* selectedPanel_{nullptr};
     std::vector<Set>        setsCache_;
+    bool                    attemptedInitialSetLoad_{false};
 };
 
 }  // namespace ccm::ui

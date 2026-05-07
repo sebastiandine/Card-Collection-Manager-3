@@ -24,6 +24,24 @@ MagicGameView::MagicGameView(ConfigService&                       config,
       cardPreview_(cardPreview),
       module_(module) {}
 
+void MagicGameView::ensureSetsLoaded() {
+    if (attemptedInitialSetLoad_) return;
+    attemptedInitialSetLoad_ = true;
+
+    auto cached = sets_.getSets(Game::Magic);
+    if (cached) {
+        setsCache_ = std::move(cached).value();
+        if (!setsCache_.empty()) return;
+    } else {
+        setsCache_.clear();
+    }
+
+    auto refreshed = sets_.updateSets(Game::Magic);
+    if (refreshed) {
+        setsCache_ = std::move(refreshed).value();
+    }
+}
+
 wxPanel* MagicGameView::listPanel(wxWindow* parent) {
     if (listPanel_ == nullptr) {
         listPanel_ = new MagicCardListPanel(parent);
@@ -60,6 +78,7 @@ void MagicGameView::refreshCollection() {
 }
 
 const std::vector<Set>& MagicGameView::setsForDialog() {
+    ensureSetsLoaded();
     if (!setsCache_.empty()) return setsCache_;
     auto loaded = sets_.getSets(Game::Magic);
     if (loaded) setsCache_ = std::move(loaded).value();
