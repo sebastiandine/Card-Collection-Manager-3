@@ -65,7 +65,9 @@ public:
                         std::vector<wxBitmap> selected);
 
 protected:
+#ifdef __WXMSW__
     bool MSWOnNotify(int idCtrl, WXLPARAM lParam, WXLPARAM* result) override;
+#endif
 
 private:
     int                  firstIconCol_{-1};

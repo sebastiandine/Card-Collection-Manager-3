@@ -238,10 +238,6 @@ void IconListCtrl::setIconBitmaps(std::vector<wxBitmap> normal,
 void IconListCtrl::destroyDibCache() {}
 void IconListCtrl::rebuildDibCache() {}
 
-bool IconListCtrl::MSWOnNotify(int idCtrl, WXLPARAM lParam, WXLPARAM* result) {
-    return wxListCtrl::MSWOnNotify(idCtrl, lParam, result);
-}
-
 #endif  // __WXMSW__
 
 }  // namespace ccm::ui
