@@ -10,8 +10,10 @@
 //   - app-owned themed header row (clickable to sort, edge-drag to resize,
 //     divider double-click to autosize) - native `wxListCtrl` header is
 //     unreliable in Windows dark mode
-//   - two-variant icon image list (dark glyph for unselected rows + headers,
-//     selection-text-colored glyph for the selected row)
+//   - custom-drawn flag-icon sub-items via `IconListCtrl` so row icons sit
+//     pixel-perfect centered under the themed-header icons regardless of
+//     column width (native `LVS_REPORT` sub-item images left-anchor with an
+//     inset and would never align with our centered header icons)
 //   - rebuild guard so DESELECTED/SELECTED storms during rebuild collapse
 //     into a single bubbled `EVT_CARD_SELECTED` event
 //   - case-insensitive substring filter via `setFilter(...)` and per-column
@@ -33,13 +35,15 @@
 // New games extend this template — see `MagicCardListPanel` and
 // `PokemonCardListPanel` for the canonical patterns.
 
+#include "ccm/ui/IconListCtrl.hpp"
 #include "ccm/ui/SvgIcons.hpp"
 #include "ccm/ui/Theme.hpp"
 
+#include <wx/bitmap.h>
 #include <wx/colour.h>
 #include <wx/cursor.h>
 #include <wx/event.h>
-#include <wx/imaglist.h>
+#include <wx/image.h>
 #include <wx/listctrl.h>
 #include <wx/panel.h>
 #include <wx/sizer.h>
@@ -106,7 +110,7 @@ public:
         list_->SetForegroundColour(palette.inputText);
         SetBackgroundColour(palette.panelBg);
         SetForegroundColour(palette.text);
-        rebuildIconList(palette.inputText, wxColour(255, 255, 255));
+        rebuildIconBitmaps(palette.inputText, wxColour(255, 255, 255));
         refreshHeaderTheme(palette);
         std::optional<std::uint32_t> keepId;
         if (auto sel = selected()) keepId = sel->id;
@@ -161,10 +165,10 @@ protected:
     explicit BaseCardListPanel(wxWindow* parent) : wxPanel(parent, wxID_ANY) {}
 
     // Subclass calls this once from its constructor body (after virtual hooks
-    // are reachable) to wire up columns + the header row + image list.
+    // are reachable) to wire up columns + the header row + custom-draw hooks.
     void buildLayout() {
-        list_ = new wxListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-                               wxLC_REPORT | wxLC_SINGLE_SEL | wxLC_NO_HEADER);
+        list_ = new IconListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                                 wxLC_REPORT | wxLC_SINGLE_SEL | wxLC_NO_HEADER);
 
         textCols_ = declareTextColumns();
         iconCols_ = declareIconColumns();
@@ -179,22 +183,40 @@ protected:
 
         buildHeaderRow();
 
-        // Column 0 is a hidden spacer that swallows MSW's mandatory item-icon
-        // gutter. All real columns live at index >= 1.
+        // Column 0 is a hidden spacer kept for historical reasons (it used
+        // to swallow MSW's mandatory item-icon gutter when we had an image
+        // list). It is harmless now that row icons go through NM_CUSTOMDRAW
+        // and is preserved so existing column-index math stays correct.
         list_->AppendColumn("", wxLIST_FORMAT_LEFT, 0);
 
         // Leading text columns (everything except the last).
         for (std::size_t i = 0; i + 1 < textCols_.size(); ++i) {
             list_->AppendColumn(textCols_[i].label, textCols_[i].format, textCols_[i].width);
         }
-        // Icon columns.
+        // Icon columns. Format is irrelevant here — we paint the icon
+        // ourselves, exactly centered, in `IconListCtrl::MSWOnNotify`.
         for (const auto& ic : iconCols_) {
             list_->AppendColumn("", wxLIST_FORMAT_CENTER, ic.width);
         }
-        rebuildIconList(wxColour(20, 20, 20), wxColour(255, 255, 255));
+        rebuildIconBitmaps(wxColour(20, 20, 20), wxColour(255, 255, 255));
         // Trailing Note column.
         const auto& last = textCols_.back();
         list_->AppendColumn(last.label, last.format, last.width);
+
+        // Wire NM_CUSTOMDRAW callbacks so row icons render centered in their
+        // sub-item rect. The predicate maps a (row, iconIdx) back through the
+        // filtered card vector so we ask the same `isIconColumnSet(...)` hook
+        // the rest of the panel uses. The bitmap cache was already pushed
+        // into `list_` by `rebuildIconBitmaps(...)` above.
+        list_->setIconColumns(firstIconColIdx(), iconColCount());
+        list_->setIconPredicate([this](long row, int iconIdx) {
+            const TCard* c = cardForRow(row);
+            if (c == nullptr) return false;
+            if (iconIdx < 0 || static_cast<std::size_t>(iconIdx) >= iconCols_.size()) {
+                return false;
+            }
+            return isIconColumnSet(*c, static_cast<std::size_t>(iconIdx));
+        });
 
         auto* sizer = new wxBoxSizer(wxVERTICAL);
         sizer->Add(headerRow_, 0, wxEXPAND);
@@ -222,9 +244,6 @@ protected:
         return static_cast<int>(iconCols_.size());
     }
 
-    // Image-list indices for unselected (dark) and selected (light) variants.
-    [[nodiscard]] int iconImgIdx (std::size_t i) const { return iconImgIdx_.at(i); }
-    [[nodiscard]] int iconImgIdxW(std::size_t i) const { return iconImgIdxW_.at(i); }
     [[nodiscard]] wxListCtrl* listCtrl() const noexcept { return list_; }
 
     // Mutable access to the underlying vector for the typed `sortBy` hook
@@ -317,6 +336,9 @@ private:
         if (idx < headerCells_.size() && headerCells_[idx] != nullptr) {
             headerCells_[idx]->SetMinSize(wxSize(nextWidth, -1));
         }
+        // Row icons are drawn from the live sub-item rect via NM_CUSTOMDRAW,
+        // so column resizing automatically re-centers them on the next paint
+        // — no image-list rebuild needed.
         headerRow_->Layout();
     }
 
@@ -448,36 +470,31 @@ private:
         rebuildRows(keepId);
     }
 
-    // ----- icon image list ---------------------------------------------------
+    // ----- cached icon bitmaps for NM_CUSTOMDRAW -----------------------------
 
-    void rebuildIconList(const wxColour& normal, const wxColour& selected) {
-        const wxSize flagBmp(kFlagBmpWidth_, kFlagIconSize);
-        auto* iconList = new wxImageList(flagBmp.GetWidth(), flagBmp.GetHeight(), /*hasMask=*/false);
+    // Pre-renders the per-icon-column bitmaps used by the custom-draw path in
+    // `IconListCtrl`. Two color variants per column: the `normal` color for
+    // unselected rows (paired with the panel's themed text color) and the
+    // `selected` color drawn on the highlighted row. After rebuilding, the
+    // bitmaps are pushed into `IconListCtrl` which converts them into a
+    // single `HIMAGELIST` for `ImageList_Draw` from `NM_CUSTOMDRAW`. See
+    // `ui_wx/AGENTS.md` convention 11 for why earlier `wxGraphicsContext::
+    // DrawBitmap` and raw `AlphaBlend` paths were abandoned.
+    void rebuildIconBitmaps(const wxColour& normal, const wxColour& selected) {
+        iconBitmapsNormal_.clear();
+        iconBitmapsSelected_.clear();
+        iconBitmapsNormal_.reserve(iconCols_.size());
+        iconBitmapsSelected_.reserve(iconCols_.size());
         const std::string normalHex   = normal.GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
         const std::string selectedHex = selected.GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
-
-        iconImgIdx_.clear();
-        iconImgIdxW_.clear();
-        // Insert in two passes so the dark variants come first; some MSW code
-        // paths assume the first N entries are the "normal" set.
         for (const auto& ic : iconCols_) {
-            iconImgIdx_.push_back(
-                iconList->Add(paddedSvgIcon(ic.svg, kFlagIconSize, flagBmp, normalHex.c_str())));
+            iconBitmapsNormal_.push_back(
+                svgIconBitmap(ic.svg, kFlagIconSize, normalHex.c_str()));
+            iconBitmapsSelected_.push_back(
+                svgIconBitmap(ic.svg, kFlagIconSize, selectedHex.c_str()));
         }
-        for (const auto& ic : iconCols_) {
-            iconImgIdxW_.push_back(
-                iconList->Add(paddedSvgIcon(ic.svg, kFlagIconSize, flagBmp, selectedHex.c_str())));
-        }
-        list_->AssignImageList(iconList, wxIMAGE_LIST_SMALL);
-
-        const int firstIcon = firstIconColIdx();
-        for (std::size_t i = 0; i < iconCols_.size(); ++i) {
-            wxListItem hdr;
-            hdr.SetMask(wxLIST_MASK_TEXT | wxLIST_MASK_IMAGE | wxLIST_MASK_FORMAT);
-            hdr.SetText("");
-            hdr.SetImage(iconImgIdx_[i]);
-            hdr.SetAlign(wxLIST_FORMAT_CENTER);
-            list_->SetColumn(firstIcon + static_cast<int>(i), hdr);
+        if (list_ != nullptr) {
+            list_->setIconBitmaps(iconBitmapsNormal_, iconBitmapsSelected_);
         }
     }
 
@@ -527,24 +544,15 @@ private:
             }
         }
 
-        auto setSubItemImage = [this](long row, int col, int imageIdx) {
-            wxListItem li;
-            li.SetId(row);
-            li.SetColumn(col);
-            li.SetMask(wxLIST_MASK_IMAGE);
-            li.SetImage(imageIdx);
-            list_->SetItem(li);
-        };
-
         long row = 0;
         long rowToSelect = -1;
         const int firstText = firstTextColIdx();
-        const int firstIcon = firstIconColIdx();
         const int noteCol   = noteColIdx();
         for (std::size_t srcIdx : filteredIndices_) {
             const auto& c = cards_[srcIdx];
-            // Insert via the hidden column-0 spacer with image=-1 so MSW does
-            // not implicitly draw the first image-list entry into column 0.
+            // Insert via the hidden column-0 spacer. We never set sub-item
+            // images: row icons are drawn through `IconListCtrl` custom-draw
+            // straight onto the device context, exactly centered in the cell.
             wxListItem spacerItem;
             spacerItem.SetId(row);
             spacerItem.SetText("");
@@ -557,13 +565,8 @@ private:
                 list_->SetItem(idx, firstText + static_cast<int>(i),
                                renderTextCell(c, i));
             }
-            // Icon columns: empty cells for unset flags.
-            for (std::size_t i = 0; i < iconCols_.size(); ++i) {
-                if (isIconColumnSet(c, i)) {
-                    setSubItemImage(idx, firstIcon + static_cast<int>(i), iconImgIdx_[i]);
-                }
-            }
-            // Trailing Note text column.
+            // Trailing Note text column. Icon columns intentionally have no
+            // text and no image — the custom-draw paints them.
             list_->SetItem(idx, noteCol, renderTextCell(c, textCols_.size() - 1));
 
             if (keepId && c.id == *keepId) rowToSelect = idx;
@@ -614,26 +617,12 @@ private:
         return &cards_[srcIdx];
     }
 
-    void applyRowSelectionStyle(long row, bool selected) {
-        const TCard* c = cardForRow(row);
-        if (!c) return;
-
-        const int firstIcon = firstIconColIdx();
-        for (std::size_t i = 0; i < iconCols_.size(); ++i) {
-            if (!isIconColumnSet(*c, i)) continue;
-            wxListItem li;
-            li.SetId(row);
-            li.SetColumn(firstIcon + static_cast<int>(i));
-            li.SetMask(wxLIST_MASK_IMAGE);
-            li.SetImage(selected ? iconImgIdxW_[i] : iconImgIdx_[i]);
-            list_->SetItem(li);
-        }
-    }
-
     void onSelectionChanged(wxListEvent& event) {
-        const long row     = event.GetIndex();
-        const bool sel     = (event.GetEventType() == wxEVT_LIST_ITEM_SELECTED);
-        applyRowSelectionStyle(row, sel);
+        // wxListCtrl invalidates the row when its selection state changes,
+        // which re-fires NM_CUSTOMDRAW with the new `CDIS_SELECTED` flag.
+        // The icon bitmap provider returns the selected-color variant, so
+        // no per-row icon swap is required here.
+        (void)event;
         if (inRebuild_) return;
         notifySelectionChanged();
     }
@@ -642,13 +631,12 @@ private:
 
     static constexpr int kFlagIconSize = 14;
     static constexpr int kResizeGripPx = 5;
-    static constexpr int kFlagBmpWidth_ = 36 - 6;  // matches Magic legacy values
 
     wxPanel*               headerRow_{nullptr};
     std::vector<wxWindow*> headerCells_;
     std::vector<std::pair<wxStaticBitmap*, const char*>> headerIcons_;
     std::unordered_map<wxWindow*, int> headerCellToCol_;
-    wxListCtrl*            list_{nullptr};
+    IconListCtrl*          list_{nullptr};
 
     std::vector<TextColumnSpec> textCols_;
     std::vector<IconColumnSpec> iconCols_;
@@ -669,8 +657,10 @@ private:
 
     std::map<TSortColumn, bool> nextDirByCol_;
 
-    std::vector<int> iconImgIdx_;
-    std::vector<int> iconImgIdxW_;
+    // Per-icon-column cached bitmaps consumed by `IconListCtrl`'s NM_CUSTOMDRAW
+    // path. Index aligns with `iconCols_`.
+    std::vector<wxBitmap> iconBitmapsNormal_;
+    std::vector<wxBitmap> iconBitmapsSelected_;
 };
 
 }  // namespace ccm::ui

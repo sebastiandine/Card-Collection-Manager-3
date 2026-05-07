@@ -46,6 +46,6 @@ wxBitmap svgIconBitmap(const char* svg, int size, const char* fillHex = "#000000
 // lists where header bitmaps render left-anchored on MSW: padding the
 // bitmap to the column width visually centers the icon under the header.
 wxBitmap paddedSvgIcon(const char* svg, int iconSize, wxSize container,
-                       const char* fillHex = "#000000");
+                       const char* fillHex = "#000000", int xOffsetPx = 0);
 
 }  // namespace ccm::ui

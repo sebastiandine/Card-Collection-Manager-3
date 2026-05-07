@@ -32,6 +32,7 @@ namespace ccm::ui {
 
 namespace {
 constexpr int kToolbarIconPx = 18;
+constexpr const char kFilterInputHint[] = "Filter";
 }  // namespace
 
 MainFrame::MainFrame(AppContext& ctx)
@@ -97,7 +98,7 @@ void MainFrame::buildLayout() {
     toolbar->AddStretchSpacer(1);
     filterInput_ = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition,
                                   wxSize(260, -1));
-    filterInput_->SetHint("Filter");
+    filterInput_->SetHint(kFilterInputHint);
     toolbar->Add(filterInput_, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxTOP | wxBOTTOM, 4);
     root->Add(toolbar, 0, wxEXPAND);
 
@@ -168,6 +169,8 @@ void MainFrame::mountActiveView() {
 
     const ThemePalette palette = paletteForTheme(ctx_.config.current().theme);
     view->applyTheme(palette);
+    applyThemeToWindowTree(selectedPanel, palette, ctx_.config.current().theme);
+    applyThemeToWindowTree(listPanel, palette, ctx_.config.current().theme);
 }
 
 void MainFrame::switchGame(Game g) {
@@ -175,8 +178,13 @@ void MainFrame::switchGame(Game g) {
     activeGame_ = g;
     mountActiveView();
     if (auto* view = activeView()) {
+        if (filterInput_ != nullptr) {
+            filterInput_->ChangeValue(wxString{});
+            filterInput_->SetHint(kFilterInputHint);
+            filterInput_->Refresh();
+        }
+        view->setFilter("");
         view->refreshCollection();
-        view->setFilter(filterInput_->GetValue().ToStdString());
         setStatusTextUi(view->displayName());
     }
 }

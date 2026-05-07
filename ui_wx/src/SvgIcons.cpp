@@ -34,15 +34,17 @@ const char* const kSvgHolo = R"SVG(<?xml version="1.0" encoding="UTF-8"?>
   <path fill="@FILL@" d="M208 512l-29.86-80.13L98 401.86 178.14 372 208 292l29.86 80.13L318 401.86 237.86 432zM382 269l-22.4-60.11L299.47 186.4 359.6 164l22.4-60.11 22.4 60.11 60.13 22.4-60.13 22.4zM160 192l-26.06-69.94L64 96l69.94-26.06L160 0l26.06 69.94L256 96l-69.94 26.06z"/>
 </svg>)SVG";
 
-// Pokemon 1st Edition: rebuilt from the original CCM2 `IconPokemonFirstEdition.tsx`.
-// A square outline with a centered "1." inside.
+// Pokemon 1st Edition: a circular badge enclosing a stylised "1." digit.
+// All strokes/fills go through `@FILL@` so the icon themes alongside foil /
+// signed / altered (transparent background, content takes the runtime
+// fill color). The digit is built from rounded rects rather than a `<text>`
+// element because NanoSVG (the SVG backend behind `wxBitmapBundle::FromSVG`)
+// does not render text nodes.
 const char* const kSvgFirstEdition = R"SVG(<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-  <rect x="1.5" y="1.5" width="13" height="13" rx="1.5" ry="1.5"
-        fill="none" stroke="@FILL@" stroke-width="1.5"/>
-  <text x="8" y="12" text-anchor="middle"
-        font-family="Arial, Helvetica, sans-serif" font-weight="bold"
-        font-size="9" fill="@FILL@">1.</text>
+  <circle cx="8" cy="8" r="6.6" fill="none" stroke="@FILL@" stroke-width="1.2"/>
+  <rect x="7.0" y="4.1" width="2.0" height="7.2" rx="0.5" fill="@FILL@"/>
+  <rect x="6.0" y="4.7" width="1.8" height="1.4" rx="0.35" fill="@FILL@"/>
 </svg>)SVG";
 
 // vscode-codicons — MIT License (Microsoft). Paths mirror VscAdd /
@@ -94,7 +96,7 @@ wxBitmap svgIconBitmap(const char* svg, int size, const char* fillHex) {
 }
 
 wxBitmap paddedSvgIcon(const char* svg, int iconSize, wxSize container,
-                       const char* fillHex) {
+                       const char* fillHex, int xOffsetPx) {
     const int cw = container.GetWidth();
     const int ch = container.GetHeight();
 
@@ -106,7 +108,8 @@ wxBitmap paddedSvgIcon(const char* svg, int iconSize, wxSize container,
     wxImage  iconImg = iconBmp.ConvertToImage();
     if (!iconImg.HasAlpha()) iconImg.InitAlpha();
 
-    const int dx = (cw - iconSize) / 2;
+    int dx = (cw - iconSize) / 2 + xOffsetPx;
+    dx = std::clamp(dx, 0, std::max(0, cw - iconSize));
     const int dy = (ch - iconSize) / 2;
     canvas.Paste(iconImg, dx, dy, wxIMAGE_ALPHA_BLEND_COMPOSE);
     return wxBitmap(canvas);

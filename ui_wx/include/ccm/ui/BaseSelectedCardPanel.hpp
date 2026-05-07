@@ -121,8 +121,34 @@ public:
     void applyTheme(const ThemePalette& palette) {
         SetBackgroundColour(palette.panelBg);
         SetForegroundColour(palette.text);
+        if (previewStatus_ != nullptr) {
+            previewStatus_->SetBackgroundColour(palette.panelBg);
+            previewStatus_->SetForegroundColour(palette.text);
+        }
+        for (auto& row : detailRows_) {
+            if (row.label != nullptr) {
+                row.label->SetBackgroundColour(palette.panelBg);
+                row.label->SetForegroundColour(palette.text);
+            }
+            if (row.value != nullptr) {
+                row.value->SetBackgroundColour(palette.panelBg);
+                row.value->SetForegroundColour(palette.text);
+            }
+        }
         flagsRow_->SetBackgroundColour(palette.panelBg);
         flagsRow_->SetForegroundColour(palette.text);
+        if (flagsLabel_ != nullptr) {
+            flagsLabel_->SetBackgroundColour(palette.panelBg);
+            flagsLabel_->SetForegroundColour(palette.text);
+        }
+        if (noteLabel_ != nullptr) {
+            noteLabel_->SetBackgroundColour(palette.panelBg);
+            noteLabel_->SetForegroundColour(palette.text);
+        }
+        if (noteValue_ != nullptr) {
+            noteValue_->SetBackgroundColour(palette.panelBg);
+            noteValue_->SetForegroundColour(palette.text);
+        }
         imageList_->SetBackgroundColour(palette.inputBg);
         imageList_->SetForegroundColour(palette.inputText);
 
@@ -130,6 +156,7 @@ public:
         for (auto& fi : flagIcons_) {
             fi.icon->SetBitmap(svgIconBitmap(fi.svg, kFlagIconSize, textHex.c_str()));
         }
+        Layout();
         Refresh();
     }
 

@@ -18,6 +18,7 @@ add_library(ccm_ui_wx STATIC
 
     src/SettingsDialog.cpp
     src/ImageViewerDialog.cpp
+    src/IconListCtrl.cpp
     src/SvgIcons.cpp
     src/Theme.cpp
 )
@@ -35,5 +36,13 @@ target_link_libraries(ccm_ui_wx
     # spurious diagnostics under -Wpedantic / -Wshadow that we'd have to
     # suppress per-call. The strict warning set is reserved for ccm_core.
 )
+
+# IconListCtrl uses AlphaBlend (msimg32) directly in NM_CUSTOMDRAW to render
+# the per-row flag glyphs with proper transparency. Without msimg32 linked
+# explicitly the linker fails on `AlphaBlend@44` even though gdi32 is pulled
+# in transitively by wxWidgets.
+if (WIN32)
+    target_link_libraries(ccm_ui_wx PRIVATE msimg32)
+endif()
 
 target_compile_features(ccm_ui_wx PUBLIC cxx_std_20)
