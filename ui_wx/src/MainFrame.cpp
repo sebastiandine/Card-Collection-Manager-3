@@ -1,8 +1,10 @@
 #include "ccm/ui/MainFrame.hpp"
 
-#include "ccm/ui/CardEditDialog.hpp"
-#include "ccm/ui/MagicCardListPanel.hpp"
-#include "ccm/ui/SelectedCardPanel.hpp"
+// BaseSelectedCardPanel.hpp is included for the shared EVT_PREVIEW_STATUS
+// declaration so MainFrame can subscribe to preview-status updates from any
+// active selected panel without depending on a specific game's view.
+#include "ccm/ui/BaseSelectedCardPanel.hpp"
+#include "ccm/ui/IGameView.hpp"
 #include "ccm/ui/SettingsDialog.hpp"
 #include "ccm/ui/SvgIcons.hpp"
 #include "ccm/ui/Theme.hpp"
@@ -19,8 +21,8 @@
 #include <wx/stattext.h>
 #include <wx/textctrl.h>
 
-#include <optional>
 #include <string>
+#include <utility>
 
 #ifdef __WXMSW__
 #include <windows.h>
@@ -43,18 +45,17 @@ MainFrame::MainFrame(AppContext& ctx)
     setStatusTextUi("Ready");
 
     setStatusTextUi("Loading collection...");
-    // Defer initial load so the frame can paint first; this improves perceived
-    // startup responsiveness on larger collections.
-    CallAfter([this]() { refreshCollection(); });
+    CallAfter([this]() {
+        mountActiveView();
+        if (auto* view = activeView()) view->refreshCollection();
+    });
 }
 
 void MainFrame::buildMenuBar() {
-    Bind(wxEVT_MENU, &MainFrame::onSettings,          this, IdSettings);
-    Bind(wxEVT_MENU, &MainFrame::onQuit,              this, wxID_EXIT);
-    Bind(wxEVT_MENU, &MainFrame::onSwitchMagic,       this, IdSwitchMagic);
-    Bind(wxEVT_MENU, &MainFrame::onSwitchPokemon,     this, IdSwitchPokemon);
-    Bind(wxEVT_MENU, &MainFrame::onUpdateSetsMagic,   this, IdUpdateSetsMagic);
-    Bind(wxEVT_MENU, &MainFrame::onUpdateSetsPokemon, this, IdUpdateSetsPokemon);
+    Bind(wxEVT_MENU, &MainFrame::onSettings, this, IdSettings);
+    Bind(wxEVT_MENU, &MainFrame::onQuit,     this, wxID_EXIT);
+    Bind(wxEVT_MENU, &MainFrame::onSwitchGame,        this, IdGameMenuBase, IdGameMenuLast);
+    Bind(wxEVT_MENU, &MainFrame::onUpdateSetsForGame, this, IdSetsMenuBase, IdSetsMenuLast);
 }
 
 void MainFrame::buildLayout() {
@@ -77,9 +78,6 @@ void MainFrame::buildLayout() {
     menuStrip_->SetSizer(menuSizer);
     root->Add(menuStrip_, 0, wxEXPAND);
 
-    // Legacy top-row layout: icon action buttons on the left (the original TS uses
-    // react-icons/vsc VscAdd/VscEdit/VscTrash — we embed the matching
-    // vscode-codicons SVGs via SvgIcons), filter field on the right.
     auto* toolbar = new wxBoxSizer(wxHORIZONTAL);
     auto makeToolBtn = [&](int id, const char* svg, const wxString& tip) {
         wxBitmap bmp = svgIconBitmap(svg, kToolbarIconPx, "#000000");
@@ -92,14 +90,10 @@ void MainFrame::buildLayout() {
     toolbarButtons_[0] = makeToolBtn(IdCreate, kSvgToolbarAdd,    "Add Card");
     toolbarButtons_[1] = makeToolBtn(IdEdit,   kSvgToolbarEdit,   "Edit");
     toolbarButtons_[2] = makeToolBtn(IdDelete, kSvgToolbarDelete, "Delete");
-    // Keep the first toolbar button aligned with the left edge of "File".
     toolbar->AddSpacer(4);
-    toolbar->Add(toolbarButtons_[0],
-                  0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
-    toolbar->Add(toolbarButtons_[1],
-                  0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
-    toolbar->Add(toolbarButtons_[2],
-                  0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
+    toolbar->Add(toolbarButtons_[0], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
+    toolbar->Add(toolbarButtons_[1], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
+    toolbar->Add(toolbarButtons_[2], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
     toolbar->AddStretchSpacer(1);
     filterInput_ = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition,
                                   wxSize(260, -1));
@@ -107,13 +101,10 @@ void MainFrame::buildLayout() {
     toolbar->Add(filterInput_, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxTOP | wxBOTTOM, 4);
     root->Add(toolbar, 0, wxEXPAND);
 
-    auto* splitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition,
-                                          wxDefaultSize, wxSP_LIVE_UPDATE);
-    selectedPanel_ = new SelectedCardPanel(splitter, ctx_.images, ctx_.cardPreview);
-    magicList_     = new MagicCardListPanel(splitter);
-    splitter->SplitVertically(selectedPanel_, magicList_, 360);
-    splitter->SetMinimumPaneSize(280);
-    root->Add(splitter, 1, wxEXPAND);
+    splitter_ = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition,
+                                     wxDefaultSize, wxSP_LIVE_UPDATE);
+    splitter_->SetMinimumPaneSize(280);
+    root->Add(splitter_, 1, wxEXPAND);
 
     auto* statusPanel = new wxPanel(this, wxID_ANY);
     auto* statusSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -128,29 +119,66 @@ void MainFrame::buildLayout() {
     Bind(wxEVT_BUTTON, &MainFrame::onEdit,   this, IdEdit);
     Bind(wxEVT_BUTTON, &MainFrame::onDelete, this, IdDelete);
 
-    // Filter input -> table rows. Pushing every keystroke straight into
-    // setFilter() is fine because rebuildRows itself is cheap (no I/O) and
-    // the rebuild guard inside MagicCardListPanel collapses the resulting
-    // wxListCtrl event burst into a single bubbled selection event.
     filterInput_->Bind(wxEVT_TEXT, [this](wxCommandEvent&) {
-        magicList_->setFilter(filterInput_->GetValue().ToStdString());
+        if (auto* view = activeView()) {
+            view->setFilter(filterInput_->GetValue().ToStdString());
+        }
     });
 
-    // List selection -> details panel.
-    Bind(EVT_MAGIC_CARD_SELECTED, [this](wxCommandEvent&) {
-        selectedPanel_->setCard(magicList_->selected());
-    });
-
-    // Preview fetch outcome -> bottom status bar. The side panel emits this
-    // every time a Scryfall preview resolves: empty string clears the bar
-    // (success path), non-empty surfaces the underlying error so the user
-    // knows it's not their connection / they're not staring at a stale
-    // image. This is also where transient Scryfall failures (HTTP 429 rate
-    // limits, network blips) become visible.
+    // Selection changes are handled per-view (each IGameView binds
+    // EVT_CARD_SELECTED on its own typed list panel and pushes the typed
+    // selection into its selected panel). MainFrame only reacts to preview
+    // status updates from any active selected panel.
     Bind(EVT_PREVIEW_STATUS, [this](wxCommandEvent& ev) {
         const wxString msg = ev.GetString();
         setStatusTextUi(msg.IsEmpty() ? wxString("Ready") : msg);
     });
+}
+
+IGameView* MainFrame::activeView() {
+    for (auto* v : ctx_.gameViews) {
+        if (v != nullptr && v->gameId() == activeGame_) return v;
+    }
+    return nullptr;
+}
+
+void MainFrame::mountActiveView() {
+    auto* view = activeView();
+    if (view == nullptr || splitter_ == nullptr) return;
+
+    // Hide every other view's panels so wx doesn't double-paint them.
+    for (auto* other : ctx_.gameViews) {
+        if (other == nullptr || other == view) continue;
+        if (auto* lp = other->listPanel(splitter_)) lp->Hide();
+        if (auto* sp = other->selectedPanel(splitter_)) sp->Hide();
+    }
+
+    auto* listPanel = view->listPanel(splitter_);
+    auto* selectedPanel = view->selectedPanel(splitter_);
+    if (listPanel == nullptr || selectedPanel == nullptr) return;
+    listPanel->Show();
+    selectedPanel->Show();
+
+    if (splitter_->IsSplit()) {
+        splitter_->ReplaceWindow(splitter_->GetWindow1(), selectedPanel);
+        splitter_->ReplaceWindow(splitter_->GetWindow2(), listPanel);
+    } else {
+        splitter_->SplitVertically(selectedPanel, listPanel, 360);
+    }
+
+    const ThemePalette palette = paletteForTheme(ctx_.config.current().theme);
+    view->applyTheme(palette);
+}
+
+void MainFrame::switchGame(Game g) {
+    if (g == activeGame_) return;
+    activeGame_ = g;
+    mountActiveView();
+    if (auto* view = activeView()) {
+        view->refreshCollection();
+        view->setFilter(filterInput_->GetValue().ToStdString());
+        setStatusTextUi(view->displayName());
+    }
 }
 
 void MainFrame::refreshToolbarIcons() {
@@ -168,20 +196,14 @@ void MainFrame::applyTheme() {
     SetBackgroundColour(palette.windowBg);
     SetForegroundColour(palette.text);
     if (filterInput_ != nullptr) {
-        // On Windows, native edit controls may keep default text color even
-        // after tree theming; force the filter field to use palette input
-        // colors so dark mode text stays readable while typing.
         filterInput_->SetBackgroundColour(palette.inputBg);
         filterInput_->SetForegroundColour(palette.inputText);
         filterInput_->SetOwnBackgroundColour(palette.inputBg);
         filterInput_->SetOwnForegroundColour(palette.inputText);
         filterInput_->Refresh();
     }
-    if (magicList_) {
-        magicList_->applyTheme(palette);
-    }
-    if (selectedPanel_) {
-        selectedPanel_->applyTheme(palette);
+    for (auto* view : ctx_.gameViews) {
+        if (view != nullptr) view->applyTheme(palette);
     }
     refreshToolbarIcons();
     Refresh();
@@ -206,11 +228,15 @@ void MainFrame::onOpenFileMenu() {
 
 void MainFrame::onOpenGameMenu() {
     wxMenu menu;
-    menu.AppendRadioItem(IdSwitchMagic, "Magic");
-    menu.AppendRadioItem(IdSwitchPokemon, "Pokemon (coming soon)");
-    menu.Check(IdSwitchMagic, activeGame_ == Game::Magic);
-    menu.Check(IdSwitchPokemon, activeGame_ == Game::Pokemon);
-    menu.Enable(IdSwitchPokemon, false);
+    menuIdToGame_.clear();
+    int id = IdGameMenuBase;
+    for (auto* view : ctx_.gameViews) {
+        if (view == nullptr) continue;
+        menu.AppendRadioItem(id, view->displayName());
+        menu.Check(id, view->gameId() == activeGame_);
+        menuIdToGame_[id] = view->gameId();
+        ++id;
+    }
     if (menuStrip_ != nullptr) {
         menuStrip_->PopupMenu(&menu, 44, menuStrip_->GetSize().GetHeight());
     }
@@ -218,47 +244,18 @@ void MainFrame::onOpenGameMenu() {
 
 void MainFrame::onOpenSetsMenu() {
     wxMenu menu;
-    menu.Append(IdUpdateSetsMagic, "Update Magic", "Refresh set list from Scryfall");
-    menu.Append(IdUpdateSetsPokemon, "Update Pokemon (coming soon)");
-    menu.Enable(IdUpdateSetsPokemon, false);
+    menuIdToGame_.clear();
+    int id = IdSetsMenuBase;
+    for (auto* view : ctx_.gameViews) {
+        if (view == nullptr) continue;
+        menu.Append(id, view->updateSetsMenuLabel(),
+                    "Refresh set list from the game's API");
+        menuIdToGame_[id] = view->gameId();
+        ++id;
+    }
     if (menuStrip_ != nullptr) {
         menuStrip_->PopupMenu(&menu, 92, menuStrip_->GetSize().GetHeight());
     }
-}
-
-void MainFrame::switchGame(Game g) {
-    activeGame_ = g;
-    refreshCollection();
-    setStatusTextUi(g == Game::Magic ? "Magic" : "Pokemon");
-}
-
-void MainFrame::refreshCollection() {
-    if (activeGame_ != Game::Magic) {
-        magicList_->setCards({});
-        selectedPanel_->setCard(std::nullopt);
-        return;
-    }
-    auto loaded = ctx_.magicCollection.list(Game::Magic);
-    if (!loaded) {
-        wxMessageBox("Failed to load collection: " + loaded.error(),
-                     "Error", wxOK | wxICON_ERROR, this);
-        return;
-    }
-    magicList_->setCards(std::move(loaded).value());
-    selectedPanel_->setCard(magicList_->selected());
-}
-
-const std::vector<Set>& MainFrame::magicSetsForDialog() {
-    if (!magicSetsCache_.empty()) {
-        return magicSetsCache_;
-    }
-    auto loaded = ctx_.sets.getSets(Game::Magic);
-    if (loaded) {
-        magicSetsCache_ = std::move(loaded).value();
-    } else {
-        magicSetsCache_.clear();
-    }
-    return magicSetsCache_;
 }
 
 // Menu handlers ---------------------------------------------------------------
@@ -282,105 +279,39 @@ void MainFrame::onSettings(wxCommandEvent&) {
 
 void MainFrame::onQuit(wxCommandEvent&) { Close(true); }
 
-void MainFrame::onSwitchMagic(wxCommandEvent&)   { switchGame(Game::Magic); }
-void MainFrame::onSwitchPokemon(wxCommandEvent&) { switchGame(Game::Pokemon); }
-
-void MainFrame::onUpdateSetsMagic(wxCommandEvent&) {
-    setStatusTextUi("Updating Magic sets from Scryfall...");
-    Update();
-    auto out = ctx_.sets.updateSets(Game::Magic);
-    if (!out) {
-        setStatusTextUi("Update failed");
-        wxMessageBox("Failed to update sets: " + out.error(),
-                     "Error", wxOK | wxICON_ERROR, this);
-        return;
-    }
-    magicSetsCache_ = out.value();
-    setStatusTextUi("Magic sets updated.");
-    wxMessageBox("Updated " + std::to_string(out.value().size()) + " Magic sets.",
-                 "Sets updated", wxOK | wxICON_INFORMATION, this);
+void MainFrame::onSwitchGame(wxCommandEvent& ev) {
+    const auto it = menuIdToGame_.find(ev.GetId());
+    if (it == menuIdToGame_.end()) return;
+    switchGame(it->second);
 }
 
-void MainFrame::onUpdateSetsPokemon(wxCommandEvent&) {
-    wxMessageBox("Pokemon support is not implemented yet.",
-                 "Coming soon", wxOK | wxICON_INFORMATION, this);
+void MainFrame::onUpdateSetsForGame(wxCommandEvent& ev) {
+    const auto it = menuIdToGame_.find(ev.GetId());
+    if (it == menuIdToGame_.end()) return;
+    IGameView* targetView = nullptr;
+    for (auto* v : ctx_.gameViews) {
+        if (v != nullptr && v->gameId() == it->second) { targetView = v; break; }
+    }
+    if (targetView == nullptr) return;
+
+    setStatusTextUi("Updating " + targetView->displayName() + " sets...");
+    Update();
+    const auto status = targetView->onUpdateSets(this);
+    setStatusTextUi(status);
 }
 
 // Toolbar handlers ------------------------------------------------------------
 
 void MainFrame::onCreate(wxCommandEvent&) {
-    if (activeGame_ != Game::Magic) {
-        wxMessageBox("Pokemon support is not implemented yet.",
-                     "Coming soon", wxOK | wxICON_INFORMATION, this);
-        return;
-    }
-    MagicCard fresh;
-    fresh.amount = 1;
-    fresh.language = Language::English;
-    fresh.condition = Condition::NearMint;
-
-    CardEditDialog dlg(this, ctx_.images, ctx_.sets, EditMode::Create, fresh,
-                       &magicSetsForDialog());
-    {
-        const Theme currentTheme = ctx_.config.current().theme;
-        const ThemePalette palette = paletteForTheme(currentTheme);
-        applyThemeToWindowTree(&dlg, palette, currentTheme);
-        dlg.SetBackgroundColour(palette.panelBg);
-        dlg.SetForegroundColour(palette.text);
-    }
-    if (dlg.ShowModal() != wxID_OK) return;
-
-    auto added = ctx_.magicCollection.add(Game::Magic, dlg.card());
-    if (!added) {
-        wxMessageBox("Failed to add card: " + added.error(),
-                     "Error", wxOK | wxICON_ERROR, this);
-        return;
-    }
-    refreshCollection();
+    if (auto* view = activeView()) view->onAddCard(this);
 }
 
 void MainFrame::onEdit(wxCommandEvent&) {
-    auto sel = magicList_->selected();
-    if (!sel) {
-        wxMessageBox("Select a card first.", "Edit", wxOK | wxICON_INFORMATION, this);
-        return;
-    }
-    CardEditDialog dlg(this, ctx_.images, ctx_.sets, EditMode::Edit, *sel,
-                       &magicSetsForDialog());
-    {
-        const Theme currentTheme = ctx_.config.current().theme;
-        const ThemePalette palette = paletteForTheme(currentTheme);
-        applyThemeToWindowTree(&dlg, palette, currentTheme);
-        dlg.SetBackgroundColour(palette.panelBg);
-        dlg.SetForegroundColour(palette.text);
-    }
-    if (dlg.ShowModal() != wxID_OK) return;
-    auto updated = ctx_.magicCollection.update(Game::Magic, dlg.card());
-    if (!updated) {
-        wxMessageBox("Failed to update card: " + updated.error(),
-                     "Error", wxOK | wxICON_ERROR, this);
-        return;
-    }
-    refreshCollection();
+    if (auto* view = activeView()) view->onEditCard(this);
 }
 
 void MainFrame::onDelete(wxCommandEvent&) {
-    auto sel = magicList_->selected();
-    if (!sel) {
-        wxMessageBox("Select a card first.", "Delete", wxOK | wxICON_INFORMATION, this);
-        return;
-    }
-    if (wxMessageBox("Delete \"" + sel->name + "\"?",
-                     "Confirm", wxYES_NO | wxICON_QUESTION, this) != wxYES) {
-        return;
-    }
-    auto removed = ctx_.magicCollection.remove(Game::Magic, sel->id);
-    if (!removed) {
-        wxMessageBox("Failed to delete card: " + removed.error(),
-                     "Error", wxOK | wxICON_ERROR, this);
-        return;
-    }
-    refreshCollection();
+    if (auto* view = activeView()) view->onDeleteCard(this);
 }
 
 #ifdef __WXMSW__

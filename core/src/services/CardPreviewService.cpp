@@ -4,8 +4,10 @@ namespace ccm {
 
 CardPreviewService::CardPreviewService(IHttpClient& http) : http_(http) {}
 
-void CardPreviewService::registerSource(Game game, ICardPreviewSource& source) {
-    sources_[game] = &source;
+void CardPreviewService::registerModule(IGameModule& module) {
+    if (auto* src = module.cardPreviewSource(); src != nullptr) {
+        sources_[module.id()] = src;
+    }
 }
 
 Result<std::string> CardPreviewService::fetchPreviewBytes(Game game,

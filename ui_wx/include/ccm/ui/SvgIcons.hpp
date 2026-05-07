@@ -9,10 +9,13 @@
 
 namespace ccm::ui {
 
-// SVG templates for the three flag icons. Original sources:
-//   - foil    -> IoSparklesSharp (Ionicons 5, MIT)
-//   - signed  -> BsPencilFill    (Bootstrap Icons, MIT)
-//   - altered -> BsPaletteFill   (Bootstrap Icons, MIT)
+// SVG templates for the per-game flag icons. Original sources:
+//   - foil          -> IoSparklesSharp (Ionicons 5, MIT)        [Magic]
+//   - signed        -> BsPencilFill    (Bootstrap Icons, MIT)
+//   - altered       -> BsPaletteFill   (Bootstrap Icons, MIT)
+//   - holo          -> IoSparklesSharp (Ionicons 5, MIT)        [Pokemon, mirrors original
+//                                                                IconHolo from PokemonTable.tsx]
+//   - firstEdition  -> rebuilt 1. Edition badge (CCM2 IconPokemonFirstEdition.tsx)
 // The fill color is parameterized via a `@FILL@` placeholder so callers can
 // choose the actual color at render time (e.g. system text vs. system
 // highlight-text). NanoSVG cannot resolve CSS `currentColor`, so we have to
@@ -20,6 +23,8 @@ namespace ccm::ui {
 extern const char* const kSvgFoil;
 extern const char* const kSvgSigned;
 extern const char* const kSvgAltered;
+extern const char* const kSvgHolo;
+extern const char* const kSvgFirstEdition;
 
 // Toolbar actions — glyphs match the original `src/pages/index.tsx` imports from
 // `react-icons/vsc` (VscAdd / VscEdit / VscTrash). Embedded SVGs are sourced

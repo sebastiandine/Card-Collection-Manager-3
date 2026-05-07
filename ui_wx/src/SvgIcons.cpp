@@ -25,6 +25,26 @@ const char* const kSvgAltered = R"SVG(<?xml version="1.0" encoding="UTF-8"?>
   <path fill="@FILL@" d="M12.433 10.07C14.133 10.585 16 11.15 16 8a8 8 0 1 0-8 8c1.996 0 1.826-1.504 1.649-3.08-.124-1.101-.252-2.237.351-2.92.465-.527 1.42-.237 2.433.07ZM8 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m-3 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m6-2a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0M11 12a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"/>
 </svg>)SVG";
 
+// Pokemon Holo: the original `PokemonTable.tsx` reuses `IoSparklesSharp` from
+// react-icons/io5 (the same path used for Magic foil). We keep one SVG per
+// concept here so future divergence (e.g. a unique Pokemon holographic glyph)
+// can swap kSvgHolo without touching kSvgFoil.
+const char* const kSvgHolo = R"SVG(<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <path fill="@FILL@" d="M208 512l-29.86-80.13L98 401.86 178.14 372 208 292l29.86 80.13L318 401.86 237.86 432zM382 269l-22.4-60.11L299.47 186.4 359.6 164l22.4-60.11 22.4 60.11 60.13 22.4-60.13 22.4zM160 192l-26.06-69.94L64 96l69.94-26.06L160 0l26.06 69.94L256 96l-69.94 26.06z"/>
+</svg>)SVG";
+
+// Pokemon 1st Edition: rebuilt from the original CCM2 `IconPokemonFirstEdition.tsx`.
+// A square outline with a centered "1." inside.
+const char* const kSvgFirstEdition = R"SVG(<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <rect x="1.5" y="1.5" width="13" height="13" rx="1.5" ry="1.5"
+        fill="none" stroke="@FILL@" stroke-width="1.5"/>
+  <text x="8" y="12" text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif" font-weight="bold"
+        font-size="9" fill="@FILL@">1.</text>
+</svg>)SVG";
+
 // vscode-codicons — MIT License (Microsoft). Paths mirror VscAdd /
 // VscEdit / VscTrash from react-icons/vsc.
 const char* const kSvgToolbarAdd = R"SVG(<?xml version="1.0" encoding="UTF-8"?>

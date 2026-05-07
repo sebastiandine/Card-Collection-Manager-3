@@ -8,7 +8,7 @@
 - `include/ccm/ports/` — interfaces (`IHttpClient`, `IFileSystem`, `ICollectionRepository<T>`, `ISetRepository`, `IImageStore`, `ICardPreviewSource`). All seams the services depend on. Add new ports here when adding new external concerns.
 - `include/ccm/services/` — high-level operations: `ConfigService`, `CollectionService<TCard>` (header-only template), `SetService`, `ImageService`, `CardPreviewService`, `CardSorter` (free functions; per-column sort comparators that mirror established table sorting behavior — UI-agnostic so they can be unit-tested directly), `CardFilter` (free functions; case-insensitive substring row matcher restricted to each game's `tableFields` valueKey list). They depend only on ports.
 - `include/ccm/infra/` — concrete adapters: `CprHttpClient`, `StdFileSystem`, `JsonCollectionRepository<T>` (header-only template), `JsonSetRepository`, `LocalImageStore`.
-- `include/ccm/games/` — `IGameModule` + per-game modules. `magic/` is the reference implementation (set source + card preview source); `pokemon/` is a stub returning "not implemented".
+- `include/ccm/games/` — `IGameModule` + per-game modules. `IGameModule` consolidates the per-game seams: every module owns an `ISetSource` (required) and may own an `ICardPreviewSource` (optional, default `nullptr`). `magic/` and `pokemon/` are the reference implementations — both expose a fully working set source + card preview source.
 - `include/ccm/util/` — `Result.hpp` (the sum type), `FsNames.hpp` (filename munging ported from `util/fs.rs`).
 - `src/` mirrors `include/ccm/` for non-template implementations.
 
@@ -28,14 +28,16 @@
 
 ## Adding a new game
 
+The end-to-end procedure (core + UI + composition root + docs) lives in `docs/adding-a-new-game.md`. The core-side checklist is:
+
 1. Add `Game::<Name>` plus `to_string` / `<Name>FromString` / `allGames()` entries in `include/ccm/domain/Enums.hpp` and `src/domain/Enums.cpp`.
-2. Create `include/ccm/games/<name>/<Name>SetSource.hpp` + `.cpp` implementing `ISetSource`. Mirror `MagicSetSource`: expose a static `parseResponse(std::string)` helper so it's unit-testable without HTTP.
-3. Create `include/ccm/games/<name>/<Name>GameModule.hpp` + `.cpp` implementing `IGameModule`. Pick a stable lowercase `dirName()` — it becomes the on-disk subdirectory and must never change.
-4. (Optional) Create `include/ccm/games/<name>/<Name>CardPreviewSource.hpp` + `.cpp` implementing `ICardPreviewSource`. Mirror `MagicCardPreviewSource`: expose static `buildSearchUrl` + `parseResponse` helpers for unit testing without HTTP. Register the instance with `CardPreviewService::registerSource(Game::<Name>, ...)` in `app/main.cpp`.
-5. If the game has a card type with different fields, add a `<Name>Card` domain type with hand-rolled JSON aliases. Otherwise reuse `MagicCard`.
+2. Create `include/ccm/games/<name>/<Name>SetSource.hpp` + `.cpp` implementing `ISetSource`. Mirror `MagicSetSource` / `PokemonSetSource`: expose a static `parseResponse(std::string)` helper so it's unit-testable without HTTP.
+3. (Optional) Create `include/ccm/games/<name>/<Name>CardPreviewSource.hpp` + `.cpp` implementing `ICardPreviewSource`. Mirror `MagicCardPreviewSource` / `PokemonCardPreviewSource`: expose static `buildSearchUrl` + `parseResponse` helpers for unit testing without HTTP.
+4. Create `include/ccm/games/<name>/<Name>GameModule.hpp` + `.cpp` implementing `IGameModule`. Pick a stable lowercase `dirName()` — it becomes the on-disk subdirectory and must never change. The module **owns** its set source and (optionally) its card preview source: override `cardPreviewSource()` to return `&previewSource_` when present (default returns `nullptr`).
+5. If the game has a card type with different fields, add a `<Name>Card` domain type with hand-rolled JSON aliases. Otherwise reuse an existing one.
 6. Add the new `.cpp` files to `core/CMakeLists.txt` (no glob).
-7. Add tests under `tests/<name>_set_source_tests.cpp` and `tests/<name>_card_preview_source_tests.cpp` modeled on the Magic versions.
-8. The composition root in `app/main.cpp` and the directory mapping in `app/main.cpp::dirNameForGame` must be updated too — see `app/AGENTS.md`.
+7. Add tests under `tests/<name>_set_source_tests.cpp` and `tests/<name>_card_preview_source_tests.cpp` modeled on the Magic / Pokemon versions.
+8. The composition root in `app/main.cpp` and the directory mapping in `app/main.cpp::dirNameForGame` must be updated too — see `app/AGENTS.md`. `CardPreviewService::registerModule(*module)` is the single registration call; modules whose `cardPreviewSource()` returns `nullptr` are silently skipped.
 
 ## Adding / changing a card-table column
 

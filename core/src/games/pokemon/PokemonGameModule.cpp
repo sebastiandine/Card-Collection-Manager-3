@@ -2,6 +2,7 @@
 
 namespace ccm {
 
-PokemonGameModule::PokemonGameModule(IHttpClient& http) : setSource_(http) {}
+PokemonGameModule::PokemonGameModule(IHttpClient& http)
+    : setSource_(http), previewSource_(http) {}
 
 }  // namespace ccm

@@ -4,9 +4,18 @@
 
 add_library(ccm_ui_wx STATIC
     src/MainFrame.cpp
+    src/BaseEvents.cpp
+
     src/MagicCardListPanel.cpp
-    src/SelectedCardPanel.cpp
-    src/CardEditDialog.cpp
+    src/MagicSelectedCardPanel.cpp
+    src/MagicCardEditDialog.cpp
+    src/MagicGameView.cpp
+
+    src/PokemonCardListPanel.cpp
+    src/PokemonSelectedCardPanel.cpp
+    src/PokemonCardEditDialog.cpp
+    src/PokemonGameView.cpp
+
     src/SettingsDialog.cpp
     src/ImageViewerDialog.cpp
     src/SvgIcons.cpp

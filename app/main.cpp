@@ -3,7 +3,7 @@
 // types are mentioned - everything downstream depends on interfaces.
 
 #include "ccm/domain/MagicCard.hpp"
-#include "ccm/games/magic/MagicCardPreviewSource.hpp"
+#include "ccm/domain/PokemonCard.hpp"
 #include "ccm/games/magic/MagicGameModule.hpp"
 #include "ccm/games/pokemon/PokemonGameModule.hpp"
 #include "ccm/infra/CprHttpClient.hpp"
@@ -17,7 +17,9 @@
 #include "ccm/services/ImageService.hpp"
 #include "ccm/services/SetService.hpp"
 #include "ccm/ui/AppContext.hpp"
+#include "ccm/ui/MagicGameView.hpp"
 #include "ccm/ui/MainFrame.hpp"
+#include "ccm/ui/PokemonGameView.hpp"
 
 #include <wx/app.h>
 #include <wx/icon.h>
@@ -72,28 +74,38 @@ public:
 
         magicRepo_ = std::make_unique<ccm::JsonCollectionRepository<ccm::MagicCard>>(
             *fs_, *config_, &dirNameForGame);
+        pokeRepo_  = std::make_unique<ccm::JsonCollectionRepository<ccm::PokemonCard>>(
+            *fs_, *config_, &dirNameForGame);
         setRepo_   = std::make_unique<ccm::JsonSetRepository>(*fs_, *config_, &dirNameForGame);
         imgStore_  = std::make_unique<ccm::LocalImageStore>(*fs_, *config_, &dirNameForGame);
 
         imgSvc_       = std::make_unique<ccm::ImageService>(*imgStore_);
         magicCollSvc_ = std::make_unique<ccm::CollectionService<ccm::MagicCard>>(
             *magicRepo_, *imgStore_);
+        pokeCollSvc_  = std::make_unique<ccm::CollectionService<ccm::PokemonCard>>(
+            *pokeRepo_, *imgStore_);
         setSvc_       = std::make_unique<ccm::SetService>(*setRepo_);
         setSvc_->registerModule(magicMod_.get());
         setSvc_->registerModule(pokeMod_.get());
 
-        magicPrevSrc_ = std::make_unique<ccm::MagicCardPreviewSource>(*http_);
         previewSvc_   = std::make_unique<ccm::CardPreviewService>(*http_);
-        previewSvc_->registerSource(ccm::Game::Magic, *magicPrevSrc_);
+        previewSvc_->registerModule(*magicMod_);
+        previewSvc_->registerModule(*pokeMod_);
+
+        // Per-game UI bundles. Order here is the order shown in the Game menu.
+        magicView_ = std::make_unique<ccm::ui::MagicGameView>(
+            *config_, *magicCollSvc_, *setSvc_, *imgSvc_, *previewSvc_, *magicMod_);
+        pokeView_  = std::make_unique<ccm::ui::PokemonGameView>(
+            *config_, *pokeCollSvc_, *setSvc_, *imgSvc_, *previewSvc_, *pokeMod_);
 
         ctx_ = std::make_unique<ccm::ui::AppContext>(ccm::ui::AppContext{
             *config_,
-            *magicCollSvc_,
             *setSvc_,
             *imgSvc_,
             *previewSvc_,
             *magicMod_,
             *pokeMod_,
+            { magicView_.get(), pokeView_.get() },
         });
 
         auto* frame = new ccm::ui::MainFrame(*ctx_);
@@ -106,21 +118,25 @@ public:
 
 private:
     // Order matters - destruction is reverse, so put services that depend on
-    // others *after* their deps in the member list.
-    std::unique_ptr<ccm::StdFileSystem>                            fs_;
-    std::unique_ptr<ccm::ConfigService>                            config_;
-    std::unique_ptr<ccm::CprHttpClient>                            http_;
-    std::unique_ptr<ccm::MagicGameModule>                          magicMod_;
-    std::unique_ptr<ccm::PokemonGameModule>                        pokeMod_;
-    std::unique_ptr<ccm::JsonCollectionRepository<ccm::MagicCard>> magicRepo_;
-    std::unique_ptr<ccm::JsonSetRepository>                        setRepo_;
-    std::unique_ptr<ccm::LocalImageStore>                          imgStore_;
-    std::unique_ptr<ccm::ImageService>                             imgSvc_;
-    std::unique_ptr<ccm::CollectionService<ccm::MagicCard>>        magicCollSvc_;
-    std::unique_ptr<ccm::SetService>                               setSvc_;
-    std::unique_ptr<ccm::MagicCardPreviewSource>                   magicPrevSrc_;
-    std::unique_ptr<ccm::CardPreviewService>                       previewSvc_;
-    std::unique_ptr<ccm::ui::AppContext>                           ctx_;
+    // others *after* their deps in the member list. Game views are torn down
+    // first so their panels release any references to the typed services.
+    std::unique_ptr<ccm::StdFileSystem>                              fs_;
+    std::unique_ptr<ccm::ConfigService>                              config_;
+    std::unique_ptr<ccm::CprHttpClient>                              http_;
+    std::unique_ptr<ccm::MagicGameModule>                            magicMod_;
+    std::unique_ptr<ccm::PokemonGameModule>                          pokeMod_;
+    std::unique_ptr<ccm::JsonCollectionRepository<ccm::MagicCard>>   magicRepo_;
+    std::unique_ptr<ccm::JsonCollectionRepository<ccm::PokemonCard>> pokeRepo_;
+    std::unique_ptr<ccm::JsonSetRepository>                          setRepo_;
+    std::unique_ptr<ccm::LocalImageStore>                            imgStore_;
+    std::unique_ptr<ccm::ImageService>                               imgSvc_;
+    std::unique_ptr<ccm::CollectionService<ccm::MagicCard>>          magicCollSvc_;
+    std::unique_ptr<ccm::CollectionService<ccm::PokemonCard>>        pokeCollSvc_;
+    std::unique_ptr<ccm::SetService>                                 setSvc_;
+    std::unique_ptr<ccm::CardPreviewService>                         previewSvc_;
+    std::unique_ptr<ccm::ui::MagicGameView>                          magicView_;
+    std::unique_ptr<ccm::ui::PokemonGameView>                        pokeView_;
+    std::unique_ptr<ccm::ui::AppContext>                             ctx_;
 };
 
 wxIMPLEMENT_APP(CcmApp);

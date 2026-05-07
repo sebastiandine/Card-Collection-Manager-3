@@ -89,4 +89,31 @@ TEST_SUITE("SetService") {
         CHECK(out.isErr());
         CHECK_FALSE(repo.hasStored);
     }
+
+    TEST_CASE("Pokemon module is routed independently of Magic") {
+        // Both modules registered; updating Pokemon must hit the Pokemon
+        // source and persist under the Pokemon Game key without disturbing
+        // a previously cached Magic list.
+        InMemSetRepo repo;
+        SetService svc{repo};
+
+        FakeGameModule magic{Game::Magic};
+        magic.source.result = Result<std::vector<Set>>::ok({
+            {"lea", "Alpha", "1993/08/05"},
+        });
+        FakeGameModule pokemon{Game::Pokemon};
+        pokemon.source.result = Result<std::vector<Set>>::ok({
+            {"base1", "Base", "1999/01/09"},
+        });
+        svc.registerModule(&magic);
+        svc.registerModule(&pokemon);
+
+        REQUIRE(svc.updateSets(Game::Magic).isOk());
+        const auto poke = svc.updateSets(Game::Pokemon);
+        REQUIRE(poke.isOk());
+        REQUIRE(poke.value().size() == 1);
+        CHECK(poke.value().front().id == "base1");
+        CHECK(magic.source.calls   == 1);
+        CHECK(pokemon.source.calls == 1);
+    }
 }

@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 
+#include "ccm/games/IGameModule.hpp"
 #include "ccm/ports/ICardPreviewSource.hpp"
 #include "ccm/ports/IHttpClient.hpp"
 #include "ccm/services/CardPreviewService.hpp"
@@ -46,17 +47,39 @@ public:
     }
 };
 
+// Minimal IGameModule fake that exposes a configurable preview source.
+class FakeGameModule final : public IGameModule {
+public:
+    Game gameId = Game::Magic;
+    ICardPreviewSource* preview = nullptr;
+
+    [[nodiscard]] Game        id() const noexcept override { return gameId; }
+    [[nodiscard]] std::string dirName()     const override { return "fake"; }
+    [[nodiscard]] std::string displayName() const override { return "Fake"; }
+
+    ISetSource& setSource() override {
+        // Tests in this file never call setSource(); a never-returned helper
+        // would clutter the fake. Throwing keeps misuse loud.
+        throw std::logic_error("FakeGameModule::setSource() not used in this test");
+    }
+    ICardPreviewSource* cardPreviewSource() noexcept override { return preview; }
+};
+
 }  // namespace
 
 TEST_SUITE("CardPreviewService::fetchPreviewBytes") {
-    TEST_CASE("happy path: routes through registered source then http GET") {
+    TEST_CASE("happy path: routes through registered module then http GET") {
         FakeSource source;
         source.url = "https://example.com/img.png";
+        FakeGameModule module;
+        module.gameId = Game::Magic;
+        module.preview = &source;
+
         FixedHttpClient http;
         http.body = std::string("\x89PNG\r\n\x1a\n", 8);  // arbitrary binary
 
         CardPreviewService svc{http};
-        svc.registerSource(Game::Magic, source);
+        svc.registerModule(module);
 
         const auto out = svc.fetchPreviewBytes(Game::Magic, "Lightning Bolt", "lea", "");
         REQUIRE(out.isOk());
@@ -65,6 +88,20 @@ TEST_SUITE("CardPreviewService::fetchPreviewBytes") {
         CHECK(source.lastName  == "Lightning Bolt");
         CHECK(source.lastSetId == "lea");
         CHECK(source.lastSetNo.empty());
+    }
+
+    TEST_CASE("module returning nullptr preview source is skipped silently") {
+        FakeGameModule module;
+        module.gameId = Game::Pokemon;
+        module.preview = nullptr;
+
+        FixedHttpClient http;
+        CardPreviewService svc{http};
+        svc.registerModule(module);  // no-op
+
+        const auto out = svc.fetchPreviewBytes(Game::Pokemon, "Pikachu", "sv3", "1");
+        CHECK(out.isErr());
+        CHECK(out.error().find("No preview source registered") != std::string::npos);
     }
 
     TEST_CASE("unregistered game returns an explicit error") {
@@ -79,11 +116,15 @@ TEST_SUITE("CardPreviewService::fetchPreviewBytes") {
         FakeSource source;
         source.ok = false;
         source.err = "scryfall 404";
+        FakeGameModule module;
+        module.gameId = Game::Magic;
+        module.preview = &source;
+
         FixedHttpClient http;
         http.lastUrl = "<unset>";
 
         CardPreviewService svc{http};
-        svc.registerSource(Game::Magic, source);
+        svc.registerModule(module);
 
         const auto out = svc.fetchPreviewBytes(Game::Magic, "X", "abc", "");
         CHECK(out.isErr());
@@ -93,12 +134,16 @@ TEST_SUITE("CardPreviewService::fetchPreviewBytes") {
 
     TEST_CASE("http GET error propagates") {
         FakeSource source;
+        FakeGameModule module;
+        module.gameId = Game::Magic;
+        module.preview = &source;
+
         FixedHttpClient http;
         http.ok = false;
         http.err = "net down";
 
         CardPreviewService svc{http};
-        svc.registerSource(Game::Magic, source);
+        svc.registerModule(module);
 
         const auto out = svc.fetchPreviewBytes(Game::Magic, "X", "abc", "");
         CHECK(out.isErr());

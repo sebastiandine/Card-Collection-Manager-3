@@ -24,6 +24,7 @@ add_library(ccm_core STATIC
     src/games/magic/MagicCardPreviewSource.cpp
     src/games/magic/MagicGameModule.cpp
     src/games/pokemon/PokemonSetSource.cpp
+    src/games/pokemon/PokemonCardPreviewSource.cpp
     src/games/pokemon/PokemonGameModule.cpp
 
     src/util/FsNames.cpp

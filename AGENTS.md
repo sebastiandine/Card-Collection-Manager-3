@@ -8,6 +8,7 @@ C++ desktop implementation (originally based on a Tauri Rust+TS version) — sin
 - `ui_wx/` — `ccm_ui_wx` static library. The only place that touches wxWidgets. See `ui_wx/AGENTS.md`.
 - `app/` — `ccm` executable (composition root). Wires concrete adapters into services. See `app/AGENTS.md`.
 - `tests/` — `ccm_core_tests` doctest binary. Pure-logic tests against in-memory fakes. See `tests/AGENTS.md`.
+- `docs/` — long-form developer documentation. Start with `docs/adding-a-new-game.md` for the canonical end-to-end procedure for extending the app with a new TCG. See `docs/AGENTS.md`.
 - `cmake/` — `Toolchain.cmake` (Clang first, MinGW-w64 fallback), `Dependencies.cmake` (FetchContent pins), `CompilerWarnings.cmake` (`ccm_warnings` interface target).
 - `CMakeLists.txt` — top-level. Defines options `CCM_USE_SYSTEM_WX` (default OFF) and `CCM_BUILD_TESTS` (default ON).
 
@@ -84,7 +85,8 @@ Run from the **workspace root**.
 
 - After modifying a domain type's fields or JSON layout you **must** update the matching round-trip test in `tests/domain_json_tests.cpp` and re-run tests.
 - After adding a new `.cpp` to `core/` or `ui_wx/` you **must** add it to that package's `CMakeLists.txt`. There is no glob.
-- After adding a new game module you **must**: (1) extend `Game` enum + string mappings in `core/include/ccm/domain/Enums.hpp`, (2) register the module in `app/main.cpp`, (3) add a directory mapping in `app/main.cpp::dirNameForGame`.
+- After adding a new game module you **must**: (1) extend `Game` enum + string mappings in `core/include/ccm/domain/Enums.hpp`, (2) register the module in `app/main.cpp`, (3) add a directory mapping in `app/main.cpp::dirNameForGame`, (4) implement an `IGameView` derived class (or `<Name>GameView`) and add it to `AppContext::gameViews` in the composition root.
+- After changing the per-game seams (`IGameModule`, `IGameView`, the `BaseCard*Panel` template hooks) you **must** update `docs/adding-a-new-game.md` so the canonical "add a new game" walkthrough stays in sync with the code.
 - After changing `formatTextForFs` or `parseIndexFromFilename` you **must** update `tests/fs_names_tests.cpp` — these functions exist to stay byte-compatible with the original Rust `util/fs.rs`.
 
 ## Anti-patterns

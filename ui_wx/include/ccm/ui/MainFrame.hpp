@@ -1,15 +1,14 @@
 #pragma once
 
-// MainFrame: top-level window. Hosts the menu bar (File / Game / Sets) and
-// the Magic card list + selected card panel. Pokemon menu items are wired up
-// but disabled for the MVP (see PokemonGameModule stub).
+// MainFrame: top-level window. Hosts the menu bar (File / Game / Sets), the
+// toolbar (Add / Edit / Delete + filter input), and the splitter that swaps
+// the active `IGameView`'s panels in and out as the user switches games.
 
 #include "ccm/domain/Enums.hpp"
-#include "ccm/domain/Set.hpp"
 #include "ccm/ui/AppContext.hpp"
 
 #include <array>
-#include <vector>
+#include <unordered_map>
 
 #include <wx/frame.h>
 
@@ -17,11 +16,11 @@ class wxTextCtrl;
 class wxBitmapButton;
 class wxStaticText;
 class wxPanel;
+class wxSplitterWindow;
 
 namespace ccm::ui {
 
-class MagicCardListPanel;
-class SelectedCardPanel;
+class IGameView;
 
 class MainFrame : public wxFrame {
 public:
@@ -37,19 +36,19 @@ private:
     void onOpenGameMenu();
     void onOpenSetsMenu();
     void switchGame(Game g);
-    void refreshCollection();
+    void mountActiveView();
 
     void onSettings(wxCommandEvent&);
     void onQuit(wxCommandEvent&);
-    void onSwitchMagic(wxCommandEvent&);
-    void onSwitchPokemon(wxCommandEvent&);
-    void onUpdateSetsMagic(wxCommandEvent&);
-    void onUpdateSetsPokemon(wxCommandEvent&);
+    void onSwitchGame(wxCommandEvent& ev);
+    void onUpdateSetsForGame(wxCommandEvent& ev);
 
     void onCreate(wxCommandEvent&);
     void onEdit(wxCommandEvent&);
     void onDelete(wxCommandEvent&);
-    const std::vector<Set>& magicSetsForDialog();
+
+    [[nodiscard]] IGameView* activeView();
+
 #ifdef __WXMSW__
     WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) override;
 #endif
@@ -57,26 +56,27 @@ private:
     AppContext& ctx_;
     Game        activeGame_{Game::Magic};
 
-    MagicCardListPanel* magicList_{nullptr};
-    SelectedCardPanel*  selectedPanel_{nullptr};
+    wxSplitterWindow*   splitter_{nullptr};
     wxTextCtrl*         filterInput_{nullptr};
     wxPanel*            menuStrip_{nullptr};
     wxStaticText*       statusText_{nullptr};
     std::array<wxBitmapButton*, 3> toolbarButtons_{{nullptr, nullptr, nullptr}};
-    std::vector<Set>    magicSetsCache_;
+
+    // Tracks the dynamic Game / Sets menu item ids for the current popup.
+    // We allocate a contiguous block per menu open so the event handler can
+    // map back to a `Game` value without a per-game member id.
+    std::unordered_map<int, Game> menuIdToGame_;
 
     enum Ids : int {
         IdSettings = wxID_HIGHEST + 1,
-        IdSwitchMagic,
-        IdSwitchPokemon,
-        IdUpdateSetsMagic,
-        IdUpdateSetsPokemon,
         IdCreate,
         IdEdit,
         IdDelete,
-        IdMenuFile,
-        IdMenuGame,
-        IdMenuSets,
+        // 8 dynamic ids for game-switch (max 4) and update-sets (max 4) entries.
+        IdGameMenuBase,
+        IdGameMenuLast    = IdGameMenuBase    + 8,
+        IdSetsMenuBase,
+        IdSetsMenuLast    = IdSetsMenuBase    + 8,
     };
 };
 
