@@ -155,7 +155,7 @@ config.json   (next to the executable)
 `config.json` defaults to:
 
 ```json
-{ "dataStorage": "<absolute path to the folder containing ccm executable>",
+{ "dataStorage": "<user home>/ccm3-data",
   "defaultGame": "Magic" }
 ```
 

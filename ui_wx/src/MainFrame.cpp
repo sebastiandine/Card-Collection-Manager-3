@@ -21,6 +21,8 @@
 #include <wx/stattext.h>
 #include <wx/textctrl.h>
 
+#include <filesystem>
+#include <fstream>
 #include <string>
 #include <utility>
 
@@ -33,11 +35,52 @@ namespace ccm::ui {
 namespace {
 constexpr int kToolbarIconPx = 18;
 constexpr const char kFilterInputHint[] = "Filter";
+
+std::string dirNameForGame(Game g) {
+    switch (g) {
+        case Game::Magic:   return "magic";
+        case Game::Pokemon: return "pokemon";
+    }
+    return "magic";
+}
+
+void ensureDataStorageScaffold(const Configuration& cfg) {
+    namespace fs = std::filesystem;
+    const fs::path root(cfg.dataStorage);
+    std::error_code ec;
+    fs::create_directories(root, ec);
+    if (ec) return;
+
+    const fs::path dataConfigPath = root / "config.json";
+    if (!fs::exists(dataConfigPath, ec)) {
+        std::ofstream out(dataConfigPath.string(), std::ios::out | std::ios::trunc);
+        if (out.is_open()) {
+            // Marker file so moved data folders are self-contained on disk.
+            out << "{\n"
+                << "  \"dataStorage\": \"" << cfg.dataStorage << "\",\n"
+                << "  \"defaultGame\": \"" << to_string(cfg.defaultGame) << "\",\n"
+                << "  \"theme\": \"" << to_string(cfg.theme) << "\"\n"
+                << "}\n";
+        }
+    }
+
+    for (Game game : {Game::Magic, Game::Pokemon}) {
+        const fs::path gameRoot = root / dirNameForGame(game);
+        fs::create_directories(gameRoot / "images", ec);
+        if (ec) continue;
+
+        const fs::path collectionPath = gameRoot / "collection.json";
+        if (!fs::exists(collectionPath, ec)) {
+            std::ofstream out(collectionPath.string(), std::ios::out | std::ios::trunc);
+            if (out.is_open()) out << "{}\n";
+        }
+    }
+}
 }  // namespace
 
 MainFrame::MainFrame(AppContext& ctx)
     : wxFrame(nullptr, wxID_ANY, "Card Collection Manager 3",
-              wxDefaultPosition, wxSize(1100, 700)),
+              wxDefaultPosition, wxSize(1210, 700)),
       ctx_(ctx),
       activeGame_(ctx.config.current().defaultGame) {
     buildMenuBar();
@@ -270,6 +313,7 @@ void MainFrame::onOpenSetsMenu() {
 
 void MainFrame::onSettings(wxCommandEvent&) {
     const Theme beforeTheme = ctx_.config.current().theme;
+    const std::string beforeDataStorage = ctx_.config.current().dataStorage;
     SettingsDialog dlg(this, ctx_.config);
     {
         const Theme currentTheme = ctx_.config.current().theme;
@@ -279,6 +323,13 @@ void MainFrame::onSettings(wxCommandEvent&) {
         dlg.SetForegroundColour(palette.text);
     }
     if (dlg.ShowModal() == wxID_OK) {
+        const bool dataDirChanged = ctx_.config.current().dataStorage != beforeDataStorage;
+        if (dataDirChanged) {
+            ensureDataStorageScaffold(ctx_.config.current());
+            for (auto* view : ctx_.gameViews) {
+                if (view != nullptr) view->refreshCollection();
+            }
+        }
         if (ctx_.config.current().theme != beforeTheme) {
             applyTheme();
         }

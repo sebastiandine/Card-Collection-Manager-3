@@ -26,6 +26,7 @@
 #include <wx/image.h>
 #include <wx/msgdlg.h>
 #include <wx/stdpaths.h>
+#include <wx/utils.h>
 
 #include <filesystem>
 #include <memory>
@@ -52,15 +53,17 @@ public:
         wxImage::AddHandler(new wxPNGHandler);
         wxImage::AddHandler(new wxJPEGHandler);
 
-        // --- locate config + data directory next to the executable -------
+        // --- locate config next to exe, data in user home ----------------
         const std::filesystem::path exeDir =
             std::filesystem::path(wxStandardPaths::Get().GetExecutablePath().ToStdString())
                 .parent_path();
         const auto configPath = exeDir / "config.json";
+        const auto defaultDataDir =
+            std::filesystem::path(wxGetHomeDir().ToStdString()) / "ccm3-data";
 
         // --- build the dependency graph -----------------------------------
         fs_       = std::make_unique<ccm::StdFileSystem>();
-        config_   = std::make_unique<ccm::ConfigService>(*fs_, configPath, exeDir);
+        config_   = std::make_unique<ccm::ConfigService>(*fs_, configPath, defaultDataDir);
 
         if (auto init = config_->initialize(); !init) {
             wxMessageBox("Failed to load configuration: " + init.error(),
