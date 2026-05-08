@@ -106,6 +106,24 @@ void PokemonGameView::onAddCard(wxWindow* parentWindow) {
                      "Error", wxOK | wxICON_ERROR, parentWindow);
         return;
     }
+
+    PokemonCard persisted = dlg.card();
+    persisted.id = added.value();
+    auto normalized = images_.normalizeNamesForPersistedCard(
+        Game::Pokemon, persisted.id, persisted.set.name, persisted.name, persisted.images);
+    if (normalized) {
+        if (normalized.value() != persisted.images) {
+            persisted.images = std::move(normalized).value();
+            auto updated = collection_.update(Game::Pokemon, persisted);
+            if (!updated) {
+                wxMessageBox("Card added, but image name normalization failed to persist: " + updated.error(),
+                             "Warning", wxOK | wxICON_WARNING, parentWindow);
+            }
+        }
+    } else {
+        wxMessageBox("Card added, but image rename to ID-prefixed format failed: " + normalized.error(),
+                     "Warning", wxOK | wxICON_WARNING, parentWindow);
+    }
     refreshCollection();
 }
 

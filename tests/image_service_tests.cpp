@@ -86,3 +86,46 @@ TEST_SUITE("ImageService::addImage") {
         CHECK(store.copies[0].target == "Beta+BlackLotus+0");
     }
 }
+
+TEST_SUITE("ImageService::normalizeNamesForPersistedCard") {
+    TEST_CASE("renames non-prefixed images to include card id") {
+        RecordingImageStore store;
+        ImageService svc{store};
+
+        const std::vector<std::string> images{
+            "Beta+BlackLotus+0.png",
+            "Beta+BlackLotus+1.jpg"
+        };
+        auto normalized = svc.normalizeNamesForPersistedCard(
+            Game::Magic, 42, "Beta", "Black Lotus", images);
+
+        REQUIRE(normalized.isOk());
+        CHECK(normalized.value().size() == 2);
+        CHECK(normalized.value()[0] == "42+Beta+BlackLotus+0.png");
+        CHECK(normalized.value()[1] == "42+Beta+BlackLotus+1.jpg");
+
+        REQUIRE(store.copies.size() == 2);
+        CHECK(store.copies[0].src == std::filesystem::path("/fake/Beta+BlackLotus+0.png"));
+        CHECK(store.copies[0].target == "42+Beta+BlackLotus+0");
+        CHECK(store.copies[1].src == std::filesystem::path("/fake/Beta+BlackLotus+1.jpg"));
+        CHECK(store.copies[1].target == "42+Beta+BlackLotus+1");
+
+        REQUIRE(store.removes.size() == 2);
+        CHECK(store.removes[0].second == "Beta+BlackLotus+0.png");
+        CHECK(store.removes[1].second == "Beta+BlackLotus+1.jpg");
+    }
+
+    TEST_CASE("keeps already-prefixed names untouched") {
+        RecordingImageStore store;
+        ImageService svc{store};
+
+        const std::vector<std::string> images{"42+Beta+BlackLotus+0.png"};
+        auto normalized = svc.normalizeNamesForPersistedCard(
+            Game::Magic, 42, "Beta", "Black Lotus", images);
+
+        REQUIRE(normalized.isOk());
+        CHECK(normalized.value() == images);
+        CHECK(store.copies.empty());
+        CHECK(store.removes.empty());
+    }
+}

@@ -2,6 +2,8 @@
 
 #include "ccm/util/FsNames.hpp"
 
+#include <filesystem>
+
 namespace ccm {
 
 ImageService::ImageService(IImageStore& store) : store_(store) {}
@@ -48,6 +50,66 @@ Result<std::string> ImageService::addImage(Game game,
 
 Result<void> ImageService::removeImage(Game game, const std::string& imageName) {
     return store_.remove(game, imageName);
+}
+
+Result<std::vector<std::string>> ImageService::normalizeNamesForPersistedCard(
+    Game game,
+    std::uint32_t cardId,
+    const std::string& setName,
+    const std::string& cardName,
+    const std::vector<std::string>& imageNames) {
+    const std::string idPrefix = std::to_string(cardId) + "+";
+    std::vector<std::string> normalized = imageNames;
+    struct RenameOp {
+        std::string oldName;
+        std::string newName;
+    };
+    std::vector<RenameOp> ops;
+    ops.reserve(imageNames.size());
+
+    for (std::size_t i = 0; i < imageNames.size(); ++i) {
+        const std::string& oldName = imageNames[i];
+        if (oldName.starts_with(idPrefix)) {
+            continue;
+        }
+        const std::uint8_t idx = parseIndexFromFilename(oldName);
+        const std::filesystem::path oldPath(oldName);
+        const std::string ext = oldPath.extension().string();
+        const std::string newBase = buildTargetName(false, cardId, setName, cardName, idx);
+        const std::string newName = newBase + ext;
+        if (newName == oldName) {
+            continue;
+        }
+        ops.push_back({oldName, newName});
+        normalized[i] = newName;
+    }
+
+    if (ops.empty()) {
+        return Result<std::vector<std::string>>::ok(std::move(normalized));
+    }
+
+    std::vector<std::string> created;
+    created.reserve(ops.size());
+    for (const auto& op : ops) {
+        auto copied = store_.copyIn(game, store_.resolvePath(game, op.oldName),
+                                    std::filesystem::path(op.newName).stem().string());
+        if (!copied) {
+            for (const auto& createdName : created) {
+                (void)store_.remove(game, createdName);
+            }
+            return Result<std::vector<std::string>>::err(copied.error());
+        }
+        created.push_back(copied.value());
+    }
+
+    for (const auto& op : ops) {
+        auto removed = store_.remove(game, op.oldName);
+        if (!removed) {
+            return Result<std::vector<std::string>>::err(removed.error());
+        }
+    }
+
+    return Result<std::vector<std::string>>::ok(std::move(normalized));
 }
 
 std::filesystem::path ImageService::resolveImagePath(Game game,

@@ -50,6 +50,16 @@ public:
 
     Result<void> removeImage(Game game, const std::string& imageName);
 
+    // Ensure image filenames for a persisted card include the card id prefix.
+    // This upgrades "create-mode" names (`set+name+idx.ext`) to
+    // `id+set+name+idx.ext` to match the ccm2-compatible naming scheme.
+    Result<std::vector<std::string>> normalizeNamesForPersistedCard(
+        Game game,
+        std::uint32_t cardId,
+        const std::string& setName,
+        const std::string& cardName,
+        const std::vector<std::string>& imageNames);
+
     [[nodiscard]] std::filesystem::path resolveImagePath(Game game,
                                                          const std::string& imageName) const;
 
