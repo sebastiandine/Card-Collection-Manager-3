@@ -35,6 +35,9 @@ struct ButtonVisualState {
     wxColour pressedBg;
     wxColour text;
     bool darkLike{false};
+    bool hovered{false};
+    bool pressed{false};
+    bool focused{false};
 };
 std::unordered_map<wxWindow*, ButtonVisualState> gButtonVisualStates;
 struct GripVisualState {
@@ -455,75 +458,87 @@ void applyThemeToWindowTree(wxWindow* root, const ThemePalette& palette, Theme t
         const wxColour pressedBg = darkLike ? lightenTowardWhite(normalBg, pressedLift) : normalBg;
         const wxColour btnFg = palette.buttonText;
         gButtonVisualStates[root] = ButtonVisualState{
-            normalBg, hoverBg, pressedBg, btnFg, darkLike
+            normalBg, hoverBg, pressedBg, btnFg, darkLike, false, false, false
         };
 
         if (!gButtonHoverBound.count(root)) {
             gButtonHoverBound.insert(root);
 
             root->Bind(wxEVT_ENTER_WINDOW, [root](wxMouseEvent& event) {
-                const auto it = gButtonVisualStates.find(root);
+                auto it = gButtonVisualStates.find(root);
                 if (it == gButtonVisualStates.end() || !it->second.darkLike) {
                     event.Skip();
                     return;
                 }
-                root->SetBackgroundColour(it->second.hoverBg);
+                it->second.hovered = true;
+                const wxColour bg = it->second.pressed ? it->second.pressedBg : it->second.hoverBg;
+                root->SetBackgroundColour(bg);
                 root->SetForegroundColour(it->second.text);
                 root->Refresh();
             });
             root->Bind(wxEVT_LEAVE_WINDOW, [root](wxMouseEvent& event) {
-                const auto it = gButtonVisualStates.find(root);
+                auto it = gButtonVisualStates.find(root);
                 if (it == gButtonVisualStates.end() || !it->second.darkLike) {
                     event.Skip();
                     return;
                 }
-                root->SetBackgroundColour(it->second.normalBg);
+                it->second.hovered = false;
+                const wxColour bg = it->second.focused ? it->second.hoverBg : it->second.normalBg;
+                root->SetBackgroundColour(bg);
                 root->SetForegroundColour(it->second.text);
                 root->Refresh();
             });
             root->Bind(wxEVT_LEFT_DOWN, [root](wxMouseEvent& event) {
-                const auto it = gButtonVisualStates.find(root);
+                auto it = gButtonVisualStates.find(root);
                 if (it == gButtonVisualStates.end() || !it->second.darkLike) {
                     event.Skip();
                     return;
                 }
+                it->second.pressed = true;
                 root->SetBackgroundColour(it->second.pressedBg);
                 root->SetForegroundColour(it->second.text);
                 root->Refresh();
                 event.Skip();
             });
             root->Bind(wxEVT_LEFT_UP, [root](wxMouseEvent& event) {
-                const auto it = gButtonVisualStates.find(root);
+                auto it = gButtonVisualStates.find(root);
                 if (it == gButtonVisualStates.end() || !it->second.darkLike) {
                     event.Skip();
                     return;
                 }
+                it->second.pressed = false;
                 const wxPoint mousePos = wxGetMousePosition();
                 const wxPoint localPos = root->ScreenToClient(mousePos);
                 const bool inside = root->GetClientRect().Contains(localPos);
-                root->SetBackgroundColour(inside ? it->second.hoverBg : it->second.normalBg);
+                it->second.hovered = inside;
+                const wxColour bg = (inside || it->second.focused) ? it->second.hoverBg : it->second.normalBg;
+                root->SetBackgroundColour(bg);
                 root->SetForegroundColour(it->second.text);
                 root->Refresh();
                 event.Skip();
             });
             root->Bind(wxEVT_SET_FOCUS, [root](wxFocusEvent& event) {
-                const auto it = gButtonVisualStates.find(root);
+                auto it = gButtonVisualStates.find(root);
                 if (it == gButtonVisualStates.end() || !it->second.darkLike) {
                     event.Skip();
                     return;
                 }
+                it->second.focused = true;
                 root->SetBackgroundColour(it->second.hoverBg);
                 root->SetForegroundColour(it->second.text);
                 root->Refresh();
                 event.Skip();
             });
             root->Bind(wxEVT_KILL_FOCUS, [root](wxFocusEvent& event) {
-                const auto it = gButtonVisualStates.find(root);
+                auto it = gButtonVisualStates.find(root);
                 if (it == gButtonVisualStates.end() || !it->second.darkLike) {
                     event.Skip();
                     return;
                 }
-                root->SetBackgroundColour(it->second.normalBg);
+                it->second.focused = false;
+                it->second.pressed = false;
+                const wxColour bg = it->second.hovered ? it->second.hoverBg : it->second.normalBg;
+                root->SetBackgroundColour(bg);
                 root->SetForegroundColour(it->second.text);
                 root->Refresh();
                 event.Skip();
@@ -538,7 +553,12 @@ void applyThemeToWindowTree(wxWindow* root, const ThemePalette& palette, Theme t
                     }
                     wxAutoBufferedPaintDC dc(root);
                     const wxRect rect = root->GetClientRect();
-                    const wxColour bg = it->second.darkLike ? root->GetBackgroundColour() : it->second.normalBg;
+                    wxColour bg = it->second.normalBg;
+                    if (it->second.pressed) {
+                        bg = it->second.pressedBg;
+                    } else if (it->second.hovered || it->second.focused) {
+                        bg = it->second.hoverBg;
+                    }
                     const wxColour fg = it->second.text;
 
                     dc.SetBrush(wxBrush(bg));

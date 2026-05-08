@@ -19,8 +19,10 @@ public:
         Bind(wxEVT_SIZE,  [this](wxSizeEvent& ev) { Refresh(); ev.Skip(); });
     }
 
-    void setImage(wxImage img) {
-        original_ = std::move(img);
+    void setImage(const wxImage& img) {
+        original_ = img;
+        cachedScaled_ = wxBitmap();
+        cachedScaledFor_ = wxSize(-1, -1);
         Refresh();
     }
 
@@ -38,14 +40,27 @@ private:
             static_cast<double>(ws.GetHeight()) / original_.GetHeight());
         const int w = std::max(1, static_cast<int>(original_.GetWidth()  * scale));
         const int h = std::max(1, static_cast<int>(original_.GetHeight() * scale));
-        wxImage scaled = original_.Scale(w, h, wxIMAGE_QUALITY_HIGH);
-        dc.DrawBitmap(wxBitmap(scaled),
+        const wxSize scaledSize(w, h);
+        if (!cachedScaled_.IsOk() || cachedScaledFor_ != scaledSize) {
+            // Use normal quality for very large reductions to keep navigation snappy.
+            const long long srcPixels = static_cast<long long>(original_.GetWidth()) * original_.GetHeight();
+            const long long dstPixels = static_cast<long long>(w) * h;
+            const bool heavyDownscale = dstPixels > 0 && srcPixels > (dstPixels * 4);
+            const wxImageResizeQuality quality =
+                heavyDownscale ? wxIMAGE_QUALITY_NORMAL : wxIMAGE_QUALITY_HIGH;
+            wxImage scaled = original_.Scale(w, h, quality);
+            cachedScaled_ = wxBitmap(scaled);
+            cachedScaledFor_ = scaledSize;
+        }
+        dc.DrawBitmap(cachedScaled_,
                       (ws.GetWidth() - w) / 2,
                       (ws.GetHeight() - h) / 2,
                       true);
     }
 
     wxImage original_;
+    wxBitmap cachedScaled_;
+    wxSize cachedScaledFor_{-1, -1};
 };
 
 }  // namespace
@@ -58,6 +73,9 @@ ImageViewerDialog::ImageViewerDialog(wxWindow* parent,
                wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
       paths_(std::move(imagePaths)),
       index_(startIndex < paths_.size() ? startIndex : 0) {
+    imageCache_.resize(paths_.size());
+    imageCacheReady_.assign(paths_.size(), false);
+
     auto* root = new wxBoxSizer(wxVERTICAL);
 
     imageHost_ = new ImageCanvas(this);
@@ -68,8 +86,10 @@ ImageViewerDialog::ImageViewerDialog(wxWindow* parent,
     root->Add(caption_, 0, wxALL, 6);
 
     auto* nav = new wxBoxSizer(wxHORIZONTAL);
-    auto* prev = new wxButton(this, wxID_ANY, "<< Prev");
-    auto* next = new wxButton(this, wxID_ANY, "Next >>");
+    prevButton_ = new wxButton(this, wxID_ANY, "<< Prev");
+    nextButton_ = new wxButton(this, wxID_ANY, "Next >>");
+    auto* prev = prevButton_;
+    auto* next = nextButton_;
     nav->Add(prev, 0, wxRIGHT, 6);
     nav->Add(next, 0);
     nav->AddStretchSpacer(1);
@@ -85,30 +105,59 @@ ImageViewerDialog::ImageViewerDialog(wxWindow* parent,
     show(index_);
 }
 
+bool ImageViewerDialog::loadImageAt(std::size_t index) {
+    if (index >= paths_.size()) return false;
+    if (imageCacheReady_[index]) return imageCache_[index].IsOk();
+
+    wxImage img;
+    if (!img.LoadFile(paths_[index].string())) {
+        imageCacheReady_[index] = true;
+        return false;
+    }
+
+    imageCache_[index] = std::move(img);
+    imageCacheReady_[index] = true;
+    return true;
+}
+
+void ImageViewerDialog::prefetchNeighbors() {
+    if (paths_.size() < 2) return;
+    const std::size_t prev = (index_ + paths_.size() - 1) % paths_.size();
+    const std::size_t next = (index_ + 1) % paths_.size();
+    loadImageAt(prev);
+    loadImageAt(next);
+}
+
 void ImageViewerDialog::show(std::size_t index) {
     if (paths_.empty()) {
         caption_->SetLabelText("(no images)");
         return;
     }
     index_ = index % paths_.size();
-    wxImage img;
-    if (img.LoadFile(paths_[index_].string())) {
-        static_cast<ImageCanvas*>(imageHost_)->setImage(std::move(img));
-    }
+    if (loadImageAt(index_)) static_cast<ImageCanvas*>(imageHost_)->setImage(imageCache_[index_]);
     caption_->SetLabelText(paths_[index_].filename().string() +
                            " (" + std::to_string(index_ + 1) +
                            "/" + std::to_string(paths_.size()) + ")");
+    prefetchNeighbors();
     Layout();
 }
 
 void ImageViewerDialog::onPrev(wxCommandEvent&) {
     if (paths_.empty()) return;
-    show((index_ + paths_.size() - 1) % paths_.size());
+    if (imageHost_ != nullptr) imageHost_->SetFocus();
+    const std::size_t target = (index_ + paths_.size() - 1) % paths_.size();
+    CallAfter([this, target]() {
+        if (!IsBeingDeleted()) show(target);
+    });
 }
 
 void ImageViewerDialog::onNext(wxCommandEvent&) {
     if (paths_.empty()) return;
-    show((index_ + 1) % paths_.size());
+    if (imageHost_ != nullptr) imageHost_->SetFocus();
+    const std::size_t target = (index_ + 1) % paths_.size();
+    CallAfter([this, target]() {
+        if (!IsBeingDeleted()) show(target);
+    });
 }
 
 }  // namespace ccm::ui
