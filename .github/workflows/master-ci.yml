@@ -76,7 +76,9 @@ jobs:
 
   build-windows:
     name: Windows build + tests
-    needs: compute-version
+    needs:
+      - sonarqube
+      - compute-version
     uses: ./.github/workflows/master-windows.yml
     with:
       version: ${{ needs.compute-version.outputs.version }}
