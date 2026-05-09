@@ -46,7 +46,12 @@
     - Avoid reloading/reparsing sets on each Add/Edit open: each `IGameView` caches its own set list and passes it into the dialog by pointer.
     - Pass preloaded sets into `BaseCardEditDialog` by pointer/reference (not by value) to avoid vector copies per open.
     - For heavy dialog setup, wrap constructor-time UI population in `Freeze()` / `Thaw()` and append choice items in bulk via `wxArrayString` (`BaseCardEditDialog::buildAndPopulate` does this).
-13. **Theme consistency rules (Windows):**
+13. **String encoding on Windows (avoid mojibake):**
+    - Domain/service strings are UTF-8 `std::string`. Do not rely on implicit `std::string <-> wxString` conversions on Windows; those can route through the active ANSI codepage and render `Pokémon` as `PokÃ©mon`.
+    - UI display path (`std::string` -> wx control): always convert with `wxString::FromUTF8(str.c_str())` before `SetLabelText`, `SetItem`, `Append`, control constructors, etc.
+    - UI write-back path (wx control -> `std::string`): always convert with `ToStdString(wxConvUTF8)` so persisted/domain text stays UTF-8.
+    - Apply this rule consistently in shared templates (`BaseCardListPanel`, `BaseSelectedCardPanel`, `BaseCardEditDialog`) because a single implicit conversion in those bases affects every game view.
+14. **Theme consistency rules (Windows):**
     - Treat dialog roots as `panelBg`, not a separate shade, otherwise label rows can look like mismatched darker boxes.
     - Theme dialogs before `ShowModal()` with `applyThemeToWindowTree(...)`; this includes Settings, Create/Edit dialogs, image viewer, About, and custom popup dialogs.
     - Do not use native `wxMessageBox` / `wxAboutBox` for app-facing flows that must match dark mode. Use themed popup helpers (or a custom themed `wxDialog`) so body/buttons stay in sync with the app palette.

@@ -119,7 +119,7 @@ jobs:
         run: rm -f build/bin/ccm_core_tests.exe build/bin/ccm_core_tests
 
       - name: Build Windows installer
-        run: makensis scripts/installer.nsi
+        run: makensis -DAPP_VERSION="${VERSION}" scripts/installer.nsi
 
       - name: Stage Windows artifact folder
         run: |

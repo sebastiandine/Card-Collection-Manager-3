@@ -35,6 +35,7 @@
 #include <wx/sizer.h>
 #include <wx/spinctrl.h>
 #include <wx/stattext.h>
+#include <wx/strconv.h>
 #include <wx/textctrl.h>
 
 #ifdef __WXMSW__
@@ -146,7 +147,7 @@ private:
         auto* grid = new wxFlexGridSizer(2, 6, 8);
         grid->AddGrowableCol(1, 1);
 
-        nameCtrl_  = new wxTextCtrl(this, wxID_ANY, card_.name);
+        nameCtrl_  = new wxTextCtrl(this, wxID_ANY, wxString::FromUTF8(card_.name.c_str()));
         appendRow(grid, "Name", nameCtrl_);
 
         setCombo_ = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0,
@@ -166,7 +167,7 @@ private:
         conditionChoice_ = new wxChoice(this, wxID_ANY);
         appendRow(grid, "Condition", conditionChoice_);
 
-        noteCtrl_ = new wxTextCtrl(this, wxID_ANY, card_.note,
+        noteCtrl_ = new wxTextCtrl(this, wxID_ANY, wxString::FromUTF8(card_.note.c_str()),
                                    wxDefaultPosition, wxSize(-1, 60), wxTE_MULTILINE);
         appendRow(grid, "Note", noteCtrl_);
 
@@ -180,7 +181,7 @@ private:
 
         auto* imgBox = new wxStaticBoxSizer(wxVERTICAL, this, "Images");
         imagesList_ = new wxListBox(this, wxID_ANY);
-        for (const auto& name : card_.images) imagesList_->Append(name);
+        for (const auto& name : card_.images) imagesList_->Append(wxString::FromUTF8(name.c_str()));
         imgBox->Add(imagesList_, 1, wxEXPAND | wxALL, 4);
 
         auto* imgButtons = new wxBoxSizer(wxHORIZONTAL);
@@ -236,7 +237,7 @@ private:
         wxArrayString setNames;
         setNames.Alloc(available.size());
         for (std::size_t i = 0; i < available.size(); ++i) {
-            setNames.Add(available[i].name);
+            setNames.Add(wxString::FromUTF8(available[i].name.c_str()));
             if (!selectedSetId.empty() && lowerAscii(available[i].id) == selectedSetId) {
                 selectIdx = static_cast<int>(i);
             }
@@ -258,7 +259,8 @@ private:
         wxArrayString langs;
         langs.Alloc(allLanguages().size());
         for (auto l : allLanguages()) {
-            langs.Add(std::string(to_string(l)));
+            const std::string lang = std::string(to_string(l));
+            langs.Add(wxString::FromUTF8(lang.c_str()));
             if (l == card_.language) langIdx = i;
             ++i;
         }
@@ -273,7 +275,8 @@ private:
         wxArrayString conditions;
         conditions.Alloc(allConditions().size());
         for (auto c : allConditions()) {
-            conditions.Add(std::string(to_string(c)));
+            const std::string cond = std::string(to_string(c));
+            conditions.Add(wxString::FromUTF8(cond.c_str()));
             if (c == card_.condition) condIdx = i;
             ++i;
         }
@@ -285,9 +288,9 @@ private:
 
     void writeFromControls() {
         const auto& available = availableSets();
-        card_.name      = nameCtrl_->GetValue().ToStdString();
+        card_.name      = nameCtrl_->GetValue().ToStdString(wxConvUTF8);
         card_.amount    = static_cast<std::uint8_t>(amountCtrl_->GetValue());
-        card_.note      = noteCtrl_->GetValue().ToStdString();
+        card_.note      = noteCtrl_->GetValue().ToStdString(wxConvUTF8);
 
         if (!available.empty() && setCombo_->IsEnabled()) {
             const int sel = setCombo_->GetSelection();
@@ -295,10 +298,10 @@ private:
                 card_.set = available[static_cast<std::size_t>(sel)];
             }
         }
-        if (auto l = languageFromString(languageChoice_->GetStringSelection().ToStdString())) {
+        if (auto l = languageFromString(languageChoice_->GetStringSelection().ToStdString(wxConvUTF8))) {
             card_.language = *l;
         }
-        if (auto c = conditionFromString(conditionChoice_->GetStringSelection().ToStdString())) {
+        if (auto c = conditionFromString(conditionChoice_->GetStringSelection().ToStdString(wxConvUTF8))) {
             card_.condition = *c;
         }
 
@@ -352,7 +355,7 @@ private:
     void onRemoveImage(wxCommandEvent&) {
         const int sel = imagesList_->GetSelection();
         if (sel == wxNOT_FOUND) return;
-        const std::string name = imagesList_->GetString(sel).ToStdString();
+        const std::string name = imagesList_->GetString(sel).ToStdString(wxConvUTF8);
         auto rm = imageService_.removeImage(game_, name);
         if (!rm) {
             showThemedMessageDialog(this, "Failed to remove image: " + rm.error(),

@@ -1,9 +1,0 @@
-remove legacy project mentions but keep functional descriptions
-
-icon
-
-pokemon + documentation on how to add new games
-
-wxwidgets has a lot of problems with dark theme and high conteast theme
-(to the point hwereit had to draw complete ui lements from scratch to implement required ux)
-is this really reuqired or was the developer unaware of some theming features?

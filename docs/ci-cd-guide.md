@@ -2,7 +2,7 @@
 
 # CI/CD Guide
 
-This guide defines the CI/CD behavior for Card Collection Manager 3. For the complete versioning policy, including prefix semantics and tag rules, see [Versioning Guide](versioning.md).
+This guide defines the CI/CD behavior for Card Collection Manager 3. For the complete versioning policy, including prefix semantics and tag rules, see [Versioning Guide](versioning.md). For how the Windows installer artifact is produced and configured, see [Windows Installer Guide](windows-installer.md).
 
 **Quick Setup:** protect `master` with the required check `Require semver prefix in PR title`, then keep release PR titles aligned with the accepted prefixes.
 

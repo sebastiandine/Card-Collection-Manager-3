@@ -73,6 +73,7 @@ Run from the **workspace root**.
 ## Windows UI theming guardrails
 
 - `wxWidgets` native dark-mode behavior on Windows is inconsistent across controls and OS builds; prefer explicit app theming in `ui_wx/src/Theme.cpp` plus targeted native hints only where needed.
+- Treat UI text from domain/services as UTF-8 and convert explicitly at wx boundaries (`wxString::FromUTF8(...)` for display, `ToStdString(wxConvUTF8)` for write-back); do not rely on implicit `std::string` conversions on Windows.
 - For dialogs (`wxDialog`) and frames (`wxFrame`), apply title-bar dark mode through top-level-window handling (not frame-only handling), otherwise modal window headers stay light.
 - The `wxListCtrl` native header can ignore dark hints; if native theming is unreliable, use a custom themed header row and preserve key UX parity (single-click sort, edge-drag resize, divider double-click autosize).
 - Do **not** apply `Explorer` class theming to `wxTextCtrl` in dark mode; some Windows builds force black typed text. Keep edit controls palette-driven, and for critical fields (for example the top-right filter box) enforce colors through `WM_CTLCOLOREDIT` handling in `MainFrame` when needed.

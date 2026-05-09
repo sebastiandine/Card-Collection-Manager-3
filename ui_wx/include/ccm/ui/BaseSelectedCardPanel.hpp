@@ -78,7 +78,7 @@ public:
 
         auto applyNote = [this](const std::string& note) {
             const bool has = !note.empty();
-            noteValue_->SetLabelText(note);
+            noteValue_->SetLabelText(wxString::FromUTF8(note.c_str()));
             noteLabel_->Show(has);
             noteValue_->Show(has);
         };
@@ -102,7 +102,8 @@ public:
             // First row is "Name" by convention; we paint it before others so
             // it appears at the top with the literal card name.
             for (auto& row : detailRows_) {
-                row.value->SetLabelText(detailValueFor(c, row.key));
+                const std::string value = detailValueFor(c, row.key);
+                row.value->SetLabelText(wxString::FromUTF8(value.c_str()));
             }
             applyNote(detailValueFor(c, kNoteKey));
             bool anyFlag = false;

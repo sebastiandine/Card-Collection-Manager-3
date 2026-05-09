@@ -4,11 +4,11 @@ Card Collection Manager 3 is an extensible desktop application for managing trad
 
 ## Screenshots
 
-### Magic: The Gathering
+### Magic The Gathering
 
 ![CCM3 Demo - Magic: The Gathering](docs/assets/images/demo-mtg.png)
 
-### Pokemon
+### Pokemon TCG
 
 ![CCM3 Demo - Pokemon](docs/assets/images/demo-pkm.png)
 

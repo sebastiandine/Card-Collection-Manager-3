@@ -8,10 +8,17 @@ Unicode True
 !define REG_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\Card Collection Manager 3"
 !define APP_PATHS_KEY "Software\Microsoft\Windows\CurrentVersion\App Paths\ccm3.exe"
 
-Name "${APP_NAME}"
+; APP_VERSION is supplied by CI via `makensis -DAPP_VERSION=...`. Falls back to
+; "localbuild" so manual runs from a developer machine still work.
+!ifndef APP_VERSION
+  !define APP_VERSION "localbuild"
+!endif
+
+Name "${APP_NAME} ${APP_VERSION}"
 OutFile "..\ccm3-windows-installer.exe"
 Icon "${APP_ICON}"
 UninstallIcon "${APP_ICON}"
+BrandingText "${APP_NAME} ${APP_VERSION}"
 InstallDir "$PROGRAMFILES64\${APP_DIR}"
 RequestExecutionLevel admin
 
@@ -31,6 +38,7 @@ Section "!Core files (required)"
   File /r "..\build\bin\*.*"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   WriteRegStr HKLM "${REG_KEY}" "DisplayName" "${APP_NAME}"
+  WriteRegStr HKLM "${REG_KEY}" "DisplayVersion" "${APP_VERSION}"
   WriteRegStr HKLM "${REG_KEY}" "DisplayIcon" "$INSTDIR\${APP_EXE}"
   WriteRegStr HKLM "${REG_KEY}" "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
   WriteRegStr HKLM "${REG_KEY}" "QuietUninstallString" "$\"$INSTDIR\Uninstall.exe$\" /S"

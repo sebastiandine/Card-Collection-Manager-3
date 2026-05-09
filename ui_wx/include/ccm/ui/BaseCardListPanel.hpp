@@ -575,12 +575,14 @@ private:
 
             // Leading text columns.
             for (std::size_t i = 0; i + 1 < textCols_.size(); ++i) {
+                const std::string cell = renderTextCell(c, i);
                 list_->SetItem(idx, firstText + static_cast<int>(i),
-                               renderTextCell(c, i));
+                               wxString::FromUTF8(cell.c_str()));
             }
             // Trailing Note text column. Icon columns intentionally have no
             // text and no image — the custom-draw paints them.
-            list_->SetItem(idx, noteCol, renderTextCell(c, textCols_.size() - 1));
+            const std::string note = renderTextCell(c, textCols_.size() - 1);
+            list_->SetItem(idx, noteCol, wxString::FromUTF8(note.c_str()));
 
             if (keepId && c.id == *keepId) rowToSelect = idx;
             ++row;
