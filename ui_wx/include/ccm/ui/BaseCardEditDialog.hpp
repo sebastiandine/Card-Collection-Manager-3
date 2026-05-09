@@ -135,6 +135,10 @@ private:
         auto loaded = setService_.getSets(game_);
         if (loaded.isOk()) {
             sets_ = std::move(loaded).value();
+            std::sort(sets_.begin(), sets_.end(),
+                      [](const Set& a, const Set& b) {
+                          return a.releaseDate < b.releaseDate;
+                      });
         }
     }
 

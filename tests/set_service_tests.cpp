@@ -26,7 +26,11 @@ public:
     Game gameId;
     explicit FakeGameModule(Game id) : gameId(id) {}
     Game id() const noexcept override { return gameId; }
-    std::string dirName()     const override { return gameId == Game::Magic ? "magic" : "pokemon"; }
+    std::string dirName()     const override {
+        if (gameId == Game::Magic) return "magic";
+        if (gameId == Game::Pokemon) return "pokemon";
+        return "yugioh";
+    }
     std::string displayName() const override { return dirName(); }
     ISetSource& setSource() override { return source; }
 };
@@ -115,5 +119,30 @@ TEST_SUITE("SetService") {
         CHECK(poke.value().front().id == "base1");
         CHECK(magic.source.calls   == 1);
         CHECK(pokemon.source.calls == 1);
+    }
+
+    TEST_CASE("YuGiOh module routes independently when all games are registered") {
+        InMemSetRepo repo;
+        SetService svc{repo};
+
+        FakeGameModule magic{Game::Magic};
+        magic.source.result = Result<std::vector<Set>>::ok({{"lea", "Alpha", "1993/08/05"}});
+        FakeGameModule pokemon{Game::Pokemon};
+        pokemon.source.result = Result<std::vector<Set>>::ok({{"base1", "Base", "1999/01/09"}});
+        FakeGameModule yugioh{Game::YuGiOh};
+        yugioh.source.result = Result<std::vector<Set>>::ok({{"LOB", "Legend of Blue Eyes", "2002/03/08"}});
+
+        svc.registerModule(&magic);
+        svc.registerModule(&pokemon);
+        svc.registerModule(&yugioh);
+
+        REQUIRE(svc.updateSets(Game::Magic).isOk());
+        REQUIRE(svc.updateSets(Game::Pokemon).isOk());
+        const auto ygo = svc.updateSets(Game::YuGiOh);
+        REQUIRE(ygo.isOk());
+        CHECK(ygo.value().front().id == "LOB");
+        CHECK(magic.source.calls == 1);
+        CHECK(pokemon.source.calls == 1);
+        CHECK(yugioh.source.calls == 1);
     }
 }

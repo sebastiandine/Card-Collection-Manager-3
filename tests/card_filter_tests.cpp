@@ -8,6 +8,7 @@
 #include "ccm/domain/Enums.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
+#include "ccm/domain/YuGiOhCard.hpp"
 #include "ccm/services/CardFilter.hpp"
 
 #include <string>
@@ -49,6 +50,21 @@ PokemonCard pc(std::string name,
     c.setNo = std::move(setNo);
     c.amount = amount;
     c.note = std::move(note);
+    return c;
+}
+
+YuGiOhCard yc(std::string name,
+              std::string setName,
+              std::string setNo = "",
+              std::string rarity = "",
+              std::uint8_t amount = 1) {
+    YuGiOhCard c;
+    c.id = 1;
+    c.name = std::move(name);
+    c.set.name = std::move(setName);
+    c.setNo = std::move(setNo);
+    c.rarity = std::move(rarity);
+    c.amount = amount;
     return c;
 }
 
@@ -156,5 +172,14 @@ TEST_SUITE("CardFilter::matchesPokemonFilter") {
 
     TEST_CASE("empty filter matches everything") {
         CHECK(matchesPokemonFilter(pc("Charizard", "Base Set"), ""));
+    }
+}
+
+TEST_SUITE("CardFilter::matchesYuGiOhFilter") {
+    TEST_CASE("matches by set number and rarity") {
+        const YuGiOhCard c = yc("Dark Magician", "Legend of Blue Eyes", "LOB-005", "Ultra Rare");
+        CHECK(matchesYuGiOhFilter(c, "lob-005"));
+        CHECK(matchesYuGiOhFilter(c, "ultra"));
+        CHECK_FALSE(matchesYuGiOhFilter(c, "secret rare"));
     }
 }

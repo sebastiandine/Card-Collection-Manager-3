@@ -52,13 +52,13 @@ Run from the **workspace root**.
 - Run the app:  
  `./build/bin/ccm3` (`.\build\bin\ccm3.exe` on Windows)
 - Run tests (CCM_BUILD_TESTS defaults to ON):  
-  `ctest --test-dir build --output-on-failure` — current baseline: **86 cases / 211 assertions, all green**.
+  `ctest --test-dir build --output-on-failure` — current baseline: **120 tests, all green**.
 - Build tests only:  
   `cmake --build build --target ccm_core_tests`
 
-> **Windows runtime note**: `cpr` is built as a shared library, so `build/bin/` ends up with `libcpr.dll`, `libcurl.dll`, `libzlib.dll` next to `ccm.exe`. With MinGW-w64 you also need `libgcc_s_seh-1.dll` and `libstdc++-6.dll` from your MSYS2 UCRT64 `bin/` on `PATH` (or copied alongside the exe) to launch from Explorer.
+> **Windows runtime note**: `cpr` is built as a shared library, so `build/bin/` ends up with `libcpr.dll`, `libcurl.dll`, `libzlib.dll` next to `ccm3.exe`. With MinGW-w64 you also need `libgcc_s_seh-1.dll` and `libstdc++-6.dll` from your MSYS2 UCRT64 `bin/` on `PATH` (or copied alongside the exe) to launch from Explorer.
 >
-> **Windows rebuild note**: linking `ccm.exe` fails with `Permission denied` if the app is still running/locked. Close `ccm.exe` before rebuilding app targets.
+> **Windows rebuild note**: linking `ccm3.exe` fails with `Permission denied` if the app is still running/locked. Close `ccm3.exe` before rebuilding app targets.
 >
 > **Windows cold-start note**: first launch right after a fresh build is often slower than subsequent launches due to cold file cache and Windows security scanning (Defender/SmartScreen) on the new exe/dll set. Warm launches are the meaningful baseline for app-side perf changes.
 
@@ -83,7 +83,7 @@ Run from the **workspace root**.
 - For button hover/pressed contrast fixes in dark theme, prefer explicit state handling in `Theme.cpp`; native Windows button states can override wx colors and produce unreadable white-on-white combinations.
 - Keep button theming state dynamic across theme switches (Dark <-> Light). Avoid lambdas that permanently capture old theme colors or behavior; stale handlers can make light-mode buttons look wrong.
 - After changing `ui_wx` theming behavior, rebuild the final app target (`cmake --build build --target ccm --parallel`), not just `ccm_ui_wx`, before validating runtime behavior.
-- If linker fails with `Permission denied` on `build/bin/ccm.exe`, the app is still running; close it before rebuilding.
+- If linker fails with `Permission denied` on `build/bin/ccm3.exe`, the app is still running; close it before rebuilding.
 
 ## Required follow-ups
 

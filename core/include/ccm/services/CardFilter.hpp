@@ -21,6 +21,7 @@
 
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
+#include "ccm/domain/YuGiOhCard.hpp"
 
 #include <string_view>
 
@@ -37,5 +38,7 @@ namespace ccm {
 // Holo/FirstEdition/Signed/Altered are bool-typed and excluded.
 [[nodiscard]] bool matchesPokemonFilter(const PokemonCard& card,
                                         std::string_view filter);
+[[nodiscard]] bool matchesYuGiOhFilter(const YuGiOhCard& card,
+                                       std::string_view filter);
 
 }  // namespace ccm

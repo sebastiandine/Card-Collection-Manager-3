@@ -6,6 +6,7 @@ add_library(ccm_core STATIC
     src/domain/Set.cpp
     src/domain/MagicCard.cpp
     src/domain/PokemonCard.cpp
+    src/domain/YuGiOhCard.cpp
     src/domain/Configuration.cpp
 
     src/services/ConfigService.cpp
@@ -26,6 +27,9 @@ add_library(ccm_core STATIC
     src/games/pokemon/PokemonSetSource.cpp
     src/games/pokemon/PokemonCardPreviewSource.cpp
     src/games/pokemon/PokemonGameModule.cpp
+    src/games/yugioh/YuGiOhSetSource.cpp
+    src/games/yugioh/YuGiOhCardPreviewSource.cpp
+    src/games/yugioh/YuGiOhGameModule.cpp
 
     src/util/FsNames.cpp
 )

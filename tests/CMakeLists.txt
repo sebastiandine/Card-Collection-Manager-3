@@ -18,6 +18,8 @@ add_executable(ccm_core_tests
     card_preview_service_tests.cpp
     pokemon_set_source_tests.cpp
     pokemon_card_preview_source_tests.cpp
+    yugioh_set_source_tests.cpp
+    yugioh_card_preview_source_tests.cpp
     card_sorter_tests.cpp
     card_filter_tests.cpp
 

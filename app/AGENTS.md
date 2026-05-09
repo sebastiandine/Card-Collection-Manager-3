@@ -9,7 +9,7 @@ The `ccm` executable — composition root only. The single place where concrete 
 
 ## Conventions
 
-1. **Composition root is the only place** that names concrete adapters: `StdFileSystem`, `CprHttpClient`, `JsonCollectionRepository<MagicCard>`, `JsonCollectionRepository<PokemonCard>`, `JsonSetRepository`, `LocalImageStore`, `MagicGameModule`, `PokemonGameModule`, `MagicGameView`, `PokemonGameView`, etc. If a concrete adapter type appears anywhere else in the codebase, move the wiring here.
+1. **Composition root is the only place** that names concrete adapters: `StdFileSystem`, `CprHttpClient`, `JsonCollectionRepository<MagicCard>`, `JsonCollectionRepository<PokemonCard>`, `JsonCollectionRepository<YuGiOhCard>`, `JsonSetRepository`, `LocalImageStore`, `MagicGameModule`, `PokemonGameModule`, `YuGiOhGameModule`, `MagicGameView`, `PokemonGameView`, `YuGiOhGameView`, etc. If a concrete adapter type appears anywhere else in the codebase, move the wiring here.
 2. **Member declaration order in `CcmApp` matters** — destruction is reverse, so a member that depends on another (e.g. `magicCollSvc_` depends on `magicRepo_` and `imgStore_`; `previewSvc_` depends on `http_` and is consumed by `ctx_`; `magicView_` depends on the typed `magicCollSvc_` and the shared services) must be declared **after** its deps. Do not reorder casually.
 3. **Use `std::unique_ptr` for everything owned** by `CcmApp`. The `AppContext` then holds plain references into those owned objects, plus a vector of `IGameView*` raw pointers (the `unique_ptr<>`s for the views are the actual owners; the vector just describes the active set).
 4. **Game-to-directory mapping** lives in `dirNameForGame(Game)` (anonymous namespace). When adding a new game, extend this function — it is wired into all three repositories (`JsonCollectionRepository`, `JsonSetRepository`, `LocalImageStore`).
@@ -32,4 +32,4 @@ The `ccm` executable — composition root only. The single place where concrete 
 ## Commands
 
 - Build the binary: `cmake --build build --target ccm`
-- Run on Windows / MinGW-w64: `.\build\bin\ccm.exe`. The cpr/curl/zlib DLLs are placed next to the exe automatically; the MSYS2 UCRT64 runtime (`libgcc_s_seh-1.dll`, `libstdc++-6.dll`) needs to be on `PATH` (e.g. `P:\msys2\msys64\ucrt64\bin`). On verified runs the exe loads under window title "Card Collection Manager 3".
+- Run on Windows / MinGW-w64: `.\build\bin\ccm3.exe`. The cpr/curl/zlib DLLs are placed next to the exe automatically; the MSYS2 UCRT64 runtime (`libgcc_s_seh-1.dll`, `libstdc++-6.dll`) needs to be on `PATH` (e.g. `P:\msys2\msys64\ucrt64\bin`). On verified runs the exe loads under window title "Card Collection Manager 3".
