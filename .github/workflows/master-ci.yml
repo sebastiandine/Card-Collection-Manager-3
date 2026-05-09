@@ -69,6 +69,7 @@ jobs:
             -Dsonar.sources=core,ui_wx,app
             -Dsonar.cfamily.compile-commands=build/compile_commands.json
             -Dsonar.coverageReportPaths=build/sonarqube-coverage.xml
+            -Dsonar.coverage.exclusions=**/ui_wx/**,**/app/**
 
   compute-version:
     name: Determine semantic version

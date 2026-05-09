@@ -609,6 +609,14 @@ void applyThemeToWindowTree(wxWindow* root, const ThemePalette& palette, Theme t
     }
 }
 
+void themeModalDialog(wxDialog* dlg, Theme theme) {
+    if (dlg == nullptr) return;
+    const ThemePalette palette = paletteForTheme(theme);
+    applyThemeToWindowTree(dlg, palette, theme);
+    dlg->SetBackgroundColour(palette.panelBg);
+    dlg->SetForegroundColour(palette.text);
+}
+
 int showThemedMessageDialog(wxWindow* parent, const wxString& message, const wxString& caption, long style) {
     wxDialog dlg(parent, wxID_ANY, caption, wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);

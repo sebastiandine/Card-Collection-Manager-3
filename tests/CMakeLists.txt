@@ -12,6 +12,7 @@ add_executable(ccm_core_tests
     config_service_tests.cpp
     json_collection_repository_tests.cpp
     json_set_repository_tests.cpp
+    local_image_store_tests.cpp
     set_service_tests.cpp
     magic_set_source_tests.cpp
     magic_card_preview_source_tests.cpp

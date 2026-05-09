@@ -12,6 +12,7 @@
 - `collection_service_tests.cpp` — `CollectionService<MagicCard>` (uses inline `InMemoryRepo` + `StubImageStore`).
 - `config_service_tests.cpp` — `ConfigService` against `InMemoryFileSystem`.
 - `json_collection_repository_tests.cpp`, `json_set_repository_tests.cpp` — repository round-trips against `InMemoryFileSystem`.
+- `local_image_store_tests.cpp` — `LocalImageStore` against `InMemoryFileSystem` + `ConfigService`: `copyIn` (extension preserved, missing source errors), `remove` (existing file deleted; absent path is a no-op), `resolvePath` layout under `dataStorage/<game>/images/`.
 - `set_service_tests.cpp` — `SetService` with `FakeSetSource` + `InMemSetRepo`.
 - `magic_set_source_tests.cpp` — `MagicSetSource::parseResponse` (Scryfall mapping). Drives `fetchAll` via `FixedHttpClient` fake.
 - `magic_card_preview_source_tests.cpp` — `MagicCardPreviewSource::buildSearchUrl` URL-encoding rules + `parseResponse` (`data[0].image_uris.normal`). Drives `fetchImageUrl` via `FixedHttpClient`.
