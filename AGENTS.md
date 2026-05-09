@@ -9,6 +9,7 @@ C++ desktop implementation (originally based on a Tauri Rust+TS version) — sin
 - `app/` — `ccm` executable (composition root). Wires concrete adapters into services. See `app/AGENTS.md`.
 - `tests/` — `ccm_core_tests` doctest binary. Pure-logic tests against in-memory fakes. See `tests/AGENTS.md`.
 - `docs/` — long-form developer documentation. Start with `docs/adding-a-new-game.md` for the canonical end-to-end procedure for extending the app with a new TCG. See `docs/AGENTS.md`.
+- `.github/workflows/` — GitHub Actions CI/release workflows. See `.github/workflows/AGENTS.md` for orchestrator/reusable workflow rules and CI invariants.
 - `cmake/` — `Toolchain.cmake` (Clang first, MinGW-w64 fallback), `Dependencies.cmake` (FetchContent pins), `CompilerWarnings.cmake` (`ccm_warnings` interface target).
 - `CMakeLists.txt` — top-level. Defines options `CCM_USE_SYSTEM_WX` (default OFF) and `CCM_BUILD_TESTS` (default ON).
   - Build metadata option: `CCM_APP_VERSION` (defaults to `${PROJECT_VERSION} (localbuild)` for local/manual builds, overridden by CI).
@@ -100,3 +101,4 @@ Run from the **workspace root**.
 - Don't enable `-Wconversion` / `-Wsign-conversion`; they fight wxWidgets's `int` IDs. They were intentionally removed from `cmake/CompilerWarnings.cmake`.
 - Don't use `master` for FetchContent tags. Bump deliberately.
 - Don't bump `cpr` past `1.10.5` without re-doing the curl install/export plumbing: cpr 1.11.x adds `install(EXPORT cprTargets)` rules that reference `libcurl_shared`, which isn't in any export set when curl is built as a sub-project, breaking configure. The 1.10.5 + `HAVE_IOCTLSOCKET_FIONBIO=ON` workaround in `cmake/Dependencies.cmake` is the verified MinGW-w64 path — do not remove it without an end-to-end Windows build first.
+- Don't create multiple top-level triggers for the same CI intent (feature or master). Keep one triggered orchestrator workflow (`feature-ci.yml`, `master-ci.yml`) and use `workflow_call` reusable workflows for OS-specific splits so GitHub Actions stays a single run per intent.

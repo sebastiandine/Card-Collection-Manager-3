@@ -8,12 +8,14 @@ This guide defines the CI/CD behavior for Card Collection Manager 3. For the com
 
 ## Workflow Map
 
-The repository uses separate GitHub Actions workflows by branch intent:
+The repository uses GitHub Actions workflows split by branch intent, with one orchestrator per branch intent:
 
-- `feature-windows.yml`: build, test, and package Windows artifacts for non-`master` branches.
-- `feature-linux.yml`: build, test, and package Linux artifacts for non-`master` branches.
+- `feature-ci.yml`: single workflow run for non-`master` pushes; orchestrates Linux and Windows feature builds.
+- `feature-linux.yml`: reusable Linux build/test/package workflow invoked by `feature-ci.yml`.
+- `feature-windows.yml`: reusable Windows build/test/package workflow invoked by `feature-ci.yml`.
 - `master-pr-title-guard.yml`: validate PR title prefixes for PRs targeting `master`.
-- `master-windows.yml`: compute release semver, build/test on Windows, tag, and publish GitHub Release artifacts after merge to `master`.
+- `master-ci.yml`: single workflow run on merged PRs to `master`; computes semver, invokes Windows reusable build, then tags/publishes release assets.
+- `master-windows.yml`: reusable Windows build/test/package workflow invoked by `master-ci.yml`.
 
 ## Version Flow
 
@@ -21,7 +23,7 @@ Feature branches and `master` use different version modes because they solve dif
 
 ### Feature Branch Builds
 
-On pushes to non-`master` branches, CI computes a version string in the format `<branch-name>-<short-sha>` via `scripts/compute_feature_version.sh` (for example `feature-dark-mode-a1b2c3d`).
+On pushes to non-`master` branches, `feature-ci.yml` fans out to Linux and Windows reusable workflows. Each platform workflow computes a version string in the format `<branch-name>-<short-sha>` via `scripts/compute_feature_version.sh` (for example `feature-dark-mode-a1b2c3d`).
 
 That version is used in two places:
 
@@ -30,7 +32,7 @@ That version is used in two places:
 
 ### Master Releases
 
-When a PR is merged into `master`, CI computes the next semantic version from the latest semver tag and the PR title prefix using `scripts/compute_master_semver.sh`.
+When a PR is merged into `master`, `master-ci.yml` computes the next semantic version from the latest semver tag and the PR title prefix using `scripts/compute_master_semver.sh`.
 
 Accepted prefix mapping:
 
@@ -56,12 +58,12 @@ If a title does not match, `master-pr-title-guard.yml` fails and the PR should n
 
 ## Artifact Naming
 
-Feature workflow artifacts:
+Feature workflow artifacts (produced by jobs inside `feature-ci.yml`):
 
 - Windows: `ccm3-windows-<version>.zip`, `ccm3-windows-installer-<version>`
 - Linux: `ccm3-linux-<version>.zip`
 
-Master release artifacts (`master-windows.yml`):
+Master release artifacts (`master-ci.yml`, built via `master-windows.yml`):
 
 - `ccm3-windows-<semver>.zip`
 - `ccm3-windows-installer-<semver>.exe`
@@ -74,7 +76,7 @@ Follow this flow for every release:
 2. Use a valid semver prefix in the PR title (`major:`, `minor:`, `fix:`, `patch:`, or `path:`).
 3. Wait for all required checks to pass.
 4. Merge the PR.
-5. Wait for `master-windows.yml` to complete semver computation, build/test, tag creation, and release publishing.
+5. Wait for `master-ci.yml` to complete semver computation, Windows build/test, tag creation, and release publishing.
 6. Verify the `vX.Y.Z` tag and release assets in GitHub.
 
 ## Local Build Version Behavior
@@ -85,4 +87,4 @@ Outside CI, the app version defaults to `${PROJECT_VERSION} (localbuild)` throug
 
 - **`msys2: command not found` in workflow logs:** ensure the MSYS2 setup step runs before jobs that use `shell: msys2 {0}`.
 - **`Permission denied` while linking `ccm3.exe`:** the app is still running; close it and rebuild.
-- **No release after merge:** verify the PR merged into `master` and used a valid prefix, then inspect `master-windows.yml` logs for version/tag/release failures.
+- **No release after merge:** verify the PR merged into `master` and used a valid prefix, then inspect `master-ci.yml` logs for version/tag/release failures.

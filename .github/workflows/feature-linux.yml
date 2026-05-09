@@ -1,9 +1,7 @@
 name: Feature Linux Build, Test, and Package
 
 on:
-  push:
-    branches-ignore:
-      - master
+  workflow_call:
 
 permissions:
   contents: read
