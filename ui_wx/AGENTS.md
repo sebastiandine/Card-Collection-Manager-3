@@ -53,7 +53,7 @@
     - Apply this rule consistently in shared templates (`BaseCardListPanel`, `BaseSelectedCardPanel`, `BaseCardEditDialog`) because a single implicit conversion in those bases affects every game view.
 14. **Theme consistency rules (Windows):**
     - Treat dialog roots as `panelBg`, not a separate shade, otherwise label rows can look like mismatched darker boxes.
-    - Theme dialogs before `ShowModal()` with `applyThemeToWindowTree(...)`; this includes Settings, Create/Edit dialogs, image viewer, About, and custom popup dialogs.
+    - Theme dialogs before `ShowModal()` with `applyThemeToWindowTree(...)` (and root background/foreground colors as needed); this includes Settings, image viewer, About, and custom popup dialogs. Per-game **Add/Edit** flows use `themeModalDialog(wxDialog*, Theme)` from `Theme.hpp` so `MagicGameView` / `PokemonGameView` / `YuGiOhGameView` share one path instead of duplicating palette wiring.
     - Do not use native `wxMessageBox` / `wxAboutBox` for app-facing flows that must match dark mode. Use themed popup helpers (or a custom themed `wxDialog`) so body/buttons stay in sync with the app palette.
     - Center popup dialogs on the app window (`CentreOnParent()`) so confirmations/info boxes open relative to the current app window.
     - Include `wxSpinCtrl` in themed input controls (Amount field) or it will keep a mismatched native background.

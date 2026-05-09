@@ -17,6 +17,10 @@ The repository uses GitHub Actions workflows split by branch intent, with one or
 - `master-ci.yml`: single workflow run on merged PRs to `master`; computes semver, invokes Windows reusable build, then tags/publishes release assets.
 - `master-windows.yml`: reusable Windows build/test/package workflow invoked by `master-ci.yml`.
 
+### SonarQube Cloud (coverage quality gate)
+
+Both `feature-ci.yml` and `master-ci.yml` include a Linux job that configures with GCC coverage flags, builds, runs `ctest`, generates `build/sonarqube-coverage.xml` via `gcovr`, and runs the SonarCloud scan. **`sonar.coverage.exclusions`** omit `ui_wx/` and `app/` from the coverage denominator because only `ccm_core` is exercised by automated tests; Sonar still analyzes those directories for bugs, vulnerabilities, and duplications. See [Testing Guide And Test Code Of Conduct](testing-and-test-code-of-conduct.md).
+
 ## Version Flow
 
 Feature branches and `master` use different version modes because they solve different problems: feature builds need traceability to a commit, while `master` builds need stable semantic releases.

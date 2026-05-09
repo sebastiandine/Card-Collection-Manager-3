@@ -3,6 +3,7 @@
 #include "ccm/ui/YuGiOhCardEditDialog.hpp"
 #include "ccm/ui/YuGiOhCardListPanel.hpp"
 #include "ccm/ui/YuGiOhSelectedCardPanel.hpp"
+#include "ccm/ui/Theme.hpp"
 
 #include <wx/msgdlg.h>
 
@@ -100,13 +101,7 @@ void YuGiOhGameView::onAddCard(wxWindow* parentWindow) {
 
     YuGiOhCardEditDialog dlg(parentWindow, images_, sets_, cardPreview_, EditMode::Create, fresh,
                              &setsForDialog());
-    {
-        const Theme currentTheme = config_.current().theme;
-        const ThemePalette palette = paletteForTheme(currentTheme);
-        applyThemeToWindowTree(&dlg, palette, currentTheme);
-        dlg.SetBackgroundColour(palette.panelBg);
-        dlg.SetForegroundColour(palette.text);
-    }
+    themeModalDialog(&dlg, config_.current().theme);
     if (dlg.ShowModal() != wxID_OK) return;
 
     auto added = collection_.add(Game::YuGiOh, dlg.card());
@@ -145,13 +140,7 @@ void YuGiOhGameView::onEditCard(wxWindow* parentWindow) {
     }
     YuGiOhCardEditDialog dlg(parentWindow, images_, sets_, cardPreview_, EditMode::Edit, *sel,
                              &setsForDialog());
-    {
-        const Theme currentTheme = config_.current().theme;
-        const ThemePalette palette = paletteForTheme(currentTheme);
-        applyThemeToWindowTree(&dlg, palette, currentTheme);
-        dlg.SetBackgroundColour(palette.panelBg);
-        dlg.SetForegroundColour(palette.text);
-    }
+    themeModalDialog(&dlg, config_.current().theme);
     if (dlg.ShowModal() != wxID_OK) return;
     auto updated = collection_.update(Game::YuGiOh, dlg.card());
     if (!updated) {

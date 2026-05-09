@@ -3,6 +3,7 @@
 #include "ccm/ui/MagicCardEditDialog.hpp"
 #include "ccm/ui/MagicCardListPanel.hpp"
 #include "ccm/ui/MagicSelectedCardPanel.hpp"
+#include "ccm/ui/Theme.hpp"
 
 #include <wx/msgdlg.h>
 
@@ -94,13 +95,7 @@ void MagicGameView::onAddCard(wxWindow* parentWindow) {
 
     MagicCardEditDialog dlg(parentWindow, images_, sets_, EditMode::Create, fresh,
                             &setsForDialog());
-    {
-        const Theme currentTheme = config_.current().theme;
-        const ThemePalette palette = paletteForTheme(currentTheme);
-        applyThemeToWindowTree(&dlg, palette, currentTheme);
-        dlg.SetBackgroundColour(palette.panelBg);
-        dlg.SetForegroundColour(palette.text);
-    }
+    themeModalDialog(&dlg, config_.current().theme);
     if (dlg.ShowModal() != wxID_OK) return;
 
     auto added = collection_.add(Game::Magic, dlg.card());
@@ -139,13 +134,7 @@ void MagicGameView::onEditCard(wxWindow* parentWindow) {
     }
     MagicCardEditDialog dlg(parentWindow, images_, sets_, EditMode::Edit, *sel,
                             &setsForDialog());
-    {
-        const Theme currentTheme = config_.current().theme;
-        const ThemePalette palette = paletteForTheme(currentTheme);
-        applyThemeToWindowTree(&dlg, palette, currentTheme);
-        dlg.SetBackgroundColour(palette.panelBg);
-        dlg.SetForegroundColour(palette.text);
-    }
+    themeModalDialog(&dlg, config_.current().theme);
     if (dlg.ShowModal() != wxID_OK) return;
     auto updated = collection_.update(Game::Magic, dlg.card());
     if (!updated) {

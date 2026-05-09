@@ -3,6 +3,7 @@
 #include "ccm/ui/PokemonCardEditDialog.hpp"
 #include "ccm/ui/PokemonCardListPanel.hpp"
 #include "ccm/ui/PokemonSelectedCardPanel.hpp"
+#include "ccm/ui/Theme.hpp"
 
 #include <wx/msgdlg.h>
 
@@ -91,13 +92,7 @@ void PokemonGameView::onAddCard(wxWindow* parentWindow) {
 
     PokemonCardEditDialog dlg(parentWindow, images_, sets_, EditMode::Create, fresh,
                               &setsForDialog());
-    {
-        const Theme currentTheme = config_.current().theme;
-        const ThemePalette palette = paletteForTheme(currentTheme);
-        applyThemeToWindowTree(&dlg, palette, currentTheme);
-        dlg.SetBackgroundColour(palette.panelBg);
-        dlg.SetForegroundColour(palette.text);
-    }
+    themeModalDialog(&dlg, config_.current().theme);
     if (dlg.ShowModal() != wxID_OK) return;
 
     auto added = collection_.add(Game::Pokemon, dlg.card());
@@ -136,13 +131,7 @@ void PokemonGameView::onEditCard(wxWindow* parentWindow) {
     }
     PokemonCardEditDialog dlg(parentWindow, images_, sets_, EditMode::Edit, *sel,
                               &setsForDialog());
-    {
-        const Theme currentTheme = config_.current().theme;
-        const ThemePalette palette = paletteForTheme(currentTheme);
-        applyThemeToWindowTree(&dlg, palette, currentTheme);
-        dlg.SetBackgroundColour(palette.panelBg);
-        dlg.SetForegroundColour(palette.text);
-    }
+    themeModalDialog(&dlg, config_.current().theme);
     if (dlg.ShowModal() != wxID_OK) return;
     auto updated = collection_.update(Game::Pokemon, dlg.card());
     if (!updated) {
