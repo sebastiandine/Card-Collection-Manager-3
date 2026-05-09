@@ -34,7 +34,7 @@ jobs:
 
       - name: Configure with coverage instrumentation
         run: >
-          cmake -S . -B build -G Ninja
+          CC=gcc CXX=g++ cmake -S . -B build -G Ninja
           -DCCM_BUILD_TESTS=ON
           -DCCM_USE_SYSTEM_WX=ON
           -DCMAKE_BUILD_TYPE=Debug

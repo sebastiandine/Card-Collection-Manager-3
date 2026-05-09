@@ -38,6 +38,7 @@ GitHub Actions workflows for CI, release automation, and policy checks.
 - Prefer minimal, surgical edits; avoid large workflow rewrites unless requested.
 - Reusable workflows should declare explicit `workflow_call` inputs for required context (e.g., version, merge SHA).
 - Sonar coverage steps that use `gcovr` must exclude third-party build trees at discovery time with `--exclude-directories` (for example `build/_deps`) so gcov does not process dependency `.gcda` files.
+- For Linux Sonar coverage jobs, keep compiler and gcov toolchain aligned (prefer `CC=gcc CXX=g++` for configure when using gcovr default `gcov`) to avoid gcov return-code failures on project `.gcno/.gcda` files.
 - Keep `permissions` least-privilege:
   - reusable build workflows: `contents: read`
   - release/tag orchestrator: `contents: write`
