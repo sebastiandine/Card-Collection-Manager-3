@@ -33,6 +33,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # Project-wide options.
 option(CCM_USE_SYSTEM_WX "Use a system-installed wxWidgets via find_package instead of FetchContent" OFF)
 option(CCM_BUILD_TESTS "Build unit tests for ccm_core" ON)
+set(CCM_APP_VERSION "${PROJECT_VERSION} (localbuild)" CACHE STRING "Application version string embedded in UI")
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CompilerWarnings.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Dependencies.cmake)

@@ -23,11 +23,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Compute feature version
-        run: |
-          VERSION="$(bash scripts/compute_feature_version.sh "${GITHUB_REF_NAME}" "${GITHUB_SHA}")"
-          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
-
       - name: Setup MSYS2 (MinGW-w64 UCRT64)
         uses: msys2/setup-msys2@v2
         with:
@@ -42,6 +37,11 @@ jobs:
             mingw-w64-ucrt-x86_64-ccache
             mingw-w64-ucrt-x86_64-wxwidgets3.2-msw
             mingw-w64-ucrt-x86_64-nsis
+
+      - name: Compute feature version
+        run: |
+          VERSION="$(bash scripts/compute_feature_version.sh "${GITHUB_REF_NAME}" "${GITHUB_SHA}")"
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
 
       - name: Restore Windows compiler cache
         uses: actions/cache@v4
@@ -64,6 +64,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release
           -DCCM_BUILD_TESTS=ON
           -DCCM_USE_SYSTEM_WX=ON
+          -DCCM_APP_VERSION="${VERSION}"
           -DCMAKE_C_COMPILER_LAUNCHER=ccache
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 

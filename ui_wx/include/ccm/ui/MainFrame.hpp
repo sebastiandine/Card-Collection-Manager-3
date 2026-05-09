@@ -35,6 +35,7 @@ private:
     void onOpenFileMenu();
     void onOpenGameMenu();
     void onOpenSetsMenu();
+    void onOpenHelpMenu();
     void switchGame(Game g);
     void mountActiveView();
 
@@ -42,6 +43,7 @@ private:
     void onQuit(wxCommandEvent&);
     void onSwitchGame(wxCommandEvent& ev);
     void onUpdateSetsForGame(wxCommandEvent& ev);
+    void onAbout(wxCommandEvent&);
 
     void onCreate(wxCommandEvent&);
     void onEdit(wxCommandEvent&);
@@ -72,6 +74,7 @@ private:
         IdCreate,
         IdEdit,
         IdDelete,
+        IdAbout,
         // 8 dynamic ids for game-switch (max 4) and update-sets (max 4) entries.
         IdGameMenuBase,
         IdGameMenuLast    = IdGameMenuBase    + 8,

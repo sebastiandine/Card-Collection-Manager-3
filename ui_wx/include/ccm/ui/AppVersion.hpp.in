@@ -1,0 +1,7 @@
+#pragma once
+
+namespace ccm::ui {
+
+inline constexpr const char* kAppVersion = "@CCM_APP_VERSION@";
+
+}  // namespace ccm::ui

@@ -1,0 +1,33 @@
+name: Master PR Title Guard
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+
+jobs:
+  validate-title:
+    name: Require semver prefix in PR title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate pull request title prefix
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          title_lower="$(echo "${PR_TITLE}" | tr '[:upper:]' '[:lower:]')"
+          if [[ "${title_lower}" == major* || "${title_lower}" == minor* || "${title_lower}" == fix* || "${title_lower}" == patch* || "${title_lower}" == path* ]]; then
+            echo "PR title is valid: ${PR_TITLE}"
+            exit 0
+          fi
+          echo "Invalid PR title: '${PR_TITLE}'"
+          echo "Title must start with one of: major, minor, fix, patch, or path."
+          exit 1

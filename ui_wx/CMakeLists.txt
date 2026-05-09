@@ -23,9 +23,16 @@ add_library(ccm_ui_wx STATIC
     src/Theme.cpp
 )
 
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ccm/ui/AppVersion.hpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/ccm/ui/AppVersion.hpp
+    @ONLY
+)
+
 target_include_directories(ccm_ui_wx
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>
 )
 
 target_link_libraries(ccm_ui_wx

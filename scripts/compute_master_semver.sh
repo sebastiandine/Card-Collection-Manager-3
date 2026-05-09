@@ -7,14 +7,16 @@ if [[ $# -lt 1 ]]; then
 fi
 
 pr_title="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
-bump="patch"
 
 if [[ "${pr_title}" == major* ]]; then
   bump="major"
 elif [[ "${pr_title}" == minor* ]]; then
   bump="minor"
-elif [[ "${pr_title}" == fix* || "${pr_title}" == patch* ]]; then
+elif [[ "${pr_title}" == fix* || "${pr_title}" == patch* || "${pr_title}" == path* ]]; then
   bump="patch"
+else
+  echo "Invalid PR title prefix. Must start with: major, minor, fix, patch, or path." >&2
+  exit 1
 fi
 
 latest="$(git tag --list | sed -E 's/^v//' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -t. -k1,1nr -k2,2nr -k3,3nr | head -n1 || true)"

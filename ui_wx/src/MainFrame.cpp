@@ -5,10 +5,12 @@
 // active selected panel without depending on a specific game's view.
 #include "ccm/ui/BaseSelectedCardPanel.hpp"
 #include "ccm/ui/IGameView.hpp"
+#include "ccm/ui/AppVersion.hpp"
 #include "ccm/ui/SettingsDialog.hpp"
 #include "ccm/ui/SvgIcons.hpp"
 #include "ccm/ui/Theme.hpp"
 
+#include <wx/aboutdlg.h>
 #include <wx/bmpbuttn.h>
 #include <wx/event.h>
 #include <wx/menu.h>
@@ -98,6 +100,7 @@ MainFrame::MainFrame(AppContext& ctx)
 void MainFrame::buildMenuBar() {
     Bind(wxEVT_MENU, &MainFrame::onSettings, this, IdSettings);
     Bind(wxEVT_MENU, &MainFrame::onQuit,     this, wxID_EXIT);
+    Bind(wxEVT_MENU, &MainFrame::onAbout,    this, IdAbout);
     Bind(wxEVT_MENU, &MainFrame::onSwitchGame,        this, IdGameMenuBase, IdGameMenuLast);
     Bind(wxEVT_MENU, &MainFrame::onUpdateSetsForGame, this, IdSetsMenuBase, IdSetsMenuLast);
 }
@@ -110,15 +113,19 @@ void MainFrame::buildLayout() {
     auto* fileLbl = new wxStaticText(menuStrip_, wxID_ANY, "File");
     auto* gameLbl = new wxStaticText(menuStrip_, wxID_ANY, "Game");
     auto* setsLbl = new wxStaticText(menuStrip_, wxID_ANY, "Sets");
+    auto* helpLbl = new wxStaticText(menuStrip_, wxID_ANY, "Help");
     fileLbl->SetCursor(wxCursor(wxCURSOR_HAND));
     gameLbl->SetCursor(wxCursor(wxCURSOR_HAND));
     setsLbl->SetCursor(wxCursor(wxCURSOR_HAND));
+    helpLbl->SetCursor(wxCursor(wxCURSOR_HAND));
     fileLbl->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent&) { onOpenFileMenu(); });
     gameLbl->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent&) { onOpenGameMenu(); });
     setsLbl->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent&) { onOpenSetsMenu(); });
+    helpLbl->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent&) { onOpenHelpMenu(); });
     menuSizer->Add(fileLbl, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxTOP | wxBOTTOM | wxRIGHT, 4);
     menuSizer->Add(gameLbl, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxTOP | wxBOTTOM | wxRIGHT, 8);
     menuSizer->Add(setsLbl, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxTOP | wxBOTTOM | wxRIGHT, 8);
+    menuSizer->Add(helpLbl, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxTOP | wxBOTTOM | wxRIGHT, 8);
     menuStrip_->SetSizer(menuSizer);
     root->Add(menuStrip_, 0, wxEXPAND);
 
@@ -309,6 +316,14 @@ void MainFrame::onOpenSetsMenu() {
     }
 }
 
+void MainFrame::onOpenHelpMenu() {
+    wxMenu menu;
+    menu.Append(IdAbout, "About", "About Card Collection Manager 3");
+    if (menuStrip_ != nullptr) {
+        menuStrip_->PopupMenu(&menu, 136, menuStrip_->GetSize().GetHeight());
+    }
+}
+
 // Menu handlers ---------------------------------------------------------------
 
 void MainFrame::onSettings(wxCommandEvent&) {
@@ -357,6 +372,14 @@ void MainFrame::onUpdateSetsForGame(wxCommandEvent& ev) {
     Update();
     const auto status = targetView->onUpdateSets(this);
     setStatusTextUi(status);
+}
+
+void MainFrame::onAbout(wxCommandEvent&) {
+    wxAboutDialogInfo info;
+    info.SetName("Card Collection Manager 3");
+    info.SetVersion(kAppVersion);
+    info.SetDescription("Desktop card collection manager for Magic and Pokemon.");
+    wxAboutBox(info, this);
 }
 
 // Toolbar handlers ------------------------------------------------------------

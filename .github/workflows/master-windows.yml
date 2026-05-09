@@ -82,6 +82,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release
           -DCCM_BUILD_TESTS=ON
           -DCCM_USE_SYSTEM_WX=ON
+          -DCCM_APP_VERSION="${VERSION}"
           -DCMAKE_C_COMPILER_LAUNCHER=ccache
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
