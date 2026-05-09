@@ -6,6 +6,9 @@ on:
       - master
     types:
       - closed
+  push:
+    branches:
+      - master
 
 permissions:
   contents: write
@@ -13,7 +16,7 @@ permissions:
 jobs:
   sonarqube:
     name: SonarQube Cloud scan
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
