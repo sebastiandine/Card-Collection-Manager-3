@@ -25,6 +25,7 @@ Currently, the application supports the following TCGs:
 
 ![CCM3 Demo - YuGiOh](docs/assets/images/demo-ygo.png)
 
+
 ## Migrating From CCM1 And CCM2
 
 CCM3 reads the established collection layout, so data from both CCM1 and CCM2 can be copied into the configured CCM3 data directory.
