@@ -1,51 +1,38 @@
+#documentation #versioning #releases
+
 # Versioning Guide
 
-This document defines how version numbers are assigned in Card Collection Manager 3.
+This guide defines how Card Collection Manager 3 assigns versions in CI and release flows. For workflow wiring and release execution details, see [CI/CD Guide](ci-cd-guide.md).
 
-For the pipeline flow (workflows, checks, tags, and release publishing), see `ci-cd-guide.md`.
+**Quick Setup:** choose a valid PR title prefix before opening a `master` PR because the prefix determines the release bump.
 
 ## Versioning Model
 
 The project uses two versioning modes:
 
-- **Feature branch CI versioning** for non-`master` branches
-- **Semantic versioning** for merged PRs into `master`
+- feature-build versioning for non-`master` branches
+- semantic versioning for merged PRs into `master`
 
-## Feature Branch Versioning
+## Feature-Build Versioning
 
-For pushes to non-`master` branches, version format is:
+Non-`master` pushes use `<branch-name>-<short-sha>` (for example `feature-dark-theme-a1b2c3d` or `fix-sort-order-f91d2ab`).
 
-- `<branch-name>-<short-sha>`
+Rules:
 
-Examples:
+- branch names are sanitized and lowercased
+- commit SHA is shortened to 7 characters
+- computation runs in `scripts/compute_feature_version.sh`
 
-- `feature-dark-theme-a1b2c3d`
-- `fix-sort-order-f91d2ab`
+Usage:
 
-### Rules
-
-- Branch name is sanitized and lowercased.
-- Commit SHA is shortened to 7 characters.
-- Computation is handled by `scripts/compute_feature_version.sh`.
-
-### Usage
-
-This feature version is used for:
-
-- CI artifact naming
-- embedded app version shown in `Help -> About` (via `CCM_APP_VERSION`)
-
-For where this is wired in workflows, see `ci-cd-guide.md`.
+- artifact names
+- app embedded version (`CCM_APP_VERSION`, visible in `Help -> About`)
 
 ## Master Semantic Versioning
 
-For merged PRs into `master`, version format is semantic:
+Merged PRs into `master` use semantic versions in `MAJOR.MINOR.PATCH` format (for example `1.4.2`).
 
-- `MAJOR.MINOR.PATCH` (for example `1.4.2`)
-
-The next version is computed from the latest semver tag and PR title prefix.
-
-### PR title prefix mapping
+CI computes the next version from the latest semver tag and the PR title prefix:
 
 - `major...` -> bump `MAJOR`, reset `MINOR` and `PATCH` to `0`
 - `minor...` -> bump `MINOR`, reset `PATCH` to `0`
@@ -53,20 +40,20 @@ The next version is computed from the latest semver tag and PR title prefix.
 - `patch...` -> bump `PATCH`
 - `path...` -> bump `PATCH` (accepted alias in current setup)
 
-### Strict validation
+Computation runs in `scripts/compute_master_semver.sh`.
 
-If PR title prefix is not one of the accepted values:
+## Validation Rules
 
-- PR title guard check fails for `master` PRs
-- semantic version script fails fast
+If the PR title prefix is not accepted, two controls fail by design:
 
-Computation is handled by `scripts/compute_master_semver.sh`.
+- PR title guard check for `master` PRs
+- semantic-version script validation
 
-For enforcement and branch protection details, see `ci-cd-guide.md`.
+This enforcement keeps release bumps deterministic and reviewable.
 
-## Tags
+## Tag Format
 
-Master releases create a git tag in this format:
+Master releases create git tags in this format:
 
 - `v<semantic-version>`
 
@@ -75,36 +62,28 @@ Examples:
 - `v1.0.0`
 - `v2.3.7`
 
-Tag creation is part of the master release workflow (see `ci-cd-guide.md`).
-
-## App Embedded Version
+## Embedded App Version
 
 The app embeds a build-time version string through CMake variable `CCM_APP_VERSION`.
 
-### CI builds
+CI behavior:
 
-- Feature CI sets `CCM_APP_VERSION` to branch+sha version
-- Master release CI sets it to semantic version
+- feature workflows set it to `<branch>-<sha>`
+- master release workflow sets it to semantic version
 
-### Local/manual builds
+Local/manual behavior:
 
-If not overridden, default is:
+- default is `${PROJECT_VERSION} (localbuild)` unless overridden
 
-- `${PROJECT_VERSION} (localbuild)`
+This default makes local binaries easy to distinguish from CI and release outputs.
 
-This makes local binaries distinguishable from CI and release binaries.
+## PR Title Conventions
 
-## Recommended PR Title Conventions
-
-Use explicit, readable prefixes:
+Use explicit prefixes in this shape:
 
 - `major: <summary>`
 - `minor: <summary>`
 - `fix: <summary>`
 - `patch: <summary>`
 
-Example:
-
-- `minor: add custom themed confirmation dialogs`
-
-This keeps version intent clear for reviewers and release automation.
+Example: `minor: add custom themed confirmation dialogs`.

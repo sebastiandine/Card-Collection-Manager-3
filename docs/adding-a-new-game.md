@@ -1,8 +1,12 @@
-# Adding a new game to Card Collection Manager
+#documentation #architecture #game-modules
 
-This is the canonical, end-to-end walkthrough for extending Card Collection Manager with support for a brand-new TCG. It covers everything from picking the right external APIs to wiring the new game into the composition root and writing tests, and is written so that you should be able to follow it from top to bottom and end up with a working game on `main`.
+# Adding A New Game To Card Collection Manager
 
-The guide is **prescriptive about file locations and seam shapes** but generic about the game itself. Wherever you see `<Name>` substitute the lowercase game key (the on-disk directory name and the `dirName()` return value) or, where capitalization is needed, the user-visible display name. Both Magic the Gathering and Pokemon TCG follow this exact procedure — when in doubt, read the matching files under `core/include/ccm/games/magic/`, `core/include/ccm/games/pokemon/`, `ui_wx/src/Magic*.cpp` and `ui_wx/src/Pokemon*.cpp` for working references.
+This is the canonical end-to-end walkthrough for adding support for a new TCG to Card Collection Manager. The guide covers external API selection, core and UI integration, composition-root wiring, and required tests so a full implementation can land cleanly on `main`.
+
+**Quick Setup:** gather required external resources first, then follow sections in order and run the full verification checklist before opening a PR.
+
+The guide is prescriptive about file locations and seam shapes but game-agnostic in naming. Replace `<Name>` with your game type name and `<name>` with the lowercase key used for on-disk directories and `dirName()`. Both Magic and Pokemon follow this structure; use their implementations as references when needed.
 
 Read the root `AGENTS.md`, `core/AGENTS.md`, `ui_wx/AGENTS.md`, `app/AGENTS.md`, and `tests/AGENTS.md` before starting. They define the architecture rules this guide is built on top of.
 

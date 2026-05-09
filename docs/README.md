@@ -1,27 +1,23 @@
+#documentation #contributors #ccm3
+
 # Documentation Index
 
-This folder contains contributor-facing documentation for major project areas.
+This folder contains contributor documentation for Card Collection Manager 3. Start with [Intro for New Developers](intro-to-new-developers.md) if you are new to the repository, then use the category sections below to navigate to specific tasks.
 
-## CI/CD and Release Management
+## CI/CD And Release
 
-- `ci-cd-guide.md`  
-  End-to-end CI/CD behavior, versioning rules, merge guards, artifact naming, and release procedure.
+- [ci-cd-guide.md](ci-cd-guide.md): CI workflows, merge guards, artifacts, and release execution.
+- [versioning.md](versioning.md): feature-build version format, semantic release rules on `master`, and tag/app-version behavior.
 
-- `versioning.md`  
-  Dedicated versioning policy for feature builds, semantic releases on `master`, tags, and embedded app version behavior.
+## Build And Local Setup
 
-## Build and Local Setup
+- [dow-doc-build-locally.md](dow-doc-build-locally.md): local build setup for Windows/Linux, dependency model, build options, and troubleshooting.
 
-- `dow-doc-build-locally.md`  
-  Complete guide for building locally on Windows/Linux, dependency management (`FetchContent`), build options, runtime DLL notes, and troubleshooting.
+## Development Workflows
 
-## Developer References
+- [testing-and-test-code-of-conduct.md](testing-and-test-code-of-conduct.md): test workflow plus repository rules for deterministic, behavior-focused tests.
+- [adding-a-new-game.md](adding-a-new-game.md): canonical end-to-end procedure for adding a new game module across `core/`, `ui_wx/`, and `app/`.
 
-- `intro-to-new-developers.md`  
-  Architecture and repository orientation for new contributors: where code lives, boundaries, guardrails, pitfalls, and links to deeper guides.
+## Onboarding
 
-- `testing-and-test-code-of-conduct.md`  
-  Practical testing workflow plus repository expectations for writing deterministic, behavior-focused, maintainable tests.
-
-- `adding-a-new-game.md`  
-  Canonical walkthrough for adding support for a new TCG/game across core, UI, and composition root.
+- [intro-to-new-developers.md](intro-to-new-developers.md): architecture orientation, boundaries, common pitfalls, and first-week workflow guidance.

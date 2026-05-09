@@ -1,95 +1,53 @@
 # Card Collection Manager 3
 
-A native C++ desktop implementation
-(originally a Tauri app written in Rust + TypeScript). Same JSON file layout,
-same card schemas, same APIs - just a single C++ binary built on wxWidgets.
+A native desktop app for managing trading card collections. This implementation is written in C++ and preserves the established JSON data layout so existing collections stay compatible.
 
-> Status: MVP. **Magic the Gathering** is fully wired end-to-end (CRUD, set
-> sync from Scryfall, image management). **Pokemon TCG** has stub modules in
-> place; finishing the parser is a small follow-up.
+> Status: MVP. Magic the Gathering is fully supported end-to-end. Pokemon support is present and still being completed.
 
-## Architecture
+## What The App Does
 
-The project is split into three layers; dependencies only point inward:
+Card Collection Manager 3 lets you maintain local card collections with per-game data, set synchronization, card image management, and desktop-first workflows.
 
-```
-app (executable / composition root)
- |- ccm_ui_wx  (wxWidgets adapter - swap to switch UI toolkit)
- |- ccm_core   (domain + services + ports + infra adapters)
-```
+## Technical Overview
 
-`ccm_core` is **completely UI-agnostic**. Replacing wxWidgets with Qt or Dear
-ImGui later means rewriting `ui_wx/` and reusing every line of `core/` as-is.
-The only thing that crosses the boundary is `ccm::ui::AppContext`, a small
-struct of references to the core services.
+This is a C++20 project with a wxWidgets UI:
 
-Inside `core/`:
+- `core/`: domain logic, services, and infrastructure adapters
+- `ui_wx/`: wxWidgets presentation layer
+- `app/`: executable composition root
 
-- `domain/` - POD value types (`MagicCard`, `PokemonCard`, `Set`, `Configuration`,
-  enums) with JSON round-trips that preserve the established serde format byte-for-byte.
-- `ports/` - interfaces (`IHttpClient`, `IFileSystem`, `ICollectionRepository<T>`,
-  `ISetRepository`, `IImageStore`, `IGameModule`, `ISetSource`). These are the
-  seams the services depend on.
-- `services/` - high-level operations that compose ports
-  (`CollectionService<T>`, `SetService`, `ImageService`, `ConfigService`).
-- `infra/` - concrete adapters: `CprHttpClient`, `StdFileSystem`,
-  `JsonCollectionRepository<T>`, `JsonSetRepository`, `LocalImageStore`.
-- `games/{magic,pokemon}/` - per-game modules. Adding a third TCG = implement
-  `IGameModule` + `ISetSource`, register it in `app/main.cpp`. Done.
+Dependency direction is strict: `app -> ui_wx -> core`.
 
-## Build and local development
+## Migrating From CCM1
 
-The complete local build guide (Windows + Linux), dependency management details,
-build options, runtime notes, and test commands now live in:
+CCM3 reads the established JSON layout, so existing collection data can be copied into the configured CCM3 data directory.
 
-- [`docs/dow-doc-build-locally.md`](docs/dow-doc-build-locally.md)
+Basic migration flow:
 
-## Data layout
+1. Close any running CCM app instance that points to the same data folder.
+2. Copy your CCM1 game data (for example `collection.json` and `images/`) into the matching game folder used by CCM3.
+3. Start CCM3 and confirm the data directory in `File > Settings`.
 
-The data layout is stable, so `collection.json` and `images/` directories remain
-interchangeable with older builds:
+If your files are in the expected layout, collections should load without conversion.
 
-```
-<dataStorage>/
-  magic/
-    collection.json
-    sets.json
-    images/
-      <set>+<name>+<idx>.{png,jpg}
-  pokemon/
-    ...
-config.json   (next to the executable)
-```
+## Previous Implementations
 
-`config.json` defaults to:
+This project continues earlier versions of Card Collection Manager:
 
-```json
-{ "dataStorage": "<user home>/ccm3-data",
-  "defaultGame": "Magic" }
-```
+- [Card Collection Manager (CCM1)](https://github.com/sebastiandine/Card-Collection-Manager): original Java/Swing implementation.
+- [Card Collection Manager 2 (CCM2)](https://github.com/sebastiandine/Card-Collection-Manager-2): Rust/TypeScript (Tauri) rewrite with multi-game support.
 
-It can be overridden in **File > Settings**.
+## Documentation
 
-## Migrating Existing Data
+Implementation details now live in `docs/`. Start here:
 
-The app reads existing JSON files unchanged. To move a collection:
-
-1. Close any other running instance that uses the same data folder.
-2. Copy `<legacy-data>/magic/collection.json` and `<legacy-data>/magic/images/`
-   into the equivalent location under your configured data directory.
-3. Launch the app, then set its data directory in **File > Settings** if needed.
-
-## Adding a new TCG
-
-1. Implement `ccm::IGameModule` and `ccm::ISetSource` for the new game under
-   `core/include/ccm/games/<name>/` and `core/src/games/<name>/`.
-2. Register the module in `app/main.cpp` and add a `Game::*` enum value plus
-   string mapping in [core/include/ccm/domain/Enums.hpp](core/include/ccm/domain/Enums.hpp).
-3. Map the new enum value to a directory name in `app/main.cpp::dirNameForGame`.
-4. (Optional) Add a card type and a UI panel in `ui_wx/`.
-
-The whole point of the layered design is that step 4 is the only one that
-touches wxWidgets - the rest is pure logic, fully unit-testable.
+- [Documentation Index](docs/README.md)
+- [Build Locally Guide](docs/dow-doc-build-locally.md)
+- [Intro For New Developers](docs/intro-to-new-developers.md)
+- [CI/CD Guide](docs/ci-cd-guide.md)
+- [Versioning Guide](docs/versioning.md)
+- [Testing Guide And Test Code Of Conduct](docs/testing-and-test-code-of-conduct.md)
+- [Adding A New Game To Card Collection Manager](docs/adding-a-new-game.md)
 
 ## License
 

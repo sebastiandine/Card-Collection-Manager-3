@@ -1,30 +1,22 @@
+#documentation #build #cmake
+
 # Build Locally Guide
 
-This guide explains how to build Card Collection Manager 3 on Windows and Linux, how dependency management works, and how to run tests locally.
+This guide explains how to build Card Collection Manager 3 on Windows and Linux, how dependencies are resolved, and how to run tests locally. For architecture orientation, see [Intro For New Developers](intro-to-new-developers.md).
 
-## Who this is for
+**Quick Setup:** run CMake configure, build, launch `ccm3`, then run `ctest` from the same build directory.
 
-Use this guide if you want to:
+## Build Model
 
-- build the app from source
-- understand how dependencies are resolved
-- choose between bundled vs system wxWidgets
-- troubleshoot local build issues
+The project uses CMake and builds one desktop executable:
 
-## Project build model
-
-The project uses CMake and builds a native desktop executable:
-
-- executable target: `ccm` (output binary name: `ccm3` / `ccm3.exe`)
+- executable target: `ccm` (output binary: `ccm3` / `ccm3.exe`)
 - language standard: C++20
-- layering:
-  - `ccm_core` (pure logic)
-  - `ccm_ui_wx` (wxWidgets UI)
-  - `ccm` (composition root)
+- layered targets: `ccm_core` (logic), `ccm_ui_wx` (wx UI), `ccm` (composition root)
 
-## Dependency management
+## Dependency Model
 
-Dependencies are managed through CMake `FetchContent` (see `cmake/Dependencies.cmake`).
+Dependencies are managed with CMake `FetchContent` in `cmake/Dependencies.cmake`.
 
 Pinned versions:
 
@@ -33,48 +25,41 @@ Pinned versions:
 - `wxWidgets` `v3.2.5`
 - `doctest` `v2.4.11` (only when tests are enabled)
 
-### How it works
+On first configure, CMake downloads sources. On first full build, heavy dependencies (especially wxWidgets and curl) build locally. Later builds reuse cached dependencies under `build/_deps`.
 
-- On first configure, CMake downloads and configures upstream sources.
-- On first full build, heavy dependencies (notably wxWidgets/curl) are built locally.
-- Subsequent builds reuse cached dependencies in `build/_deps`.
+## Use System wxWidgets
 
-### Using system wxWidgets
-
-By default, wxWidgets is fetched/built from source.  
-For faster local iteration you can use an installed wxWidgets:
-
-- set `-DCCM_USE_SYSTEM_WX=ON`
+By default, the build fetches wxWidgets. For faster local iteration with an installed wxWidgets, set `-DCCM_USE_SYSTEM_WX=ON`.
 
 ## Prerequisites
 
-## Windows
+### Windows
 
-### Recommended path: Clang + Ninja
+Recommended: Clang + Ninja
 
-- LLVM/Clang 14+ in `PATH`
+- LLVM/Clang 14+ on `PATH`
 - CMake 3.22+
-- Ninja in `PATH`
+- Ninja on `PATH`
 
-### Verified fallback path: MSYS2 UCRT64 + MinGW-w64 GCC
+Verified fallback: MSYS2 UCRT64 + MinGW-w64 GCC
 
-- MSYS2 UCRT64 toolchain (`gcc`, `cmake`, `make`/`ninja`)
+- MSYS2 UCRT64 toolchain (`gcc`, `cmake`, `make` or `ninja`)
 - CMake 3.22+
 
-> MSVC is intentionally not supported.
+MSVC is intentionally not supported.
 
-## Linux
+### Linux
 
 - CMake 3.22+
-- C++ compiler (Clang or GCC with C++20 support)
+- Clang or GCC with C++20 support
 - Ninja recommended
-- system packages required when using system wx (for example GTK/wx dev packages)
+- required system packages when using system wxWidgets (for example GTK/wx dev packages)
 
-## Build commands
+## Build Commands
 
-Run all commands from repository root.
+Run from repository root.
 
-## Windows (Clang + Ninja, recommended)
+### Windows (Clang + Ninja)
 
 ```powershell
 cmake -S . -B build -G Ninja
@@ -82,7 +67,7 @@ cmake --build build --parallel
 .\build\bin\ccm3.exe
 ```
 
-## Windows (MinGW Makefiles fallback)
+### Windows (MinGW Makefiles)
 
 ```powershell
 cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
@@ -90,7 +75,7 @@ cmake --build build --parallel 4
 .\build\bin\ccm3.exe
 ```
 
-## Linux (Ninja)
+### Linux (Ninja)
 
 ```bash
 cmake -S . -B build -G Ninja
@@ -98,56 +83,47 @@ cmake --build build --parallel
 ./build/bin/ccm3
 ```
 
-## Build options
+## Build Options
 
-| Option | Default | Purpose |
-|---|---|---|
-| `CCM_USE_SYSTEM_WX` | `OFF` | Use installed wxWidgets instead of FetchContent wx build |
-| `CCM_BUILD_TESTS` | `ON` | Build `ccm_core_tests` |
-| `CMAKE_BUILD_TYPE` | `Release` | Standard CMake build type |
-| `CCM_APP_VERSION` | `${PROJECT_VERSION} (localbuild)` | Embedded version string shown in app About dialog |
+- `CCM_USE_SYSTEM_WX` (default `OFF`): use installed wxWidgets instead of fetched wxWidgets.
+- `CCM_BUILD_TESTS` (default `ON`): build `ccm_core_tests`.
+- `CMAKE_BUILD_TYPE` (commonly `Release`): standard CMake build type.
+- `CCM_APP_VERSION` (default `${PROJECT_VERSION} (localbuild)`): app version string shown in About dialog.
 
-Example (faster local iteration):
-
+Example for faster local iteration:
 ```bash
 cmake -S . -B build -DCCM_USE_SYSTEM_WX=ON -DCCM_BUILD_TESTS=OFF
 cmake --build build
 ```
 
-## Running tests locally
+## Run Tests Locally
 
+From repository root:
 ```bash
 cmake -S . -B build -DCCM_BUILD_TESTS=ON
 cmake --build build --target ccm_core_tests
 ctest --test-dir build --output-on-failure
 ```
 
-The automated test surface is concentrated in `core/` and infra adapters; UI tests are currently out of scope.
+Automated tests primarily cover `core/` and infrastructure adapters. UI testing is currently manual.
 
-## Runtime notes
+## Runtime Notes
 
-## Windows runtime DLLs
+### Windows Runtime DLLs
 
-`cpr` is built shared, so `build/bin` contains runtime DLLs (for example `libcpr.dll`, `libcurl.dll`, `libzlib.dll`) next to `ccm3.exe`.
+`cpr` builds as shared, so `build/bin` contains runtime DLLs (for example `libcpr.dll`, `libcurl.dll`, `libzlib.dll`) next to `ccm3.exe`.
 
-For MinGW/MSYS2 builds you also need UCRT runtime DLLs available (typically from MSYS2 UCRT64 `bin` on `PATH`).
+For MinGW/MSYS2 builds, UCRT runtime DLLs must be available (typically via MSYS2 UCRT64 `bin` on `PATH`).
 
-## Common troubleshooting
+## Troubleshooting
 
-- **First build is slow**
-  - Expected. Fetch/build of wx/curl can take several minutes.
+- **First build is slow:** expected on cold dependency fetch/build, especially wxWidgets and curl.
+- **`Permission denied` while linking `ccm3.exe`:** the app is still running; close it and rebuild.
+- **Generator mismatch:** reuse the same generator for a build directory or create a new build directory.
+- **Windows CI/local shell mismatch:** in CI jobs using `shell: msys2 {0}`, ensure MSYS2 setup runs before shell commands.
 
-- **`Permission denied` while linking `ccm3.exe`**
-  - App is still running. Close it, then rebuild.
+## Related Docs
 
-- **Generator mismatch (Ninja vs MinGW Makefiles)**
-  - Reuse the existing generator in that build directory, or create a new build directory.
-
-- **Windows CI/local shell mismatch**
-  - In CI with `shell: msys2 {0}`, ensure MSYS2 setup step runs before shell commands.
-
-## Related docs
-
-- `ci-cd-guide.md` — CI/CD behavior and release automation
-- `versioning.md` — versioning policy and tag rules
-- `adding-a-new-game.md` — adding support for a new TCG
+- [CI/CD Guide](ci-cd-guide.md)
+- [Versioning Guide](versioning.md)
+- [Adding a new game to Card Collection Manager](adding-a-new-game.md)

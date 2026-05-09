@@ -1,124 +1,116 @@
-# Testing Guide and Test Code of Conduct
+#documentation #testing #quality
 
-This document explains how testing works in Card Collection Manager 3 and defines expectations for writing and maintaining tests.
+# Testing Guide And Test Code Of Conduct
 
-## Testing philosophy
+This guide defines how testing works in Card Collection Manager 3 and which standards test code must meet. For local build setup and toolchain prerequisites, see [Build Locally Guide](dow-doc-build-locally.md).
 
-The project prioritizes:
+**Quick Setup:** run `ccm_core_tests` from a clean build, keep tests hermetic, and update contract tests in the same change when contracts move.
 
-- deterministic tests
-- fast feedback
-- behavior-focused coverage of core logic
-- no reliance on network or real filesystem for unit tests
+## Testing Focus
 
-Most automated coverage is intentionally concentrated in `core/` and infra/service behavior. UI behavior is validated manually.
+The project prioritizes deterministic, fast, behavior-oriented testing. Most automated coverage intentionally targets `core/` logic and infrastructure/service behavior, while UI validation remains manual.
 
-## Current test setup
+## Test Setup
 
-- test framework: `doctest`
-- test target: `ccm_core_tests`
+- framework: `doctest`
+- primary target: `ccm_core_tests`
 - location: `tests/`
-- default build behavior: tests enabled via `CCM_BUILD_TESTS=ON`
+- default behavior: tests enabled via `CCM_BUILD_TESTS=ON`
 
-## How to run tests
+## Run Tests
 
 From repository root:
-
 ```bash
 cmake -S . -B build -DCCM_BUILD_TESTS=ON
 cmake --build build --target ccm_core_tests
 ctest --test-dir build --output-on-failure
 ```
 
-Windows and Linux follow the same logical flow; only generator/toolchain setup differs.
+Windows and Linux use the same logical flow; only generator and compiler setup differ.
 
-For complete local environment setup, see `dow-doc-build-locally.md`.
+## Coverage Surface
 
-## What is covered
+Current automated tests cover non-UI behavior, including:
 
-Current suite covers the non-UI surface, including:
-
-- filesystem naming/parsing behavior
-- domain JSON round-trips
-- service behavior (`CollectionService`, `ConfigService`, `SetService`, etc.)
-- repository behavior over in-memory filesystem fakes
+- filesystem naming and parsing behavior
+- domain JSON round-trip behavior
+- service behavior (`CollectionService`, `ConfigService`, `SetService`)
+- repository behavior with in-memory filesystem fakes
 - game set-source parsing behavior
 
-## Manual testing expectations (UI)
+## Manual UI Validation
 
-Since there is no UI automation yet, validate UI changes manually:
+Because there is no UI automation, UI-affecting changes require manual checks:
 
-- dark/light theme behavior
+- theme switching (dark and light)
 - dialog and popup behavior
 - add/edit/delete card flows
 - set update flows
-- preview/image interactions
+- preview and image interactions
 
-When changing UI theming, prefer rebuilding/running the final app target (`ccm`) instead of only static library targets.
+For theming work, rebuild and run the final app target (`ccm`) instead of validating only static library targets.
 
-## Test Code of Conduct
+## Test Code Of Conduct
 
-These are non-negotiable quality rules for test code in this repository.
+### Keep Tests Hermetic
 
-## 1) Keep tests hermetic
+- do not call real network services
+- do not depend on local machine files
+- use fakes and in-memory adapters where possible
 
-- Do not hit real network services.
-- Do not depend on local machine files.
-- Use test doubles/fakes (for example in-memory filesystem) whenever possible.
+### Test Behavior, Not Internals
 
-## 2) Test behavior, not implementation trivia
+- assert externally visible outcomes
+- avoid brittle assertions tied to incidental implementation details
+- prefer domain-level expectations over call-level trivia
 
-- Assert externally visible outcomes.
-- Avoid brittle tests that break on harmless refactors.
-- Prefer meaningful domain assertions over incidental internal details.
+### Keep Tests Deterministic
 
-## 3) Keep tests deterministic
+- no unseeded randomness
+- no timing-sensitive assertions that can flap
+- no ordering assumptions unless ordering is part of the contract
 
-- No random behavior without fixed seed.
-- No time-sensitive assertions that can flap.
-- No order assumptions unless order is part of the contract.
+### Keep Tests Readable
 
-## 4) Keep tests readable and maintainable
+- one intent per test case
+- descriptive test names
+- clear arrange/act/assert flow
+- minimal abstraction for small tests
 
-- One clear intent per test case.
-- Use descriptive test names.
-- Keep arrange/act/assert flow obvious.
-- Avoid over-abstracting tiny tests.
+### Update Tests With Contract Changes
 
-## 5) Update tests with contract changes
+When contracts change, update tests in the same change:
 
-If you change a contract, update tests in the same change:
+- domain JSON schema or aliases -> round-trip tests
+- filename formatting or parsing -> filesystem naming tests
+- service semantics -> matching service tests
 
-- domain JSON schema/aliases -> round-trip tests
-- filename formatting/parsing -> fs naming tests
-- service semantics -> corresponding service tests
+Behavior changes without aligned tests are incomplete.
 
-Do not merge behavior changes without aligned tests.
+### Avoid Over-Mocking
 
-## 6) Avoid over-mocking core behavior
+- prefer realistic fakes over mock-heavy tests
+- mock at external boundaries only when needed
+- preserve confidence in integration-shaped behavior paths
 
-- Prefer realistic fakes over mocking every call.
-- Mock only at external boundaries where needed.
-- Preserve confidence that real integration paths are still represented.
+### Keep Runtime Practical
 
-## 7) Keep runtime practical
+- keep suite runtime fast enough for frequent local execution
+- avoid repeated expensive setup when shared setup works
+- justify any expensive new suite and keep scope narrow
 
-- Tests should stay fast enough for frequent local execution.
-- Avoid expensive setup in each case when shared setup is sufficient.
-- If a new suite is expensive, justify it and keep scope tight.
+## Review Checklist
 
-## Review checklist for test changes
-
-Before finalizing a test PR/change, verify:
+Before merging test changes, verify:
 
 - tests pass locally
 - no new flakiness risk
-- no external dependencies introduced
+- no external dependency introduced
 - assertions reflect intended behavior
-- failure messages are clear enough to debug quickly
+- failure messages are clear and actionable
 
-## Related docs
+## Related Docs
 
-- `dow-doc-build-locally.md` — local build/test setup
-- `intro-to-new-developers.md` — onboarding and architecture context
-- `adding-a-new-game.md` — when extending per-game functionality
+- [Build Locally Guide](dow-doc-build-locally.md)
+- [Intro For New Developers](intro-to-new-developers.md)
+- [Adding a new game to Card Collection Manager](adding-a-new-game.md)

@@ -1,148 +1,106 @@
-# Intro for New Developers
+#documentation #onboarding #architecture
 
-This document is a practical onboarding guide for developers new to Card Collection Manager 3.
+# Intro For New Developers
 
-## What this project is
+This document orients new contributors to Card Collection Manager 3. For local setup and build commands, start with [Build Locally Guide](dow-doc-build-locally.md); then use this guide to understand architecture boundaries and daily workflows.
 
-Card Collection Manager 3 is a native desktop app written in C++20 with wxWidgets.
+**Quick Setup:** read `AGENTS.md` files first, build once, run tests once, then make one small layer-scoped change to validate your environment.
 
-It is intentionally layered so core logic stays UI-agnostic:
+## Toolchain Snapshot
 
-- `core/` contains domain logic, services, and infrastructure adapters
-- `ui_wx/` contains wxWidgets UI code only
-- `app/` is the composition root that wires everything together
+Card Collection Manager 3 builds as a native C++ desktop binary with CMake. The project standard is C++20, with Clang as the preferred compiler on Windows and Linux, plus a verified MinGW-w64 fallback path on Windows.
 
-## Architecture at a glance
+- build system: CMake 3.22+ with `FetchContent`
+- language/toolchain: C++20, Clang preferred, MinGW-w64 GCC fallback on Windows
+- UI toolkit: wxWidgets (`ui_wx/` only)
+- test framework: `doctest`
 
-Dependencies flow inward only:
+Use [Build Locally Guide](dow-doc-build-locally.md) for exact commands, generator options, runtime DLL notes, and troubleshooting details.
 
-`app -> ui_wx -> core`
+## Project Shape
 
-Rules that matter:
+Card Collection Manager 3 is a native desktop app written in C++20 with wxWidgets. The architecture is intentionally layered so core logic stays UI-agnostic.
 
-- `core/` must not depend on wxWidgets
-- UI should consume services through `ccm::ui::AppContext`
-- concrete adapter wiring belongs in `app/main.cpp`
+- `core/`: domain logic, services, and infrastructure adapters
+- `ui_wx/`: wxWidgets UI code only
+- `app/`: composition root that wires adapters, services, and views
 
-## Where to find things
+Dependency direction is strict: `app -> ui_wx -> core`.
 
-## `core/` (business/domain layer)
+## Architecture Rules
 
-Main areas:
+These rules are the baseline for all feature work:
 
-- `domain/`: value types and enums (`MagicCard`, `PokemonCard`, `Set`, `Configuration`, etc.)
-- `ports/`: interfaces (`IHttpClient`, `IFileSystem`, repositories, game module seams)
-- `services/`: use-case level logic (`CollectionService`, `SetService`, `ConfigService`, etc.)
+- `core/` must never include or depend on wxWidgets.
+- UI code consumes services through `ccm::ui::AppContext`.
+- Concrete adapter wiring belongs in `app/main.cpp`.
+- JSON keys and aliases are contract-sensitive and must stay stable.
+
+## Repository Map
+
+### `core/`
+
+`core/` contains domain and non-UI behavior:
+
+- `domain/`: value types and enums (`MagicCard`, `PokemonCard`, `Set`, `Configuration`)
+- `ports/`: seam interfaces (`IHttpClient`, `IFileSystem`, repositories, game seams)
+- `services/`: use-case logic (`CollectionService`, `SetService`, `ConfigService`)
 - `infra/`: concrete adapters (`Json*Repository`, `StdFileSystem`, `CprHttpClient`, `LocalImageStore`)
-- `games/`: per-game module implementations (`magic`, `pokemon`)
+- `games/`: per-game modules (`magic`, `pokemon`)
 
-Care points:
+### `ui_wx/`
 
-- preserve JSON compatibility (field names/aliases are contract-sensitive)
-- keep logic testable and free of UI dependencies
+`ui_wx/` contains all presentation code:
 
-## `ui_wx/` (presentation layer)
+- `MainFrame`: top-level shell and menu/split-view orchestration
+- `BaseCardListPanel`, `BaseCardEditDialog`, `BaseSelectedCardPanel`: reusable UI templates
+- `Magic*` and `Pokemon*` classes: game-specific view/panel implementations
+- `Theme.cpp`, `SvgIcons.cpp`, `IconListCtrl.cpp`: theming and visual behavior
 
-Main areas:
+### `app/`
 
-- `MainFrame`: top-level window/menu/toolbar/split-view orchestration
-- base templates:
-  - `BaseCardListPanel`
-  - `BaseCardEditDialog`
-  - `BaseSelectedCardPanel`
-- game-specific UI views/panels:
-  - `Magic*`
-  - `Pokemon*`
-- theming and UI behavior:
-  - `Theme.cpp`
-  - `SvgIcons.cpp`
-  - `IconListCtrl.cpp`
+`app/main.cpp` is the composition root:
 
-Care points:
-
-- keep wx-specific code here only
-- use themed popup helpers (not native light popups in dark mode flows)
-- keep per-game typed wiring inside each `IGameView` implementation
-
-## `app/` (composition root)
-
-Main file:
-
-- `app/main.cpp`
-
-Responsibilities:
-
-- instantiate concrete adapters/services/modules
-- register game modules
-- create `AppContext`
+- instantiate adapters, services, and modules
+- register game modules and game views
+- build `AppContext`
 - create and show `MainFrame`
 
-Care points:
+Keep this file focused on wiring, not business logic.
 
-- keep this as wiring code, not business logic
-- preserve dependency construction/destruction order in `CcmApp`
+### `tests/`
 
-## `tests/`
+Tests target non-UI behavior with deterministic fakes and in-memory adapters. When a domain JSON contract or filesystem naming rule changes, update the matching tests in the same change.
 
-- unit tests focus on non-UI behavior
-- fakes/in-memory adapters are used for deterministic tests
+## Common Workflows
 
-If you change domain JSON layout or filesystem naming behavior, update corresponding tests immediately.
+### Add A Small Feature
 
-## Common workflows
+1. Identify the correct layer (`core`, `ui_wx`, or both).
+2. Make the smallest coherent change in that layer.
+3. Rebuild the affected target.
+4. Run tests when core behavior changes.
 
-## Add a small feature
+### Add A New Game
 
-1. Identify layer (`core`, `ui_wx`, or both)
-2. Make focused changes in the right layer
-3. Run/build affected targets
-4. Run tests if core behavior changed
+Use [Adding a new game to Card Collection Manager](adding-a-new-game.md). Do not bypass the existing seams or invent parallel architecture for a new game.
 
-## Add a new game
+### Release-Oriented Changes
 
-Use the canonical guide:
+Use [CI/CD Guide](ci-cd-guide.md) and [Versioning Guide](versioning.md) for workflow and release policy decisions.
 
-- `adding-a-new-game.md`
+## Avoid These Pitfalls
 
-Do not improvise architecture for new games outside the existing seams.
+- adding wx headers in `core/`
+- putting business logic in `app/main.cpp`
+- accessing concrete adapters directly from UI code instead of `AppContext`
+- changing JSON key spellings casually
+- using unpinned dependency versions
 
-## Release-related changes
+## First-Day Checklist
 
-For CI/CD, release flow, and versioning:
-
-- `ci-cd-guide.md`
-- `versioning.md`
-
-## Build and run locally
-
-Use:
-
-- `dow-doc-build-locally.md`
-
-This includes toolchains, dependencies, runtime DLL notes, options, and troubleshooting.
-
-## What to avoid
-
-- Adding wx headers/includes in `core/`
-- Putting business logic in `app/main.cpp`
-- Bypassing `AppContext` to use concrete adapters from UI code
-- Changing domain JSON keys casually
-- Using native `wxMessageBox` / `wxAboutBox` in flows that must match app theming
-- Introducing unpinned dependency versions
-
-## Practical “first day” checklist
-
-1. Read `README.md` for project intent and data model context
-2. Read this doc end-to-end
-3. Build locally with `dow-doc-build-locally.md`
-4. Skim `core/AGENTS.md`, `ui_wx/AGENTS.md`, and `app/AGENTS.md`
-5. Run tests once to verify environment
-6. Make a small change in one layer to get familiar with boundaries
-
-## Related docs
-
-- `README.md` (project overview)
-- `dow-doc-build-locally.md` (local setup/build)
-- `ci-cd-guide.md` (pipeline and release operations)
-- `versioning.md` (version policy)
-- `adding-a-new-game.md` (new game integration)
+1. Read repository `AGENTS.md` files (`core/`, `ui_wx/`, `app/`, `tests/`).
+2. Build locally with [Build Locally Guide](dow-doc-build-locally.md).
+3. Run the test suite once.
+4. Make one small layer-contained change.
+5. Rebuild and rerun relevant tests.

@@ -1,57 +1,50 @@
+#documentation #ci-cd #github-actions
+
 # CI/CD Guide
 
-This guide explains the CI/CD setup for Card Collection Manager 3 and how to create releases.
+This guide defines the CI/CD behavior for Card Collection Manager 3. For the complete versioning policy, including prefix semantics and tag rules, see [Versioning Guide](versioning.md).
 
-## Overview
+**Quick Setup:** protect `master` with the required check `Require semver prefix in PR title`, then keep release PR titles aligned with the accepted prefixes.
 
-The repository uses GitHub Actions with separate workflows:
+## Workflow Map
+
+The repository uses separate GitHub Actions workflows by branch intent:
 
 - `feature-windows.yml`: build, test, and package Windows artifacts for non-`master` branches.
 - `feature-linux.yml`: build, test, and package Linux artifacts for non-`master` branches.
-- `master-pr-title-guard.yml`: validates pull request titles targeting `master`.
-- `master-windows.yml`: semantic versioning, Windows build/test, tagging, and GitHub Release creation on merged PRs to `master`.
+- `master-pr-title-guard.yml`: validate PR title prefixes for PRs targeting `master`.
+- `master-windows.yml`: compute release semver, build/test on Windows, tag, and publish GitHub Release artifacts after merge to `master`.
 
-## Versioning Rules
+## Version Flow
 
-For the detailed versioning policy and conventions, see `versioning.md`.
+Feature branches and `master` use different version modes because they solve different problems: feature builds need traceability to a commit, while `master` builds need stable semantic releases.
 
-### Feature branches
+### Feature Branch Builds
 
-On any push to a non-`master` branch:
+On pushes to non-`master` branches, CI computes a version string in the format `<branch-name>-<short-sha>` via `scripts/compute_feature_version.sh` (for example `feature-dark-mode-a1b2c3d`).
 
-- Version format: `<branch-name>-<short-sha>`
-- Example: `feature-dark-mode-a1b2c3d`
-- Computed by `scripts/compute_feature_version.sh`
+That version is used in two places:
 
-This version is:
+- artifact file names
+- app embedded version via `-DCCM_APP_VERSION=...`
 
-- used in uploaded artifact names
-- baked into the app via `-DCCM_APP_VERSION=...`
+### Master Releases
 
-### Master releases
+When a PR is merged into `master`, CI computes the next semantic version from the latest semver tag and the PR title prefix using `scripts/compute_master_semver.sh`.
 
-On merged PRs into `master`:
+Accepted prefix mapping:
 
-- Semantic version is computed from the latest existing semver tag.
-- Bump type is derived from PR title prefix:
-  - `major...` -> major bump
-  - `minor...` -> minor bump
-  - `fix...` -> patch bump
-  - `patch...` -> patch bump
-  - `path...` -> patch bump (accepted alias in current setup)
-- Computed by `scripts/compute_master_semver.sh`
+- `major...` -> major bump
+- `minor...` -> minor bump
+- `fix...` -> patch bump
+- `patch...` -> patch bump
+- `path...` -> patch bump (accepted alias in current setup)
 
-The resulting version is:
+The resulting version is embedded in the app (`CCM_APP_VERSION`), used in artifact names, and tagged as `v<version>`.
 
-- baked into the app (`CCM_APP_VERSION`)
-- used in release artifact names
-- tagged as `v<version>`
+## Master Merge Guard
 
-## Merge Guard for Master
-
-PRs targeting `master` are validated by `master-pr-title-guard.yml`.
-
-A PR title must start with one of:
+PRs targeting `master` must start with one of the accepted prefixes:
 
 - `major`
 - `minor`
@@ -59,64 +52,37 @@ A PR title must start with one of:
 - `patch`
 - `path`
 
-If not, the check fails.
+If a title does not match, `master-pr-title-guard.yml` fails and the PR should not be merged.
 
-To enforce this as a hard merge gate, configure branch protection for `master` to require:
+## Artifact Naming
 
-- `Require semver prefix in PR title`
+Feature workflow artifacts:
 
-## Artifacts
+- Windows: `ccm3-windows-<version>.zip`, `ccm3-windows-installer-<version>`
+- Linux: `ccm3-linux-<version>.zip`
 
-### Feature branch artifacts
-
-- Windows workflow uploads:
-  - `ccm3-windows-<version>.zip`
-  - `ccm3-windows-installer-<version>`
-- Linux workflow uploads:
-  - `ccm3-linux-<version>.zip`
-
-### Master release artifacts
-
-`master-windows.yml` publishes Windows-only release assets:
+Master release artifacts (`master-windows.yml`):
 
 - `ccm3-windows-<semver>.zip`
 - `ccm3-windows-installer-<semver>.exe`
 
-## How to Create a New Release
+## Release Procedure
 
-This is the standard release process:
+Follow this flow for every release:
 
-1. Create a pull request targeting `master`.
-2. Set the PR title prefix based on desired version bump:
-   - `major: ...` for breaking changes
-   - `minor: ...` for backward-compatible features
-   - `fix: ...` (or `patch:` / `path:`) for bug fixes and small updates
-3. Ensure all required checks pass (including title guard and build/test checks).
-4. Merge the PR into `master`.
-5. Wait for `master-windows.yml` to finish:
-   - computes next semantic version
-   - builds/tests Windows app
-   - creates tag `vX.Y.Z`
-   - creates GitHub Release and uploads artifacts
-6. Verify in GitHub:
-   - tag exists in the repository
-   - release exists with expected version and assets
+1. Open a PR to `master`.
+2. Use a valid semver prefix in the PR title (`major:`, `minor:`, `fix:`, `patch:`, or `path:`).
+3. Wait for all required checks to pass.
+4. Merge the PR.
+5. Wait for `master-windows.yml` to complete semver computation, build/test, tag creation, and release publishing.
+6. Verify the `vX.Y.Z` tag and release assets in GitHub.
 
 ## Local Build Version Behavior
 
-When building outside CI/CD:
-
-- app version defaults to `${PROJECT_VERSION} (localbuild)`
-- configured via `CCM_APP_VERSION` in top-level `CMakeLists.txt`
-
-This makes local binaries easy to distinguish from CI/release binaries.
+Outside CI, the app version defaults to `${PROJECT_VERSION} (localbuild)` through `CCM_APP_VERSION` in the top-level `CMakeLists.txt`. This keeps local binaries easy to distinguish from CI and release outputs.
 
 ## Troubleshooting
 
-- **`msys2: command not found` in Windows workflow**
-  - Ensure MSYS2 setup step runs before any `run` step in jobs using `shell: msys2 {0}`.
-- **`Permission denied` when linking `ccm3.exe`**
-  - The executable is likely still running; close it and rebuild.
-- **No release created after merge**
-  - Confirm PR was merged into `master` and title prefix was valid.
-  - Check `master-windows.yml` logs for versioning/tag/release step failures.
+- **`msys2: command not found` in workflow logs:** ensure the MSYS2 setup step runs before jobs that use `shell: msys2 {0}`.
+- **`Permission denied` while linking `ccm3.exe`:** the app is still running; close it and rebuild.
+- **No release after merge:** verify the PR merged into `master` and used a valid prefix, then inspect `master-windows.yml` logs for version/tag/release failures.
