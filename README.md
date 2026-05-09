@@ -1,6 +1,8 @@
 # Card Collection Manager 3
 
-[![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-dark.svg)](https://sonarcloud.io/summary/new_code?id=sebastiandine_Card-Collection-Manager-3)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=sebastiandine_Card-Collection-Manager-3&metric=alert_status&token=a7e5822db3829af68223a1d3710f3105ff9543bc)](https://sonarcloud.io/summary/new_code?id=sebastiandine_Card-Collection-Manager-3)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=sebastiandine_Card-Collection-Manager-3&metric=bugs&token=a7e5822db3829af68223a1d3710f3105ff9543bc)](https://sonarcloud.io/summary/new_code?id=sebastiandine_Card-Collection-Manager-3)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=sebastiandine_Card-Collection-Manager-3&metric=security_rating&token=a7e5822db3829af68223a1d3710f3105ff9543bc)](https://sonarcloud.io/summary/new_code?id=sebastiandine_Card-Collection-Manager-3)
 
 Card Collection Manager 3 is an extensible desktop application for managing trading card game collections. It is designed as a practical way to track cards and manage per-card images for large collections, with local per-game data, set synchronization workflows, and a desktop-first UX. The app preserves the established JSON layout from earlier CCM versions so existing collections stay compatible.
 
