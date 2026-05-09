@@ -1,4 +1,4 @@
-name: Build, Test, and Package
+name: Feature Windows Build, Test, and Package
 
 on:
   push:
@@ -9,79 +9,6 @@ permissions:
   contents: read
 
 jobs:
-  build-linux:
-    name: Linux build + tests
-    runs-on: ubuntu-latest
-    env:
-      CCACHE_DIR: ${{ github.workspace }}/.ccache
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install build tools
-        run: >
-          sudo apt-get update &&
-          sudo apt-get install -y
-          ninja-build
-          ccache
-          pkg-config
-          libgtk-3-dev
-          libwxgtk3.2-dev
-
-      - name: Restore Linux compiler cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.CCACHE_DIR }}
-          key: ccache-linux-${{ github.ref_name }}-v1
-          restore-keys: |
-            ccache-linux-${{ github.ref_name }}-
-            ccache-linux-
-
-      - name: Configure
-        run: >
-          cmake -S . -B build -G Ninja
-          -DCCM_BUILD_TESTS=ON
-          -DCCM_USE_SYSTEM_WX=ON
-          -DCMAKE_C_COMPILER_LAUNCHER=ccache
-          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-
-      - name: Build
-        run: cmake --build build --parallel 3
-
-      - name: Run unit tests
-        run: ctest --test-dir build --output-on-failure
-
-      - name: Remove test executable from bundle
-        run: rm -f build/bin/ccm_core_tests
-
-      - name: Verify runtime dependencies are resolved
-        run: |
-          for f in build/bin/*; do
-            [ -f "$f" ] || continue
-            if file "$f" | grep -q "ELF"; then
-              echo "Checking $f"
-              ldd "$f"
-              if ldd "$f" | grep -q "not found"; then
-                echo "Missing runtime dependency detected in $f"
-                exit 1
-              fi
-            fi
-          done
-
-      - name: Stage Linux artifact folder
-        run: |
-          rm -rf dist/ccm3-linux
-          mkdir -p dist/ccm3-linux
-          cp -a build/bin/. dist/ccm3-linux/
-
-      - name: Upload Linux artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ccm3-linux.zip
-          path: dist/ccm3-linux
-          if-no-files-found: error
-
   build-windows:
     name: Windows build + tests
     runs-on: windows-latest
@@ -95,6 +22,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Compute feature version
+        run: |
+          VERSION="$(bash scripts/compute_feature_version.sh "${GITHUB_REF_NAME}" "${GITHUB_SHA}")"
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
 
       - name: Setup MSYS2 (MinGW-w64 UCRT64)
         uses: msys2/setup-msys2@v2
@@ -168,8 +100,7 @@ jobs:
         run: rm -f build/bin/ccm_core_tests.exe build/bin/ccm_core_tests
 
       - name: Build Windows installer
-        run: |
-          makensis scripts/installer.nsi
+        run: makensis scripts/installer.nsi
 
       - name: Stage Windows artifact folder
         run: |
@@ -180,13 +111,13 @@ jobs:
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ccm3-windows.zip
+          name: ccm3-windows-${{ env.VERSION }}.zip
           path: dist/ccm3-windows
           if-no-files-found: error
 
       - name: Upload Windows installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ccm3-windows-installer
+          name: ccm3-windows-installer-${{ env.VERSION }}
           path: ccm3-windows-installer.exe
           if-no-files-found: error

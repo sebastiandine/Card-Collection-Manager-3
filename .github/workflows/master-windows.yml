@@ -1,0 +1,175 @@
+name: Master Windows Release
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - closed
+
+permissions:
+  contents: write
+
+jobs:
+  compute-version:
+    name: Determine semantic version
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release_tag: ${{ steps.version.outputs.release_tag }}
+    steps:
+      - name: Checkout tags
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve semantic version
+        id: version
+        run: bash scripts/compute_master_semver.sh "${{ github.event.pull_request.title }}"
+
+  build-windows:
+    name: Windows build + tests
+    needs: compute-version
+    runs-on: windows-latest
+    env:
+      CCACHE_DIR_WIN: ${{ github.workspace }}\.ccache
+      VERSION: ${{ needs.compute-version.outputs.version }}
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Checkout merge commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Setup MSYS2 (MinGW-w64 UCRT64)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          cache: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-make
+            mingw-w64-ucrt-x86_64-ccache
+            mingw-w64-ucrt-x86_64-wxwidgets3.2-msw
+            mingw-w64-ucrt-x86_64-nsis
+
+      - name: Restore Windows compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR_WIN }}
+          key: ccache-windows-master-v2
+          restore-keys: |
+            ccache-windows-master-
+            ccache-windows-
+
+      - name: Configure MSYS2 ccache directory
+        run: |
+          CCACHE_DIR_POSIX="$(cygpath -u "$CCACHE_DIR_WIN")"
+          echo "CCACHE_DIR=${CCACHE_DIR_POSIX}" >> "$GITHUB_ENV"
+          mkdir -p "$CCACHE_DIR_POSIX"
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCCM_BUILD_TESTS=ON
+          -DCCM_USE_SYSTEM_WX=ON
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+
+      - name: Build
+        run: cmake --build build --parallel 4
+
+      - name: Run unit tests
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Collect runtime DLL dependencies
+        run: |
+          rm -f deps.txt
+          for f in build/bin/*.exe build/bin/*.dll; do
+            [ -e "$f" ] || continue
+            ldd "$f" | awk '/\/ucrt64\/bin\// { print $3 }' >> deps.txt
+          done
+          sort -u deps.txt | while read -r dep; do
+            [ -f "$dep" ] && cp -n "$dep" build/bin/
+          done
+
+      - name: Verify runtime dependencies are resolved
+        run: |
+          for f in build/bin/*.exe build/bin/*.dll; do
+            [ -e "$f" ] || continue
+            echo "Checking $f"
+            ldd "$f"
+            if ldd "$f" | grep -q "not found"; then
+              echo "Missing runtime dependency detected in $f"
+              exit 1
+            fi
+          done
+
+      - name: Remove test executable from bundle
+        run: rm -f build/bin/ccm_core_tests.exe build/bin/ccm_core_tests
+
+      - name: Build Windows installer
+        run: makensis scripts/installer.nsi
+
+      - name: Stage Windows artifact folder
+        run: |
+          rm -rf dist/ccm3-windows
+          mkdir -p dist/ccm3-windows
+          cp -a build/bin/. dist/ccm3-windows/
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccm3-windows-${{ env.VERSION }}.zip
+          path: dist/ccm3-windows
+          if-no-files-found: error
+
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccm3-windows-installer-${{ env.VERSION }}
+          path: ccm3-windows-installer.exe
+          if-no-files-found: error
+
+  release-master:
+    name: Tag and release on master
+    needs:
+      - compute-version
+      - build-windows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ccm3-windows-${{ needs.compute-version.outputs.version }}.zip
+          path: release/windows
+
+      - name: Download Windows installer artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ccm3-windows-installer-${{ needs.compute-version.outputs.version }}
+          path: release/installer
+
+      - name: Package release assets with semantic version
+        run: |
+          mkdir -p release-assets
+          VERSION="${{ needs.compute-version.outputs.version }}"
+          zip -r "release-assets/ccm3-windows-${VERSION}.zip" release/windows
+          cp release/installer/ccm3-windows-installer.exe "release-assets/ccm3-windows-installer-${VERSION}.exe"
+
+      - name: Create tag and GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.compute-version.outputs.release_tag }}
+          target_commitish: ${{ github.event.pull_request.merge_commit_sha }}
+          generate_release_notes: true
+          files: release-assets/*

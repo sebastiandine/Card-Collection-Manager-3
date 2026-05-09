@@ -13,7 +13,7 @@ Utility scripts and CI helper assets live in this folder.
 
 - Prefer referencing script files from workflows instead of embedding large inline scripts.
 - Keep scripts deterministic and non-interactive so CI can run unattended.
-- When changing installer behavior, edit `installer.nsi` and ensure `.github/workflows/build-and-test.yml` still invokes it via `makensis scripts/installer.nsi`.
+- When changing installer behavior, edit `installer.nsi` and ensure both `.github/workflows/feature-windows.yml` and `.github/workflows/master-windows.yml` still invoke it via `makensis scripts/installer.nsi`.
 - Keep installer assets that should not be generated at runtime (such as icon files) committed in this folder.
 - `installer.nsi` path semantics:
   - `installer_icon.ico` is resolved relative to `scripts/`.
