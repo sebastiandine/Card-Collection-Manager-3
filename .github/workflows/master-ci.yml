@@ -11,6 +11,49 @@ permissions:
   contents: write
 
 jobs:
+  sonarqube:
+    name: SonarQube Cloud scan
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute Sonar project key
+        run: echo "SONAR_PROJECT_KEY=${GITHUB_REPOSITORY/\//_}" >> "$GITHUB_ENV"
+
+      - name: Install scan prerequisites
+        run: >
+          sudo apt-get update &&
+          sudo apt-get install -y
+          cmake
+          ninja-build
+          pkg-config
+          libgtk-3-dev
+          libwxgtk3.2-dev
+
+      - name: Generate compile commands
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCCM_BUILD_TESTS=OFF
+          -DCCM_USE_SYSTEM_WX=ON
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: SonarQube Cloud scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.organization=${{ github.repository_owner }}
+            -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
+            -Dsonar.sources=core,ui_wx,app
+            -Dsonar.cfamily.compile-commands=build/compile_commands.json
+
   compute-version:
     name: Determine semantic version
     if: github.event.pull_request.merged == true
@@ -30,7 +73,9 @@ jobs:
 
   build-windows:
     name: Windows build + tests
-    needs: compute-version
+    needs:
+      - sonarqube
+      - compute-version
     uses: ./.github/workflows/master-windows.yml
     with:
       version: ${{ needs.compute-version.outputs.version }}
