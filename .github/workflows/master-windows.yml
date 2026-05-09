@@ -1,0 +1,128 @@
+name: Master Windows Build, Test, and Package
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      merge_commit_sha:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    name: Windows build + tests
+    runs-on: windows-latest
+    env:
+      CCACHE_DIR_WIN: ${{ github.workspace }}\.ccache
+      VERSION: ${{ inputs.version }}
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Checkout merge commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.merge_commit_sha }}
+
+      - name: Setup MSYS2 (MinGW-w64 UCRT64)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          cache: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-make
+            mingw-w64-ucrt-x86_64-ccache
+            mingw-w64-ucrt-x86_64-wxwidgets3.2-msw
+            mingw-w64-ucrt-x86_64-nsis
+
+      - name: Restore Windows compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR_WIN }}
+          key: ccache-windows-master-v2
+          restore-keys: |
+            ccache-windows-master-
+            ccache-windows-
+
+      - name: Configure MSYS2 ccache directory
+        run: |
+          CCACHE_DIR_POSIX="$(cygpath -u "$CCACHE_DIR_WIN")"
+          echo "CCACHE_DIR=${CCACHE_DIR_POSIX}" >> "$GITHUB_ENV"
+          mkdir -p "$CCACHE_DIR_POSIX"
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCCM_BUILD_TESTS=ON
+          -DCCM_USE_SYSTEM_WX=ON
+          -DCCM_APP_VERSION="${VERSION}"
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+
+      - name: Build
+        run: cmake --build build --parallel 4
+
+      - name: Run unit tests
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Collect runtime DLL dependencies
+        run: |
+          rm -f deps.txt
+          for f in build/bin/*.exe build/bin/*.dll; do
+            [ -e "$f" ] || continue
+            ldd "$f" | awk '/\/ucrt64\/bin\// { print $3 }' >> deps.txt
+          done
+          sort -u deps.txt | while read -r dep; do
+            [ -f "$dep" ] && cp -n "$dep" build/bin/
+          done
+
+      - name: Verify runtime dependencies are resolved
+        run: |
+          for f in build/bin/*.exe build/bin/*.dll; do
+            [ -e "$f" ] || continue
+            echo "Checking $f"
+            ldd "$f"
+            if ldd "$f" | grep -q "not found"; then
+              echo "Missing runtime dependency detected in $f"
+              exit 1
+            fi
+          done
+
+      - name: Remove test executable from bundle
+        run: rm -f build/bin/ccm_core_tests.exe build/bin/ccm_core_tests
+
+      - name: Build Windows installer
+        run: makensis -DAPP_VERSION="${VERSION}" scripts/installer.nsi
+
+      - name: Stage Windows artifact folder
+        run: |
+          rm -rf dist/ccm3-windows
+          mkdir -p dist/ccm3-windows
+          cp -a build/bin/. dist/ccm3-windows/
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccm3-windows-${{ env.VERSION }}.zip
+          path: dist/ccm3-windows
+          if-no-files-found: error
+
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccm3-windows-installer-${{ env.VERSION }}
+          path: ccm3-windows-installer.exe
+          if-no-files-found: error
+
