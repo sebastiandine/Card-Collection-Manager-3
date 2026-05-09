@@ -43,6 +43,10 @@ public:
                                           std::string_view setId,
                                           std::string_view setNo);
 
+    // Download image bytes from a fully-qualified URL without going through
+    // per-game preview-source resolution.
+    Result<std::string> fetchImageBytesByUrl(std::string_view url);
+
 private:
     IHttpClient& http_;
     std::unordered_map<Game, ICardPreviewSource*> sources_;

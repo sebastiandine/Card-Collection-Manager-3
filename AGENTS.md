@@ -69,6 +69,7 @@ Run from the **workspace root**.
 - Avoid repeated set-list loads when opening Add/Edit: cache Magic sets in `MainFrame` and reuse them in `CardEditDialog`.
 - Pass preloaded set data to dialogs by pointer/reference, not by value, to avoid copying large vectors on every open.
 - While constructing/populating dialogs with many controls/choices, wrap with `Freeze()`/`Thaw()` and append choice items in bulk (`wxArrayString`) to reduce layout/repaint churn.
+- Keep selected-card preview usable when remote lookup fails: show a per-game card-back fallback image (CCM2 parity), not a blank preview panel.
 
 ## Windows UI theming guardrails
 

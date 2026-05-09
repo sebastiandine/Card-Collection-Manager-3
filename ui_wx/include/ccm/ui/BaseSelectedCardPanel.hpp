@@ -276,6 +276,19 @@ private:
         return wxBitmap(img);
     }
 
+    static std::string fallbackImageUrlForGame(Game game) {
+        switch (game) {
+            case Game::Magic:
+                // Mirrors CCM2's unresolved-preview fallback image.
+                return "https://gamepedia.cursecdn.com/mtgsalvation_gamepedia/f/f8/Magic_card_back.jpg";
+            case Game::Pokemon:
+                // Mirrors CCM2's unresolved-preview fallback image.
+                return "https://archives.bulbagarden.net/media/upload/1/17/Cardback.jpg";
+            default:
+                return {};
+        }
+    }
+
     void buildInfoGrid(wxBoxSizer* root) {
         auto* grid = new wxFlexGridSizer(/*cols=*/2, /*vgap=*/4, /*hgap=*/12);
         grid->AddGrowableCol(1, 1);
@@ -358,20 +371,39 @@ private:
         std::thread([state, gen, svcPtr, name = std::move(name),
                      setId = std::move(setId), setNo = std::move(setNo), game]() {
             auto bytes = svcPtr->fetchPreviewBytes(game, name, setId, setNo);
-            const bool ok = bytes.isOk();
+            bool ok = bytes.isOk();
+            bool usedFallback = false;
             std::string payload = ok ? std::move(bytes).value() : std::string{};
             std::string err     = ok ? std::string{}            : bytes.error();
+
+            if (!ok || payload.empty()) {
+                const std::string fallbackUrl = fallbackImageUrlForGame(game);
+                if (!fallbackUrl.empty()) {
+                    auto fallbackBytes = svcPtr->fetchImageBytesByUrl(fallbackUrl);
+                    if (fallbackBytes.isOk()) {
+                        payload = std::move(fallbackBytes).value();
+                        ok = !payload.empty();
+                        if (ok) {
+                            usedFallback = true;
+                            err.clear();
+                        }
+                    }
+                }
+            }
+
             wxTheApp->CallAfter(
-                [state, gen, ok, payload = std::move(payload), err = std::move(err)]() mutable {
+                [state, gen, ok, usedFallback,
+                 payload = std::move(payload), err = std::move(err)]() mutable {
                     if (!state->alive.load()) return;
                     if (state->currentGen.load() != gen) return;
                     if (state->panel == nullptr) return;
-                    state->panel->onPreviewBytes(gen, ok, std::move(payload), std::move(err));
+                    state->panel->onPreviewBytes(gen, ok, usedFallback,
+                                                 std::move(payload), std::move(err));
                 });
         }).detach();
     }
 
-    void onPreviewBytes(unsigned gen, bool ok,
+    void onPreviewBytes(unsigned gen, bool ok, bool usedFallback,
                         std::string bytes, std::string err) {
         if (gen != state_->currentGen.load()) return;
         if (!ok || bytes.empty()) {
@@ -398,9 +430,14 @@ private:
             img.Rescale(kPreviewWidth, kPreviewHeight, wxIMAGE_QUALITY_HIGH);
         }
         previewBitmap_->SetBitmap(wxBitmap(img));
-        previewStatus_->SetLabelText("");
+        if (usedFallback) {
+            previewStatus_->SetLabelText("(image preview unavailable)");
+            emitPreviewStatus("Preview unavailable: showing fallback card-back image.");
+        } else {
+            previewStatus_->SetLabelText("");
+            emitPreviewStatus("");
+        }
         Layout();
-        emitPreviewStatus("");
     }
 
     void emitPreviewStatus(const wxString& message) {

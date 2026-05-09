@@ -25,4 +25,10 @@ Result<std::string> CardPreviewService::fetchPreviewBytes(Game game,
     return Result<std::string>::ok(std::move(bytes).value());
 }
 
+Result<std::string> CardPreviewService::fetchImageBytesByUrl(std::string_view url) {
+    auto bytes = http_.get(url);
+    if (!bytes) return Result<std::string>::err(bytes.error());
+    return Result<std::string>::ok(std::move(bytes).value());
+}
+
 }  // namespace ccm
