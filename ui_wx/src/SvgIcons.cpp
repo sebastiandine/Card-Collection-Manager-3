@@ -4,7 +4,6 @@
 #include <wx/image.h>
 
 #include <algorithm>
-#include <cstring>
 #include <string>
 #include <string_view>
 
@@ -68,12 +67,14 @@ namespace {
 
 // Substitute every "@FILL@" occurrence in `tmpl` with `fill`.
 std::string applyFill(const char* tmpl, const char* fill) {
-    std::string s(tmpl);
+    std::string s = tmpl != nullptr ? tmpl : "";
     constexpr std::string_view kPlaceholder = "@FILL@";
+    const std::string_view fillView = fill != nullptr ? std::string_view(fill)
+                                                      : std::string_view{};
     for (std::string::size_type pos = s.find(kPlaceholder);
          pos != std::string::npos;
-         pos = s.find(kPlaceholder, pos + std::strlen(fill))) {
-        s.replace(pos, kPlaceholder.size(), fill);
+         pos = s.find(kPlaceholder, pos + fillView.size())) {
+        s.replace(pos, kPlaceholder.size(), fillView);
     }
     return s;
 }
