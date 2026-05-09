@@ -8,7 +8,9 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
+#include <vector>
 
 namespace ccm {
 
@@ -373,44 +375,92 @@ Result<std::string, PreviewLookupError> YuGiOhCardPreviewSource::parseFallbackIm
     }
 }
 
-Result<AutoDetectedPrint> YuGiOhCardPreviewSource::parseFirstPrint(
-    const std::string& body, std::string_view preferredSetName) {
+Result<std::vector<AutoDetectedPrint>> YuGiOhCardPreviewSource::parsePrintVariants(
+    const std::string& body,
+    std::string_view preferredSetName,
+    std::string_view wantedCardName) {
+    using R = Result<std::vector<AutoDetectedPrint>>;
     try {
         const auto j = nlohmann::json::parse(body);
         if (!j.contains("data") || !j.at("data").is_array() || j.at("data").empty()) {
-            return Result<AutoDetectedPrint>::err("YGOPRODeck returned no matching cards.");
+            return R::err("YGOPRODeck returned no matching cards.");
         }
         const std::string wantedSet = trim(std::string(preferredSetName));
+        const std::string wantedNameLower = toLower(trim(std::string(wantedCardName)));
+
+        std::vector<AutoDetectedPrint> collected;
+        auto pushPrint = [&collected](const nlohmann::json& print) {
+            AutoDetectedPrint out;
+            out.setNo = trim(print.value("set_code", ""));
+            out.rarity = trim(print.value("set_rarity", ""));
+            if (out.setNo.empty() && out.rarity.empty()) return;
+            collected.push_back(std::move(out));
+        };
+
         for (const auto& card : j.at("data")) {
+            if (!wantedNameLower.empty()) {
+                const std::string cardName = trim(card.value("name", ""));
+                if (toLower(cardName) != wantedNameLower) continue;
+            }
             if (!card.contains("card_sets") || !card.at("card_sets").is_array()) continue;
             for (const auto& print : card.at("card_sets")) {
                 const std::string setName = trim(print.value("set_name", ""));
                 if (!wantedSet.empty() && setName != wantedSet) continue;
-                AutoDetectedPrint out;
-                out.setNo = trim(print.value("set_code", ""));
-                out.rarity = trim(print.value("set_rarity", ""));
-                if (!out.setNo.empty() || !out.rarity.empty()) {
-                    return Result<AutoDetectedPrint>::ok(std::move(out));
+                pushPrint(print);
+            }
+        }
+
+        // Mirror parseFirstPrint fallback: if nothing matched `wantedSet`, take
+        // every print from `data[0]` without filtering by set_name.
+        //
+        // When the caller supplied an exact card name (edit-dialog variant
+        // listing), combining unrelated `card_sets[]` rows after a non-empty
+        // display-set filter missed would falsely imply multiple printings
+        // "in one set" (different real-world products share the same card).
+        if (collected.empty()) {
+            if (!wantedNameLower.empty() && !wantedSet.empty()) {
+                return R::err("Could not auto-detect set print metadata.");
+            }
+            const auto& firstCard = j.at("data").at(0);
+            if (!wantedNameLower.empty()) {
+                const std::string cardName = trim(firstCard.value("name", ""));
+                if (toLower(cardName) != wantedNameLower) {
+                    return R::err("Could not auto-detect set print metadata.");
+                }
+            }
+            if (firstCard.contains("card_sets") && firstCard.at("card_sets").is_array()) {
+                for (const auto& print : firstCard.at("card_sets")) {
+                    pushPrint(print);
                 }
             }
         }
-        // Fallback: no preferred-set print found; pick first available print.
-        const auto& firstCard = j.at("data").at(0);
-        if (firstCard.contains("card_sets") && firstCard.at("card_sets").is_array()
-            && !firstCard.at("card_sets").empty()) {
-            const auto& print = firstCard.at("card_sets").at(0);
-            AutoDetectedPrint out;
-            out.setNo = trim(print.value("set_code", ""));
-            out.rarity = trim(print.value("set_rarity", ""));
-            if (!out.setNo.empty() || !out.rarity.empty()) {
-                return Result<AutoDetectedPrint>::ok(std::move(out));
-            }
+
+        if (collected.empty()) {
+            return R::err("Could not auto-detect set print metadata.");
         }
-        return Result<AutoDetectedPrint>::err("Could not auto-detect set print metadata.");
+
+        std::vector<AutoDetectedPrint> deduped;
+        deduped.reserve(collected.size());
+        std::unordered_set<std::string> seen;
+        seen.reserve(collected.size() * 2);
+        for (auto& p : collected) {
+            const std::string key = p.setNo + '\0' + p.rarity;
+            if (seen.insert(key).second) deduped.push_back(std::move(p));
+        }
+        return R::ok(std::move(deduped));
     } catch (const std::exception& e) {
-        return Result<AutoDetectedPrint>::err(
-            std::string("YGOPRODeck JSON parse error: ") + e.what());
+        return R::err(std::string("YGOPRODeck JSON parse error: ") + e.what());
     }
+}
+
+Result<AutoDetectedPrint> YuGiOhCardPreviewSource::parseFirstPrint(
+    const std::string& body, std::string_view preferredSetName) {
+    auto list = parsePrintVariants(body, preferredSetName, "");
+    if (!list || list.value().empty()) {
+        if (!list) return Result<AutoDetectedPrint>::err(list.error());
+        return Result<AutoDetectedPrint>::err("Could not auto-detect set print metadata.");
+    }
+    return Result<AutoDetectedPrint>::ok(list.value().front());
 }
 
 // ============================================================================
@@ -489,15 +539,27 @@ YuGiOhCardPreviewSource::fetchImageUrl(std::string_view name,
 
 Result<AutoDetectedPrint> YuGiOhCardPreviewSource::detectFirstPrint(std::string_view name,
                                                                     std::string_view setId) {
+    auto list = detectPrintVariants(name, setId);
+    if (!list || list.value().empty()) {
+        if (!list) return Result<AutoDetectedPrint>::err(list.error());
+        return Result<AutoDetectedPrint>::err("Could not auto-detect set print metadata.");
+    }
+    return Result<AutoDetectedPrint>::ok(list.value().front());
+}
+
+Result<std::vector<AutoDetectedPrint>> YuGiOhCardPreviewSource::detectPrintVariants(
+    std::string_view name,
+    std::string_view setId) {
+    using R = Result<std::vector<AutoDetectedPrint>>;
     const std::string url = buildSearchUrl(name, setId);
     auto resp = http_.get(url);
     if (resp) {
-        return parseFirstPrint(resp.value(), setId);
+        return parsePrintVariants(resp.value(), setId, name);
     }
     const std::string fallbackUrl = buildSearchUrl(name, "");
     auto fallback = http_.get(fallbackUrl);
-    if (!fallback) return Result<AutoDetectedPrint>::err(fallback.error());
-    return parseFirstPrint(fallback.value(), setId);
+    if (!fallback) return R::err(fallback.error());
+    return parsePrintVariants(fallback.value(), setId, name);
 }
 
 }  // namespace ccm

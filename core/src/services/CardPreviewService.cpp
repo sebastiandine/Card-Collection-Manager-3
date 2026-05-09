@@ -2,6 +2,7 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace ccm {
 
@@ -108,6 +109,9 @@ Result<std::string> CardPreviewService::fetchAndCache(const std::string& cacheKe
     auto bytes = http_.get(url);
     if (!bytes) return Result<std::string>::err(bytes.error());
     std::string payload = std::move(bytes).value();
+    if (payload.empty()) {
+        return Result<std::string>::err("Empty response body from " + std::string(url));
+    }
     cacheStore(cacheKey, payload);
     // Best-effort persist to disk so the next app launch starts warm.
     // The persistent tier is fire-and-forget: any I/O error is swallowed
@@ -189,6 +193,22 @@ Result<AutoDetectedPrint> CardPreviewService::detectFirstPrint(Game game,
         return Result<AutoDetectedPrint>::err("Auto-detect not enabled for this game.");
     }
     return it->second->detectFirstPrint(name, setId);
+}
+
+Result<std::vector<AutoDetectedPrint>> CardPreviewService::detectPrintVariants(
+    Game game,
+    std::string_view name,
+    std::string_view setId) {
+    auto it = sources_.find(game);
+    if (it == sources_.end() || it->second == nullptr) {
+        return Result<std::vector<AutoDetectedPrint>>::err(
+            "No preview source registered for this game.");
+    }
+    if (!it->second->supportsAutoDetectPrint()) {
+        return Result<std::vector<AutoDetectedPrint>>::err(
+            "Auto-detect not enabled for this game.");
+    }
+    return it->second->detectPrintVariants(name, setId);
 }
 
 Result<std::string> CardPreviewService::fetchImageBytesByUrl(std::string_view url) {

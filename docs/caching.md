@@ -34,11 +34,11 @@ For `CardPreviewService::fetchPreviewBytes(game, name, setId, setNo)`:
 
 1. **In-memory LRU** — O(1) lookup. A positive entry returns the bytes immediately; a **negative** entry returns an error immediately (no network call). Either kind of hit moves the entry to the most-recently-used position.
 2. **Disk cache** (`IPreviewByteCache`, production: `LocalPreviewByteCache`) — on memory miss, look up on disk. A positive disk hit is **promoted** into the in-memory LRU and returned; a negative disk hit is likewise promoted into memory as a negative entry and returned as an error. So the next selection of the same card stays in-memory only.
-3. **Network** — ask `ICardPreviewSource` for an image URL, then `IHttpClient::get(url)` for bytes. On success, write through to **both** memory and disk tiers as a positive entry. On failure, the **error classification** decides what to do (see below).
+3. **Network** — ask `ICardPreviewSource` for an image URL, then `IHttpClient::get(url)` for bytes. On success, write through to **both** memory and disk tiers as a positive entry. **`CardPreviewService::fetchAndCache`** treats an HTTP **2xx with an empty body** as an error (no cache write) so empty payloads cannot populate the LRU as false positives.
 
 For `fetchImageBytesByUrl(url)` (used for per-game **card-back fallbacks** when preview lookup fails):
 
-- Same three-tier pattern, but the cache key is derived only from the URL. There is no negative-cache analogue here: the URL is a fixed constant, so any failure is by definition transient.
+- Same three-tier pattern, but the cache key is derived only from the URL. There is no negative-cache analogue here: the URL is a fixed constant, so any failure is by definition transient. Empty bodies are rejected the same way as on the preview-image GET path.
 
 ## Negative caching: transient vs. permanent failures
 

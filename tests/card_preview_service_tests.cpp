@@ -9,6 +9,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 using namespace ccm;
 
@@ -53,6 +54,15 @@ public:
         detectLastName = std::string(name);
         detectLastSetId = std::string(setId);
         return Result<AutoDetectedPrint>::ok(detectedPrint);
+    }
+
+    Result<std::vector<AutoDetectedPrint>> detectPrintVariants(std::string_view name,
+                                                               std::string_view setId) override {
+        detectLastName  = std::string(name);
+        detectLastSetId = std::string(setId);
+        std::vector<AutoDetectedPrint> v;
+        v.push_back(detectedPrint);
+        return Result<std::vector<AutoDetectedPrint>>::ok(std::move(v));
     }
 
     [[nodiscard]] bool supportsAutoDetectPrint() const noexcept override {
@@ -679,6 +689,43 @@ TEST_SUITE("CardPreviewService::detectFirstPrint") {
         svc.registerModule(module);
 
         const auto out = svc.detectFirstPrint(Game::Magic, "Any", "Any Set");
+        CHECK(out.isErr());
+        CHECK(out.error().find("not enabled") != std::string::npos);
+    }
+}
+
+TEST_SUITE("CardPreviewService::detectPrintVariants") {
+    TEST_CASE("routes variant listing to registered source") {
+        FakeSource source;
+        source.detectedPrint = {"LOB-005", "Secret Rare"};
+        FakeGameModule module;
+        module.gameId = Game::YuGiOh;
+        module.preview = &source;
+
+        FixedHttpClient http;
+        CardPreviewService svc{http};
+        svc.registerModule(module);
+
+        const auto out = svc.detectPrintVariants(Game::YuGiOh, "Dark Magician",
+                                                 "Legend of Blue Eyes White Dragon");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value()[0].setNo == "LOB-005");
+        CHECK(out.value()[0].rarity == "Secret Rare");
+    }
+
+    TEST_CASE("detectPrintVariants returns error when game does not enable auto-detect") {
+        FakeSource source;
+        source.allowAutoDetect = false;
+        FakeGameModule module;
+        module.gameId = Game::Magic;
+        module.preview = &source;
+
+        FixedHttpClient http;
+        CardPreviewService svc{http};
+        svc.registerModule(module);
+
+        const auto out = svc.detectPrintVariants(Game::Magic, "Any", "Any Set");
         CHECK(out.isErr());
         CHECK(out.error().find("not enabled") != std::string::npos);
     }

@@ -141,7 +141,7 @@ Mirror `core/include/ccm/games/pokemon/PokemonCardPreviewSource.hpp`. The header
 - `static std::string buildSearchUrl(std::string_view name, std::string_view setId, std::string_view setNo);`
 - `static Result<std::string> parseResponse(const std::string& body);`
 
-If your game benefits from edit-dialog metadata helpers (for example auto-detecting collector number / rarity), you can also opt in to `ICardPreviewSource::detectFirstPrint(...)` and route it via `CardPreviewService::detectFirstPrint(...)`. Keep this optional per game — default behavior for games that do not opt in should remain an explicit unsupported error.
+If your game benefits from edit-dialog metadata helpers (for example auto-detecting collector number / rarity), you can opt in to `ICardPreviewSource::detectFirstPrint(...)` and route it via `CardPreviewService::detectFirstPrint(...)`. If you need to enumerate multiple upstream printings (for example Yu-Gi-Oh! “Next” cycling between alternate `set_code` or `set_rarity` values), also override `ICardPreviewSource::detectPrintVariants(...)` and expose it through `CardPreviewService::detectPrintVariants(...)`. Keep both optional per game — default behavior should remain an explicit unsupported error.
 
 Both `buildSearchUrl` and `parseResponse` are static and pure on purpose: every URL-encoding and JSON-shape rule is testable without HTTP. Common edge cases your tests must cover:
 

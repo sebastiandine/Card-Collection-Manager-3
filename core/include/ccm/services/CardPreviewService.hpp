@@ -25,6 +25,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 namespace ccm {
 
@@ -71,6 +72,10 @@ public:
     Result<AutoDetectedPrint> detectFirstPrint(Game game,
                                                std::string_view name,
                                                std::string_view setId);
+
+    Result<std::vector<AutoDetectedPrint>> detectPrintVariants(Game game,
+                                                               std::string_view name,
+                                                               std::string_view setId);
 
     // Download image bytes from a fully-qualified URL without going through
     // per-game preview-source resolution. Cached by URL (same LRU bound).

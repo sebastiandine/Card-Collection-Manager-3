@@ -272,16 +272,13 @@ TEST_SUITE("CardSorter - empty / single-element inputs are no-ops") {
 }
 
 TEST_SUITE("CardSorter - YuGiOh columns") {
-    TEST_CASE("Set # and Rarity sort lexicographically") {
+    TEST_CASE("Amount sorts numerically") {
         std::vector<YuGiOhCard> v = {
-            yc(1, "A", "S1", "2000/01/01", "SDK-002", "Common"),
-            yc(2, "B", "S1", "2000/01/01", "SDK-001", "Ultra Rare"),
-            yc(3, "C", "S1", "2000/01/01", "SDK-003", "Secret Rare"),
+            yc(1, "a", "X", "2000/01/01", "", "", 9),
+            yc(2, "b", "X", "2000/01/01", "", "", 11),
+            yc(3, "c", "X", "2000/01/01", "", "", 1),
         };
-        sortYuGiOhCards(v, YuGiOhSortColumn::SetNo, true);
-        CHECK(ids(v) == std::vector<std::uint32_t>{2, 1, 3});
-
-        sortYuGiOhCards(v, YuGiOhSortColumn::Rarity, true);
-        CHECK(ids(v) == std::vector<std::uint32_t>{1, 3, 2});
+        sortYuGiOhCards(v, YuGiOhSortColumn::Amount, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{3, 1, 2});
     }
 }

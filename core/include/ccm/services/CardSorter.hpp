@@ -56,8 +56,6 @@ enum class PokemonSortColumn {
 enum class YuGiOhSortColumn {
     Name,
     SetReleaseDate,
-    SetNo,
-    Rarity,
     Language,
     Condition,
     Amount,

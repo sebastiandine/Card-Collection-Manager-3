@@ -5,7 +5,7 @@ The `ccm` executable — composition root only. The single place where concrete 
 ## File pointers
 
 - `main.cpp` — the entire app. Defines `CcmApp : public wxApp`, builds the dependency graph in `OnInit()`, then hands an `AppContext` to `MainFrame`.
-- `CMakeLists.txt` — declares the `ccm` target. Sets `WIN32_EXECUTABLE TRUE` on Windows so no console window appears. Links `ccm_core`, `ccm_ui_wx`, `ccm_warnings`.
+- `CMakeLists.txt` — declares the `ccm` target. Sets `WIN32_EXECUTABLE TRUE` on Windows so no console window appears. Links `ccm_core`, `ccm_ui_wx`, `ccm_warnings`. **`POST_BUILD`**: creates `$<TARGET_FILE_DIR:ccm>/assets/` and copies `ui_wx/assets/ygo_card_back.png` there so Yu-Gi-Oh! preview fallbacks work offline (see `BaseSelectedCardPanel` / `docs/assets-and-info-apis.md`).
 
 ## Conventions
 
@@ -21,6 +21,7 @@ The `ccm` executable — composition root only. The single place where concrete 
 
 ## Required follow-ups
 
+- The **`POST_BUILD` copy of `ygo_card_back.png`** must stay in sync with `ui_wx/assets/`; if you relocate install layout or add more bundled assets, mirror the pattern (`make_directory` + `copy_if_different`) and document under `docs/assets-and-info-apis.md` / `ui_wx/AGENTS.md`.
 - After adding a new game module you **must**: (1) add a `unique_ptr<<Name>GameModule>` member in declaration-order-correct position, (2) construct it in `OnInit()`, (3) call `setSvc_->registerModule(<name>Mod_.get())`, (4) call `previewSvc_->registerModule(*<name>Mod_)` (no-op when the module has no preview source), (5) extend `dirNameForGame`, (6) add a typed `JsonCollectionRepository<<Name>Card>` + `CollectionService<<Name>Card>` if the game has a custom card type, (7) construct a `<Name>GameView` and append its raw pointer to the `AppContext::gameViews` vector, (8) make sure the view's `unique_ptr<>` member sits **after** all its deps (typed services + `IGameModule`).
 - After adding a new core service you **must** add a `unique_ptr<...>` member, construct it in `OnInit()` after its deps, and add a reference field to `AppContext`.
 - After adding a new dependency edge you **must** verify destruction order is still correct: deps **before** dependents in the member list.

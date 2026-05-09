@@ -17,8 +17,6 @@ YuGiOhCardListPanel::declareTextColumns() const {
     return {
         {"Name",      200, wxLIST_FORMAT_LEFT,  YuGiOhSortColumn::Name},
         {"Set",       160, wxLIST_FORMAT_LEFT,  YuGiOhSortColumn::SetReleaseDate},
-        {"Set #",     120, wxLIST_FORMAT_LEFT,  YuGiOhSortColumn::SetNo},
-        {"Rarity",    120, wxLIST_FORMAT_LEFT,  YuGiOhSortColumn::Rarity},
         {"Amount",    70,  wxLIST_FORMAT_RIGHT, YuGiOhSortColumn::Amount},
         {"Condition", 100, wxLIST_FORMAT_LEFT,  YuGiOhSortColumn::Condition},
         {"Language",  100, wxLIST_FORMAT_LEFT,  YuGiOhSortColumn::Language},
@@ -41,12 +39,10 @@ std::string YuGiOhCardListPanel::renderTextCell(const YuGiOhCard& card,
     switch (idx) {
     case 0: return card.name;
     case 1: return card.set.name;
-    case 2: return card.setNo;
-    case 3: return card.rarity;
-    case 4: return std::to_string(card.amount);
-    case 5: return std::string(to_string(card.condition));
-    case 6: return std::string(to_string(card.language));
-    case 7: return card.note;
+    case 2: return std::to_string(card.amount);
+    case 3: return std::string(to_string(card.condition));
+    case 4: return std::string(to_string(card.language));
+    case 5: return card.note;
     }
     return {};
 }

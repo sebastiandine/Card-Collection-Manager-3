@@ -90,6 +90,7 @@ protected:
         }
         buildLayout();
         populateChoices();
+        openingSnapshot_ = card_;
         Thaw();
     }
 
@@ -118,6 +119,11 @@ protected:
     [[nodiscard]] virtual std::string emptySetMessage() const {
         return "(no sets cached - use Sets > " + updateMenuName() + ")";
     }
+
+    // Called when the card name field changes. Games that cache upstream print
+    // metadata keyed by `(name, set)` should clear it here so stale "Next"
+    // controls cannot outlive the lookup identity.
+    virtual void onCardLookupContextChanged() {}
 
     // Common helpers ----------------------------------------------------------
 
@@ -162,6 +168,10 @@ private:
         grid->AddGrowableCol(1, 1);
 
         nameCtrl_  = new wxTextCtrl(this, wxID_ANY, wxString::FromUTF8(card_.name.c_str()));
+        nameCtrl_->Bind(wxEVT_TEXT, [this](wxCommandEvent& ev) {
+            onCardLookupContextChanged();
+            ev.Skip();
+        });
         appendRow(grid, "Name", nameCtrl_);
 
         setCombo_ = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0,
@@ -407,6 +417,14 @@ private:
                                     "Add card", wxOK | wxICON_INFORMATION);
             return;
         }
+        if (mode_ == EditMode::Edit && !(card_ == openingSnapshot_)) {
+            if (showThemedConfirmDialog(
+                    this,
+                    wxString::FromUTF8("Save changes to this card?"),
+                    wxString::FromUTF8("Save changes")) != wxID_YES) {
+                return;
+            }
+        }
         ev.Skip();
     }
 
@@ -517,6 +535,7 @@ private:
     SetService&   setService_;
     EditMode      mode_;
     TCard         card_;
+    TCard         openingSnapshot_{};
     Game          game_;
 
     std::vector<Set>        sets_;

@@ -12,6 +12,7 @@
 
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace ccm {
 
@@ -69,6 +70,14 @@ public:
     virtual Result<AutoDetectedPrint> detectFirstPrint(std::string_view /*name*/,
                                                        std::string_view /*setId*/) {
         return Result<AutoDetectedPrint>::err("Auto-detect not supported by this game.");
+    }
+
+    // Optional listing of every distinct `(set_code, rarity)` print returned by
+    // the upstream for an exact card name inside the chosen display set.
+    virtual Result<std::vector<AutoDetectedPrint>>
+        detectPrintVariants(std::string_view /*name*/, std::string_view /*setId*/) {
+        return Result<std::vector<AutoDetectedPrint>>::err(
+            "Print variant listing not supported by this game.");
     }
 };
 

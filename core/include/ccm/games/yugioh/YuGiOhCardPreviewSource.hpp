@@ -40,6 +40,8 @@ public:
                       std::string_view setNo) override;
     Result<AutoDetectedPrint> detectFirstPrint(std::string_view name,
                                                std::string_view setId) override;
+    Result<std::vector<AutoDetectedPrint>> detectPrintVariants(std::string_view name,
+                                                               std::string_view setId) override;
 
     // ---- Yugipedia helpers (image preview path) ----------------------------
 
@@ -105,6 +107,14 @@ public:
     // response. Drives the "Auto detect" button in the YGO edit dialog.
     static Result<AutoDetectedPrint> parseFirstPrint(const std::string& body,
                                                      std::string_view preferredSetName);
+
+    // Every `(set_code, set_rarity)` pair for cards whose name matches
+    // `wantedCardName` (case-insensitive). When `wantedCardName` is empty,
+    // scans every row in `data[]` like `parseFirstPrint` did historically.
+    static Result<std::vector<AutoDetectedPrint>>
+        parsePrintVariants(const std::string& body,
+                           std::string_view preferredSetName,
+                           std::string_view wantedCardName);
 
 private:
     IHttpClient& http_;

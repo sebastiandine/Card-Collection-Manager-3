@@ -2,8 +2,12 @@
 
 #include "ccm/games/yugioh/YuGiOhCardPreviewSource.hpp"
 #include "ccm/ports/IHttpClient.hpp"
+#include "ccm/util/YuGiOhPrintingSlot.hpp"
 
+#include <algorithm>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 using namespace ccm;
@@ -51,6 +55,28 @@ public:
 };
 
 }  // namespace
+
+TEST_SUITE("ygoPrintingSlotsMatch") {
+    TEST_CASE("matches CCM composed setNo to YGOPRODeck set_code with region infix") {
+        CHECK(ygoPrintingSlotsMatch("SOD-015", "SOD-EN015"));
+        CHECK(ygoPrintingSlotsMatch("sod-015", "SOD-EN015"));
+        CHECK_FALSE(ygoPrintingSlotsMatch("SOD-015", "SOD-EN016"));
+        CHECK_FALSE(ygoPrintingSlotsMatch("SOD-015", "IOC-EN015"));
+    }
+
+    TEST_CASE("matches German-style and digits-only suffix variants") {
+        CHECK(ygoPrintingSlotsMatch("LOB-005", "LOB-DE005"));
+        CHECK(ygoPrintingSlotsMatch("RA04-001", "RA04-EN001"));
+    }
+
+    TEST_CASE("detects European alternate numbering suffix E+digit vs EN/DE") {
+        CHECK(ygoLikelyEuropeanRegionalSetCode("LOB-E003"));
+        CHECK_FALSE(ygoLikelyEuropeanRegionalSetCode("LOB-EN005"));
+        CHECK_FALSE(ygoLikelyEuropeanRegionalSetCode("LOB-005"));
+        CHECK_FALSE(ygoLikelyEuropeanRegionalSetCode("LOB-DE005"));
+        CHECK_FALSE(ygoLikelyEuropeanRegionalSetCode("SOD-EN015"));
+    }
+}
 
 TEST_SUITE("YuGiOhCardPreviewSource::normalizeName") {
     TEST_CASE("strips whitespace and policy-banned punctuation") {
@@ -222,6 +248,236 @@ TEST_SUITE("YuGiOhCardPreviewSource::parseFirstPrint") {
         REQUIRE(out.isOk());
         CHECK(out.value().setNo == "LOB-001");
         CHECK(out.value().rarity == "Ultra Rare");
+    }
+}
+
+TEST_SUITE("YuGiOhCardPreviewSource::parsePrintVariants") {
+    TEST_CASE("lists distinct set_code entries for an exact name in one display set") {
+        const std::string json = R"({
+          "data":[
+            {"name":"Test Goblin",
+             "card_sets":[
+               {"set_name":"Mega Pack","set_code":"MP21-EN001","set_rarity":"Common"},
+               {"set_name":"Mega Pack","set_code":"MP21-EN002","set_rarity":"Rare"}
+             ]}
+          ]
+        })";
+        const auto out = YuGiOhCardPreviewSource::parsePrintVariants(
+            json, "Mega Pack", "Test Goblin");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 2);
+        CHECK(out.value()[0].setNo == "MP21-EN001");
+        CHECK(out.value()[1].setNo == "MP21-EN002");
+    }
+
+    TEST_CASE("lists multiple rarities for one set_code") {
+        const std::string json = R"({
+          "data":[
+            {"name":"Odd-Eyes Pendulum Dragon",
+             "card_sets":[
+               {"set_name":"Duelist Alliance","set_code":"DUEA-EN004","set_rarity":"Super Rare"},
+               {"set_name":"Duelist Alliance","set_code":"DUEA-EN004","set_rarity":"Ultimate Rare"}
+             ]}
+          ]
+        })";
+        const auto out = YuGiOhCardPreviewSource::parsePrintVariants(
+            json, "Duelist Alliance", "Odd-Eyes Pendulum Dragon");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 2);
+        CHECK(out.value()[0].setNo == "DUEA-EN004");
+        CHECK(out.value()[0].rarity == "Super Rare");
+        CHECK(out.value()[1].setNo == "DUEA-EN004");
+        CHECK(out.value()[1].rarity == "Ultimate Rare");
+    }
+
+    TEST_CASE("dedupes identical print pairs") {
+        const std::string json = R"({
+          "data":[
+            {"name":"Mirror Force",
+             "card_sets":[
+               {"set_name":"Starter Deck","set_code":"SDY-043","set_rarity":"Super Rare"},
+               {"set_name":"Starter Deck","set_code":"SDY-043","set_rarity":"Super Rare"}
+             ]}
+          ]
+        })";
+        const auto out = YuGiOhCardPreviewSource::parsePrintVariants(
+            json, "Starter Deck", "Mirror Force");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value()[0].setNo == "SDY-043");
+        CHECK(out.value()[0].rarity == "Super Rare");
+    }
+}
+
+// Helpers aligned with external fixture `yugioh_same_card_set_variant_tests`
+// (same_card_same_set: distinct collector numbers vs distinct rarities).
+[[nodiscard]] std::size_t countDistinctSetCodes(const std::vector<AutoDetectedPrint>& v) {
+    std::unordered_set<std::string> codes;
+    for (const auto& p : v) {
+        if (!p.setNo.empty()) codes.insert(p.setNo);
+    }
+    return codes.size();
+}
+
+[[nodiscard]] std::size_t maxRarityVariantsPerCode(const std::vector<AutoDetectedPrint>& v) {
+    std::unordered_map<std::string, std::unordered_set<std::string>> byCode;
+    for (const auto& p : v) {
+        if (p.setNo.empty() || p.rarity.empty()) continue;
+        byCode[p.setNo].insert(p.rarity);
+    }
+    std::size_t mx = 0;
+    for (const auto& e : byCode) {
+        mx = std::max(mx, e.second.size());
+    }
+    return mx;
+}
+
+TEST_SUITE("YuGiOhCardPreviewSource::parsePrintVariants yugioh_same_card_set_variant_tests") {
+    TEST_CASE("S1-001 Armed Dragon LV7 Soul of the Duelist Ultra vs Ultimate") {
+        const std::string json = R"({
+          "data":[{
+            "name":"Armed Dragon LV7",
+            "card_sets":[
+              {"set_name":"Soul of the Duelist","set_code":"SOD-EN015","set_rarity":"Ultra Rare"},
+              {"set_name":"Soul of the Duelist","set_code":"SOD-EN015","set_rarity":"Ultimate Rare"}
+            ]
+          }]
+        })";
+        const auto out = YuGiOhCardPreviewSource::parsePrintVariants(
+            json, "Soul of the Duelist", "Armed Dragon LV7");
+        REQUIRE(out.isOk());
+        CHECK(countDistinctSetCodes(out.value()) == 1);
+        CHECK(maxRarityVariantsPerCode(out.value()) == 2);
+    }
+
+    TEST_CASE("S1-002 Horus LV8 Soul of the Duelist Ultra vs Ultimate") {
+        const std::string json = R"({
+          "data":[{
+            "name":"Horus the Black Flame Dragon LV8",
+            "card_sets":[
+              {"set_name":"Soul of the Duelist","set_code":"SOD-EN008","set_rarity":"Ultra Rare"},
+              {"set_name":"Soul of the Duelist","set_code":"SOD-EN008","set_rarity":"Ultimate Rare"}
+            ]
+          }]
+        })";
+        const auto out = YuGiOhCardPreviewSource::parsePrintVariants(
+            json, "Soul of the Duelist", "Horus the Black Flame Dragon LV8");
+        REQUIRE(out.isOk());
+        CHECK(countDistinctSetCodes(out.value()) == 1);
+        CHECK(maxRarityVariantsPerCode(out.value()) == 2);
+    }
+
+    TEST_CASE("S1-003 Mobius Soul of the Duelist Super vs Ultimate") {
+        const std::string json = R"({
+          "data":[{
+            "name":"Mobius the Frost Monarch",
+            "card_sets":[
+              {"set_name":"Soul of the Duelist","set_code":"SOD-EN022","set_rarity":"Super Rare"},
+              {"set_name":"Soul of the Duelist","set_code":"SOD-EN022","set_rarity":"Ultimate Rare"}
+            ]
+          }]
+        })";
+        const auto out = YuGiOhCardPreviewSource::parsePrintVariants(
+            json, "Soul of the Duelist", "Mobius the Frost Monarch");
+        REQUIRE(out.isOk());
+        CHECK(countDistinctSetCodes(out.value()) == 1);
+        CHECK(maxRarityVariantsPerCode(out.value()) == 2);
+    }
+
+    TEST_CASE("S2-001 Dark Magician Yugi's Legendary Decks three set codes") {
+        const std::string json = R"({
+          "data":[{
+            "name":"Dark Magician",
+            "card_sets":[
+              {"set_name":"Yugi's Legendary Decks","set_code":"YGLD-ENA03","set_rarity":"Common"},
+              {"set_name":"Yugi's Legendary Decks","set_code":"YGLD-ENB02","set_rarity":"Common"},
+              {"set_name":"Yugi's Legendary Decks","set_code":"YGLD-ENC09","set_rarity":"Common"}
+            ]
+          }]
+        })";
+        const auto out = YuGiOhCardPreviewSource::parsePrintVariants(
+            json, "Yugi's Legendary Decks", "Dark Magician");
+        REQUIRE(out.isOk());
+        CHECK(countDistinctSetCodes(out.value()) == 3);
+        CHECK(maxRarityVariantsPerCode(out.value()) == 1);
+    }
+
+    TEST_CASE("S2-002 Dark Magician Girl Yugi's Legendary Decks two set codes") {
+        const std::string json = R"({
+          "data":[{
+            "name":"Dark Magician Girl",
+            "card_sets":[
+              {"set_name":"Yugi's Legendary Decks","set_code":"YGLD-ENA04","set_rarity":"Common"},
+              {"set_name":"Yugi's Legendary Decks","set_code":"YGLD-ENC10","set_rarity":"Common"}
+            ]
+          }]
+        })";
+        const auto out = YuGiOhCardPreviewSource::parsePrintVariants(
+            json, "Yugi's Legendary Decks", "Dark Magician Girl");
+        REQUIRE(out.isOk());
+        CHECK(countDistinctSetCodes(out.value()) == 2);
+        CHECK(maxRarityVariantsPerCode(out.value()) == 1);
+    }
+
+    TEST_CASE("NEG-001 duplicate rarity lines collapse to one variant") {
+        const std::string json = R"({
+          "data":[{
+            "name":"Armed Dragon LV7",
+            "card_sets":[
+              {"set_name":"Soul of the Duelist","set_code":"SOD-EN015","set_rarity":"Ultra Rare"},
+              {"set_name":"Soul of the Duelist","set_code":"SOD-EN015","set_rarity":"Ultra Rare"}
+            ]
+          }]
+        })";
+        const auto out = YuGiOhCardPreviewSource::parsePrintVariants(
+            json, "Soul of the Duelist", "Armed Dragon LV7");
+        REQUIRE(out.isOk());
+        CHECK(out.value().size() == 1);
+        CHECK(maxRarityVariantsPerCode(out.value()) == 1);
+    }
+
+    TEST_CASE("NEG-002 duplicate set codes collapse to one collector slot") {
+        const std::string json = R"({
+          "data":[{
+            "name":"Dark Magician",
+            "card_sets":[
+              {"set_name":"Yugi's Legendary Decks","set_code":"YGLD-ENA03","set_rarity":"Common"},
+              {"set_name":"Yugi's Legendary Decks","set_code":"YGLD-ENA03","set_rarity":"Common"}
+            ]
+          }]
+        })";
+        const auto out = YuGiOhCardPreviewSource::parsePrintVariants(
+            json, "Yugi's Legendary Decks", "Dark Magician");
+        REQUIRE(out.isOk());
+        CHECK(countDistinctSetCodes(out.value()) == 1);
+        CHECK(maxRarityVariantsPerCode(out.value()) == 1);
+    }
+
+    TEST_CASE("NEG-003 no cross-product merge when display set matches nothing") {
+        const std::string json = R"({
+          "data":[{
+            "name":"Dark Magician",
+            "card_sets":[
+              {"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB-005","set_rarity":"Ultra Rare"},
+              {"set_name":"Starter Deck: Yugi","set_code":"SDY-006","set_rarity":"Ultra Rare"}
+            ]
+          }]
+        })";
+        const auto bogus = YuGiOhCardPreviewSource::parsePrintVariants(
+            json, "Different Sets", "Dark Magician");
+        CHECK(bogus.isErr());
+
+        const auto lob = YuGiOhCardPreviewSource::parsePrintVariants(
+            json, "Legend of Blue Eyes White Dragon", "Dark Magician");
+        REQUIRE(lob.isOk());
+        REQUIRE(lob.value().size() == 1);
+        CHECK(lob.value()[0].setNo == "LOB-005");
+
+        const auto sdy = YuGiOhCardPreviewSource::parsePrintVariants(
+            json, "Starter Deck: Yugi", "Dark Magician");
+        REQUIRE(sdy.isOk());
+        REQUIRE(sdy.value().size() == 1);
+        CHECK(sdy.value()[0].setNo == "SDY-006");
     }
 }
 

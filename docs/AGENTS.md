@@ -11,7 +11,7 @@ Long-form contributor documentation that lives outside the source tree.
 - `dow-doc-build-locally.md` — complete local build/setup reference for Windows and Linux, including dependency management and troubleshooting.
 - `intro-to-new-developers.md` — onboarding map for new contributors: architecture, folder responsibilities, guardrails, anti-patterns, and links to deeper docs.
 - `testing-and-test-code-of-conduct.md` — testing workflow plus expected standards for writing and maintaining deterministic, hermetic, behavior-focused tests.
-- `assets-and-info-apis.md` — reference for the external info APIs (set metadata) and asset APIs (card preview images) used by the Magic, Pokemon, and Yu-Gi-Oh! modules, plus the runtime flow through `SetService` / `CardPreviewService` and the error-surface conventions.
+- `assets-and-info-apis.md` — reference for the external info APIs (set metadata) and asset APIs (card preview images) used by the Magic, Pokémon, and Yu-Gi-Oh! modules, plus the runtime flow through `SetService` / `CardPreviewService`, shared HTTP defaults (`CprHttpClient`, `Accept: */*`), per-game card-back fallbacks (URLs + bundled `ygo_card_back.png`), and error-surface conventions.
 - `caching.md` — dedicated reference for preview-byte caching tiers (`CardPreviewService` LRU + `LocalPreviewByteCache`), cache keys and eviction, HTTP session reuse via `CprHttpClient`, and explicit non-goals (no error caching).
 - `README.md` — index page that clusters docs by area and links to all documents in this directory.
 

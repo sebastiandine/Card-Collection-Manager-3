@@ -22,7 +22,7 @@ This folder contains contributor documentation for Card Collection Manager 3. St
 
 - [adding-a-new-game.md](adding-a-new-game.md): canonical end-to-end procedure for adding a new game module across `core/`, `ui_wx/`, and `app/`.
 
-- [assets-and-info-apis.md](assets-and-info-apis.md): external info and asset APIs used by Magic, Pokemon, and Yu-Gi-Oh! modules and their runtime purpose.
+- [assets-and-info-apis.md](assets-and-info-apis.md): external info and asset APIs used by Magic, Pokémon, and Yu-Gi-Oh! modules, preview fallback URLs / bundled YGO card-back asset, and shared HTTP behavior (`CprHttpClient`).
 
 ## Performance & Caching
 

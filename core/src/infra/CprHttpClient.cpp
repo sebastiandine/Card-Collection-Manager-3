@@ -14,9 +14,11 @@ CprHttpClient::CprHttpClient(std::chrono::milliseconds timeout)
     // the URL. libcurl's connection cache lives inside the easy handle, so
     // reusing one Session across calls is what gets us TLS keep-alive.
     session_->SetTimeout(cpr::Timeout{timeout_});
+    // `Accept: application/json` breaks some CDNs that refuse non-JSON bodies
+    // (preview pipeline also GETs raw JPG/PNG). Wildcard keeps JSON APIs happy.
     session_->SetHeader(cpr::Header{
         {"User-Agent", "card-collection-manager-3/0.1"},
-        {"Accept",     "application/json"},
+        {"Accept",     "*/*"},
     });
     session_->SetRedirect(cpr::Redirect{/*max_redirects=*/10L,
                                         /*follow=*/true,

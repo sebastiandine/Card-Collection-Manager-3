@@ -185,18 +185,6 @@ void sortYuGiOhCards(std::vector<YuGiOhCard>& cards, YuGiOhSortColumn column,
                 return asciiLower(a.set.releaseDate) < asciiLower(b.set.releaseDate);
             }, ascending));
         break;
-    case YuGiOhSortColumn::SetNo:
-        std::stable_sort(cards.begin(), cards.end(), directional(
-            [](const YuGiOhCard& a, const YuGiOhCard& b) {
-                return asciiLower(a.setNo) < asciiLower(b.setNo);
-            }, ascending));
-        break;
-    case YuGiOhSortColumn::Rarity:
-        std::stable_sort(cards.begin(), cards.end(), directional(
-            [](const YuGiOhCard& a, const YuGiOhCard& b) {
-                return asciiLower(a.rarity) < asciiLower(b.rarity);
-            }, ascending));
-        break;
     case YuGiOhSortColumn::Language:
         std::stable_sort(cards.begin(), cards.end(), directional(
             [](const YuGiOhCard& a, const YuGiOhCard& b) {
