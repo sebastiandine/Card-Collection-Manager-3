@@ -20,6 +20,7 @@ add_library(ccm_core STATIC
     src/infra/StdFileSystem.cpp
     src/infra/JsonSetRepository.cpp
     src/infra/LocalImageStore.cpp
+    src/infra/LocalPreviewByteCache.cpp
 
     src/games/magic/MagicSetSource.cpp
     src/games/magic/MagicCardPreviewSource.cpp

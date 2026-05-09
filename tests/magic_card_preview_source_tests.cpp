@@ -64,38 +64,47 @@ TEST_SUITE("MagicCardPreviewSource::parseResponse") {
         CHECK(out.value() == "https://img.scryfall.io/normal.jpg");
     }
 
-    TEST_CASE("empty data array returns an error") {
+    TEST_CASE("empty data array is classified as NotFound (negative-cacheable)") {
         const auto out = MagicCardPreviewSource::parseResponse(R"({"data":[]})");
-        CHECK(out.isErr());
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::NotFound);
     }
 
-    TEST_CASE("missing data array returns an error") {
+    TEST_CASE("missing data array is classified as Transient (schema deviation)") {
+        // No `data` array at all means the API contract failed - this is
+        // not the user's record being weird, it's the upstream not
+        // talking to us right now.
         const auto out = MagicCardPreviewSource::parseResponse(R"({"meta":{}})");
-        CHECK(out.isErr());
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
     }
 
-    TEST_CASE("entry without image_uris returns an error (double-faced cards)") {
+    TEST_CASE("entry without image_uris is classified as NotFound (double-faced cards)") {
         const std::string json = R"({
             "data": [
                 {"name":"DoubleFace","card_faces":[{"image_uris":{"normal":"x"}}]}
             ]
         })";
         const auto out = MagicCardPreviewSource::parseResponse(json);
-        CHECK(out.isErr());
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::NotFound);
     }
 
-    TEST_CASE("invalid JSON returns an error") {
+    TEST_CASE("invalid JSON is classified as Transient") {
         const auto out = MagicCardPreviewSource::parseResponse("{not json");
-        CHECK(out.isErr());
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
     }
 }
 
 TEST_SUITE("MagicCardPreviewSource::fetchImageUrl") {
-    TEST_CASE("network error is surfaced as a Result error") {
+    TEST_CASE("network error is surfaced as Transient") {
         FixedHttpClient http;
         http.ok = false;
         MagicCardPreviewSource src{http};
-        CHECK(src.fetchImageUrl("Lightning Bolt", "lea", "").isErr());
+        const auto out = src.fetchImageUrl("Lightning Bolt", "lea", "");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
     }
 
     TEST_CASE("network success is parsed end-to-end and uses the encoded URL") {

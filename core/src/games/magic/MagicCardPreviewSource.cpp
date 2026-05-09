@@ -62,38 +62,47 @@ std::string MagicCardPreviewSource::buildSearchUrl(std::string_view name,
     return std::string("https://api.scryfall.com/cards/search?q=") + urlEncode(query);
 }
 
-Result<std::string> MagicCardPreviewSource::parseResponse(const std::string& body) {
+Result<std::string, PreviewLookupError>
+MagicCardPreviewSource::parseResponse(const std::string& body) {
+    using R = Result<std::string, PreviewLookupError>;
+    using K = PreviewLookupError::Kind;
     try {
         const auto j = nlohmann::json::parse(body);
         if (!j.contains("data") || !j.at("data").is_array()) {
-            return Result<std::string>::err("Scryfall response missing 'data' array.");
+            // Treat schema deviation as transient: the API contract failed,
+            // not the user's record. Scryfall returns a JSON error object
+            // here on outage, which is rare but not stable.
+            return R::err({K::Transient, "Scryfall response missing 'data' array."});
         }
         const auto& data = j.at("data");
         if (data.empty()) {
-            return Result<std::string>::err("Scryfall returned no matching cards.");
+            return R::err({K::NotFound, "Scryfall returned no matching cards."});
         }
         const auto& first = data.at(0);
         if (!first.contains("image_uris") || !first.at("image_uris").is_object()) {
             // Double-faced cards expose image_uris on each face; there is no
             // fallback for this and surfaces it as "no preview".
-            return Result<std::string>::err("Card has no top-level image_uris.");
+            return R::err({K::NotFound, "Card has no top-level image_uris."});
         }
         const auto& uris = first.at("image_uris");
         if (!uris.contains("normal") || !uris.at("normal").is_string()) {
-            return Result<std::string>::err("Card has no 'normal' image variant.");
+            return R::err({K::NotFound, "Card has no 'normal' image variant."});
         }
-        return Result<std::string>::ok(uris.at("normal").get<std::string>());
+        return R::ok(uris.at("normal").get<std::string>());
     } catch (const std::exception& e) {
-        return Result<std::string>::err(std::string("Scryfall JSON parse error: ") + e.what());
+        return R::err({K::Transient, std::string("Scryfall JSON parse error: ") + e.what()});
     }
 }
 
-Result<std::string> MagicCardPreviewSource::fetchImageUrl(std::string_view name,
-                                                          std::string_view setId,
-                                                          std::string_view /*setNo*/) {
+Result<std::string, PreviewLookupError>
+MagicCardPreviewSource::fetchImageUrl(std::string_view name,
+                                      std::string_view setId,
+                                      std::string_view /*setNo*/) {
+    using R = Result<std::string, PreviewLookupError>;
+    using K = PreviewLookupError::Kind;
     const std::string url = buildSearchUrl(name, setId);
     auto resp = http_.get(url);
-    if (!resp) return Result<std::string>::err(resp.error());
+    if (!resp) return R::err({K::Transient, resp.error()});
     return parseResponse(resp.value());
 }
 

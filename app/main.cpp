@@ -12,6 +12,7 @@
 #include "ccm/infra/JsonCollectionRepository.hpp"
 #include "ccm/infra/JsonSetRepository.hpp"
 #include "ccm/infra/LocalImageStore.hpp"
+#include "ccm/infra/LocalPreviewByteCache.hpp"
 #include "ccm/infra/StdFileSystem.hpp"
 #include "ccm/services/CardPreviewService.hpp"
 #include "ccm/services/CollectionService.hpp"
@@ -101,7 +102,21 @@ public:
         setSvc_->registerModule(pokeMod_.get());
         setSvc_->registerModule(ygoMod_.get());
 
-        previewSvc_   = std::make_unique<ccm::CardPreviewService>(*http_);
+        // Disk-backed preview cache lives next to the executable, in the same
+        // location scope as config.json - NOT inside the user's data-storage
+        // directory. Rationale: previews are downloaded artifacts, not user
+        // data, so they should not move when the user relocates their
+        // collection (data-storage path can be reconfigured at runtime), and
+        // they should not be uploaded together with the user's collection
+        // when the data dir is backed up / synced. The umbrella ".cache/"
+        // directory is reserved for any future computed-from-network caches
+        // (set-list snapshots, etc.); the leading dot keeps it out of the way
+        // for users poking around the install folder. Constructed before
+        // previewSvc_ so the service can hold a stable raw pointer to it.
+        previewCache_ = std::make_unique<ccm::LocalPreviewByteCache>(
+            *fs_,
+            exeDir / ".cache" / "preview-cache");
+        previewSvc_   = std::make_unique<ccm::CardPreviewService>(*http_, previewCache_.get());
         previewSvc_->registerModule(*magicMod_);
         previewSvc_->registerModule(*pokeMod_);
         previewSvc_->registerModule(*ygoMod_);
@@ -153,6 +168,7 @@ private:
     std::unique_ptr<ccm::CollectionService<ccm::PokemonCard>>        pokeCollSvc_;
     std::unique_ptr<ccm::CollectionService<ccm::YuGiOhCard>>         ygoCollSvc_;
     std::unique_ptr<ccm::SetService>                                 setSvc_;
+    std::unique_ptr<ccm::LocalPreviewByteCache>                      previewCache_;
     std::unique_ptr<ccm::CardPreviewService>                         previewSvc_;
     std::unique_ptr<ccm::ui::MagicGameView>                          magicView_;
     std::unique_ptr<ccm::ui::PokemonGameView>                        pokeView_;

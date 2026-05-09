@@ -4,6 +4,7 @@
 #include <wx/button.h>
 #include <wx/dcclient.h>
 #include <wx/image.h>
+#include <wx/log.h>
 #include <wx/panel.h>
 #include <wx/sizer.h>
 
@@ -110,7 +111,12 @@ bool ImageViewerDialog::loadImageAt(std::size_t index) {
     if (imageCacheReady_[index]) return imageCache_[index].IsOk();
 
     wxImage img;
-    if (!img.LoadFile(paths_[index].string())) {
+    bool ok = false;
+    {
+        wxLogNull suppressPngWarnings;
+        ok = img.LoadFile(paths_[index].string());
+    }
+    if (!ok) {
         imageCacheReady_[index] = true;
         return false;
     }

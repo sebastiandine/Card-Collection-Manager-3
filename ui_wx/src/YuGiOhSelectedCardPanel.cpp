@@ -76,7 +76,14 @@ bool YuGiOhSelectedCardPanel::isFlagSet(const YuGiOhCard& card, DetailKey key) c
 
 std::tuple<std::string, std::string, std::string>
 YuGiOhSelectedCardPanel::previewKey(const YuGiOhCard& card) const {
-    return {card.name, card.set.name, card.setNo + "||" + card.rarity};
+    // Pack rarity and edition into the third tuple slot so the YGO preview
+    // source can build Yugipedia file names without changing the generic
+    // ICardPreviewSource interface. Format: "<setNo>||<rarity>||<1E|UE>".
+    // Yugipedia per-printing scans need the edition stamp to disambiguate
+    // 1st-Edition vs Unlimited reprints.
+    const char* const editionTag = card.firstEdition ? "1E" : "UE";
+    return {card.name, card.set.name,
+            card.setNo + "||" + card.rarity + "||" + editionTag};
 }
 
 }  // namespace ccm::ui

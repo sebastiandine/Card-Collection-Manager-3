@@ -32,6 +32,7 @@
 #include <wx/event.h>
 #include <wx/image.h>
 #include <wx/listbox.h>
+#include <wx/log.h>
 #include <wx/mstream.h>
 #include <wx/panel.h>
 #include <wx/settings.h>
@@ -419,7 +420,16 @@ private:
 
         wxMemoryInputStream stream(bytes.data(), bytes.size());
         wxImage img;
-        if (!img.LoadFile(stream, wxBITMAP_TYPE_ANY)) {
+        // libpng emits iCCP warnings for some upstream PNGs (e.g. Yugipedia
+        // scans with embedded sRGB chunks wx considers invalid). wx forwards
+        // those as wxLogWarning -> modal dialog. Suppress logging for decode
+        // only; the pixels load correctly either way.
+        bool decoded = false;
+        {
+            wxLogNull suppressPngWarnings;
+            decoded = img.LoadFile(stream, wxBITMAP_TYPE_ANY);
+        }
+        if (!decoded) {
             previewStatus_->SetLabelText("(preview decode failed)");
             clearPreview();
             Layout();
