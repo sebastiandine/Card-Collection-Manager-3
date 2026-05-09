@@ -18,6 +18,7 @@ namespace ccm {
 enum class Game {
     Magic,
     Pokemon,
+    YuGiOh,
 };
 
 enum class Language {
@@ -56,7 +57,7 @@ std::optional<Language>  languageFromString(std::string_view s) noexcept;
 std::optional<Condition> conditionFromString(std::string_view s) noexcept;
 std::optional<Theme>     themeFromString(std::string_view s) noexcept;
 
-const std::array<Game, 2>&       allGames() noexcept;
+const std::array<Game, 3>&       allGames() noexcept;
 const std::array<Language, 8>&   allLanguages() noexcept;
 const std::array<Condition, 7>&  allConditions() noexcept;
 const std::array<Theme, 2>&      allThemes() noexcept;

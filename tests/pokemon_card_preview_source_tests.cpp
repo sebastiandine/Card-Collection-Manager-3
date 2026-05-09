@@ -85,34 +85,40 @@ TEST_SUITE("PokemonCardPreviewSource::parseResponse") {
         CHECK(out.value() == "https://small.only/img.png");
     }
 
-    TEST_CASE("empty data array returns an error") {
+    TEST_CASE("empty data array is classified as NotFound (negative-cacheable)") {
         const auto out = PokemonCardPreviewSource::parseResponse(R"({"data":[]})");
-        CHECK(out.isErr());
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::NotFound);
     }
 
-    TEST_CASE("missing data array returns an error") {
+    TEST_CASE("missing data array is classified as Transient (schema deviation)") {
         const auto out = PokemonCardPreviewSource::parseResponse(R"({"meta":{}})");
-        CHECK(out.isErr());
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
     }
 
-    TEST_CASE("entry without images returns an error") {
+    TEST_CASE("entry without images is classified as NotFound") {
         const auto out = PokemonCardPreviewSource::parseResponse(
             R"({"data":[{"name":"Pikachu"}]})");
-        CHECK(out.isErr());
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::NotFound);
     }
 
-    TEST_CASE("invalid JSON returns an error") {
+    TEST_CASE("invalid JSON is classified as Transient") {
         const auto out = PokemonCardPreviewSource::parseResponse("{not json");
-        CHECK(out.isErr());
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
     }
 }
 
 TEST_SUITE("PokemonCardPreviewSource::fetchImageUrl") {
-    TEST_CASE("network error is surfaced as a Result error") {
+    TEST_CASE("network error is surfaced as Transient") {
         FixedHttpClient http;
         http.ok = false;
         PokemonCardPreviewSource src{http};
-        CHECK(src.fetchImageUrl("Pikachu", "base1", "").isErr());
+        const auto out = src.fetchImageUrl("Pikachu", "base1", "");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
     }
 
     TEST_CASE("network success is parsed end-to-end and uses the encoded URL") {

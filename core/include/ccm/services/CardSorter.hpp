@@ -18,6 +18,7 @@
 
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
+#include "ccm/domain/YuGiOhCard.hpp"
 
 #include <vector>
 
@@ -52,11 +53,25 @@ enum class PokemonSortColumn {
     Note,
 };
 
+enum class YuGiOhSortColumn {
+    Name,
+    SetReleaseDate,
+    Language,
+    Condition,
+    Amount,
+    FirstEdition,
+    Signed,
+    Altered,
+    Note,
+};
+
 // Stable in-place sort. `ascending=false` runs the same comparator with
 // inverted sign, matching `byField(field, asc)` semantics.
 void sortMagicCards(std::vector<MagicCard>& cards, MagicSortColumn column,
                     bool ascending);
 void sortPokemonCards(std::vector<PokemonCard>& cards, PokemonSortColumn column,
                       bool ascending);
+void sortYuGiOhCards(std::vector<YuGiOhCard>& cards, YuGiOhSortColumn column,
+                     bool ascending);
 
 }  // namespace ccm

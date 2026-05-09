@@ -170,4 +170,64 @@ void sortPokemonCards(std::vector<PokemonCard>& cards, PokemonSortColumn column,
     }
 }
 
+void sortYuGiOhCards(std::vector<YuGiOhCard>& cards, YuGiOhSortColumn column,
+                     bool ascending) {
+    switch (column) {
+    case YuGiOhSortColumn::Name:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhCard& a, const YuGiOhCard& b) {
+                return asciiLower(a.name) < asciiLower(b.name);
+            }, ascending));
+        break;
+    case YuGiOhSortColumn::SetReleaseDate:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhCard& a, const YuGiOhCard& b) {
+                return asciiLower(a.set.releaseDate) < asciiLower(b.set.releaseDate);
+            }, ascending));
+        break;
+    case YuGiOhSortColumn::Language:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhCard& a, const YuGiOhCard& b) {
+                return asciiLower(to_string(a.language)) < asciiLower(to_string(b.language));
+            }, ascending));
+        break;
+    case YuGiOhSortColumn::Condition:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhCard& a, const YuGiOhCard& b) {
+                return asciiLower(to_string(a.condition)) < asciiLower(to_string(b.condition));
+            }, ascending));
+        break;
+    case YuGiOhSortColumn::Amount:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhCard& a, const YuGiOhCard& b) {
+                return a.amount < b.amount;
+            }, ascending));
+        break;
+    case YuGiOhSortColumn::FirstEdition:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhCard& a, const YuGiOhCard& b) {
+                return a.firstEdition < b.firstEdition;
+            }, ascending));
+        break;
+    case YuGiOhSortColumn::Signed:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhCard& a, const YuGiOhCard& b) {
+                return a.signed_ < b.signed_;
+            }, ascending));
+        break;
+    case YuGiOhSortColumn::Altered:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhCard& a, const YuGiOhCard& b) {
+                return a.altered < b.altered;
+            }, ascending));
+        break;
+    case YuGiOhSortColumn::Note:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhCard& a, const YuGiOhCard& b) {
+                return asciiLower(a.note) < asciiLower(b.note);
+            }, ascending));
+        break;
+    }
+}
+
 }  // namespace ccm

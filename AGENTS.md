@@ -5,7 +5,7 @@ C++ desktop implementation (originally based on a Tauri Rust+TS version) — sin
 ## Project structure
 
 - `core/` — `ccm_core` static library. UI-agnostic domain, ports, services, infra adapters. **Never** depends on wxWidgets. See `core/AGENTS.md`.
-- `ui_wx/` — `ccm_ui_wx` static library. The only place that touches wxWidgets. See `ui_wx/AGENTS.md`.
+- `ui_wx/` — `ccm_ui_wx` static library. The only place that touches wxWidgets. See `ui_wx/AGENTS.md`. Ships `ui_wx/assets/ygo_card_back.png` (Yu-Gi-Oh! offline preview fallback); `app/CMakeLists.txt` copies it to `<exeDir>/assets/` when linking `ccm`.
 - `app/` — `ccm` executable (composition root). Wires concrete adapters into services. See `app/AGENTS.md`.
 - `tests/` — `ccm_core_tests` doctest binary. Pure-logic tests against in-memory fakes. See `tests/AGENTS.md`.
 - `docs/` — long-form developer documentation. Start with `docs/adding-a-new-game.md` for the canonical end-to-end procedure for extending the app with a new TCG. See `docs/AGENTS.md`.
@@ -52,13 +52,13 @@ Run from the **workspace root**.
 - Run the app:  
  `./build/bin/ccm3` (`.\build\bin\ccm3.exe` on Windows)
 - Run tests (CCM_BUILD_TESTS defaults to ON):  
-  `ctest --test-dir build --output-on-failure` — current baseline: **86 cases / 211 assertions, all green**.
+  `ctest --test-dir build --output-on-failure` — current baseline: **180 tests, all green**.
 - Build tests only:  
   `cmake --build build --target ccm_core_tests`
 
-> **Windows runtime note**: `cpr` is built as a shared library, so `build/bin/` ends up with `libcpr.dll`, `libcurl.dll`, `libzlib.dll` next to `ccm.exe`. With MinGW-w64 you also need `libgcc_s_seh-1.dll` and `libstdc++-6.dll` from your MSYS2 UCRT64 `bin/` on `PATH` (or copied alongside the exe) to launch from Explorer.
+> **Windows runtime note**: `cpr` is built as a shared library, so `build/bin/` ends up with `libcpr.dll`, `libcurl.dll`, `libzlib.dll` next to `ccm3.exe`. With MinGW-w64 you also need `libgcc_s_seh-1.dll` and `libstdc++-6.dll` from your MSYS2 UCRT64 `bin/` on `PATH` (or copied alongside the exe) to launch from Explorer.
 >
-> **Windows rebuild note**: linking `ccm.exe` fails with `Permission denied` if the app is still running/locked. Close `ccm.exe` before rebuilding app targets.
+> **Windows rebuild note**: linking `ccm3.exe` fails with `Permission denied` if the app is still running/locked. Close `ccm3.exe` before rebuilding app targets.
 >
 > **Windows cold-start note**: first launch right after a fresh build is often slower than subsequent launches due to cold file cache and Windows security scanning (Defender/SmartScreen) on the new exe/dll set. Warm launches are the meaningful baseline for app-side perf changes.
 
@@ -69,8 +69,14 @@ Run from the **workspace root**.
 - Preserve "select first row on startup" behavior without blocking first paint by scheduling the initial selection with `CallAfter(...)` instead of selecting synchronously during row rebuild.
 - Avoid repeated set-list loads when opening Add/Edit: cache Magic sets in `MainFrame` and reuse them in `CardEditDialog`.
 - Pass preloaded set data to dialogs by pointer/reference, not by value, to avoid copying large vectors on every open.
+- `MainFrame` default window size is **1210×770** (`ui_wx/src/MainFrame.cpp`).
+- Saving from **Edit** in `BaseCardEditDialog`: themed Yes/No confirmation when the card changed versus the snapshot taken at dialog open; Add mode does not prompt.
 - While constructing/populating dialogs with many controls/choices, wrap with `Freeze()`/`Thaw()` and append choice items in bulk (`wxArrayString`) to reduce layout/repaint churn.
 - Keep selected-card preview usable when remote lookup fails: show a per-game card-back fallback image (CCM2 parity), not a blank preview panel.
+- Card preview round-trips are slow (HTTPS handshake + image GET, often two hosts). The three amortizations in place — all game-agnostic — must stay. The full update mechanic (key-driven invalidation, positive↔negative same-key replacement, eviction, manual cache clearing) is documented in `docs/caching.md` → "Updating cached entries"; do **not** add a side-channel `clearCache(...)` API to `CardPreviewService` — keep updates flowing through cache keys so the in-memory and disk tiers stay aligned automatically.
+  - `CardPreviewService` keeps a bounded in-memory LRU (`kCacheCapacity`) of preview bytes keyed by `(game, name, setId, setNo)` plus a by-URL cache for the per-game card-back fallback. Re-selecting a row already viewed in this session is decode-only, no HTTP. Source failures are split by `PreviewLookupError::Kind`: `NotFound` (the upstream answered cleanly that the record has no image) is **negative-cached** so subsequent clicks short-circuit to the card-back placeholder without HTTP, while `Transient` (HTTP/network/parse) is **never** cached so a brief outage can recover on the next selection. Editing a lookup-relevant field changes the cache key and invalidates the negative entry automatically.
+  - `LocalPreviewByteCache` (port `IPreviewByteCache`) extends the LRU with an on-disk byte cache rooted at `<exeDir>/.cache/preview-cache/` — **next to the executable, in the same scope as `config.json`, NOT inside the user-configurable `dataStorage` path** so previews don't follow the user's collection when the data-storage path is reconfigured (the umbrella `.cache/` directory is reserved for any future computed-from-network caches). Both positive previews and `NotFound` verdicts **survive app restarts**. Lookup order is memory → disk → source/HTTP; a disk hit (positive or negative) is promoted into the in-memory tier so the follow-up call stays decode-only. Total `.bin` payload size is capped (default 64 MiB) and oldest-by-mtime entries are evicted when a new write would exceed the cap; tiny `.neg` markers are not counted against the cap. The persistent tier is fire-and-forget: any I/O error is swallowed by the adapter so disk problems can never break the preview path.
+  - `CprHttpClient` owns a single long-lived `cpr::Session` (and therefore a single libcurl easy handle) with keep-alive enabled, so repeat HTTPS calls to the same host (`api.scryfall.com`, `api.pokemontcg.io`, `db.ygoprodeck.com`, `yugipedia.com`, `ms.yugipedia.com`) reuse the existing TLS connection. Concurrent callers are serialized through a mutex — easy handles are not thread-safe and the preview path is single-flight already. Session default **`Accept: */*`** keeps JSON info APIs and binary image GETs on one client; **`CardPreviewService::fetchAndCache`** rejects empty HTTP bodies so a bogus 200 cannot masquerade as a cached preview.
 
 ## Windows UI theming guardrails
 
@@ -83,7 +89,7 @@ Run from the **workspace root**.
 - For button hover/pressed contrast fixes in dark theme, prefer explicit state handling in `Theme.cpp`; native Windows button states can override wx colors and produce unreadable white-on-white combinations.
 - Keep button theming state dynamic across theme switches (Dark <-> Light). Avoid lambdas that permanently capture old theme colors or behavior; stale handlers can make light-mode buttons look wrong.
 - After changing `ui_wx` theming behavior, rebuild the final app target (`cmake --build build --target ccm --parallel`), not just `ccm_ui_wx`, before validating runtime behavior.
-- If linker fails with `Permission denied` on `build/bin/ccm.exe`, the app is still running; close it before rebuilding.
+- If linker fails with `Permission denied` on `build/bin/ccm3.exe`, the app is still running; close it before rebuilding.
 
 ## Required follow-ups
 

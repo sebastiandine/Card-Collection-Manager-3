@@ -19,9 +19,10 @@ class PokemonCardPreviewSource final : public ICardPreviewSource {
 public:
     explicit PokemonCardPreviewSource(IHttpClient& http);
 
-    Result<std::string> fetchImageUrl(std::string_view name,
-                                      std::string_view setId,
-                                      std::string_view setNo) override;
+    Result<std::string, PreviewLookupError>
+        fetchImageUrl(std::string_view name,
+                      std::string_view setId,
+                      std::string_view setNo) override;
 
     // Build the fully URL-encoded Pokemon TCG search URL for the given card.
     // Exposed for unit testing and to keep encoding rules in one place.
@@ -31,9 +32,11 @@ public:
 
     // Parse a Pokemon TCG /v2/cards response body and pull out the image URL
     // for the first matching card. Prefers `images.large`, falls back to
-    // `images.small`, and returns an error result if neither is present, the
-    // data array is empty, or the JSON is malformed.
-    static Result<std::string> parseResponse(const std::string& body);
+    // `images.small`. Errors are classified:
+    //   - JSON parse failure or missing/non-array `data` => Transient.
+    //   - Empty `data` array or missing image variants => NotFound.
+    static Result<std::string, PreviewLookupError>
+        parseResponse(const std::string& body);
 
 private:
     IHttpClient& http_;

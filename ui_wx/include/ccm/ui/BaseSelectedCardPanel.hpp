@@ -30,9 +30,12 @@
 #include <wx/bitmap.h>
 #include <wx/colour.h>
 #include <wx/event.h>
+#include <wx/filename.h>
 #include <wx/image.h>
 #include <wx/listbox.h>
+#include <wx/log.h>
 #include <wx/mstream.h>
+#include <wx/stdpaths.h>
 #include <wx/panel.h>
 #include <wx/settings.h>
 #include <wx/sizer.h>
@@ -43,8 +46,10 @@
 #include <atomic>
 #include <cstdint>
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <tuple>
@@ -221,6 +226,9 @@ protected:
           imageService_(imageService),
           cardPreview_(cardPreview),
           state_(std::make_shared<PreviewState>()) {
+        wxFileName exe(wxStandardPaths::Get().GetExecutablePath());
+        exe.SetFullName(wxEmptyString);
+        exeDirForBundledAssets_ = exe.GetPathWithSep().ToStdString(wxConvUTF8);
         state_->panel = this;
     }
 
@@ -284,6 +292,9 @@ private:
             case Game::Pokemon:
                 // Mirrors CCM2's unresolved-preview fallback image.
                 return "https://archives.bulbagarden.net/media/upload/1/17/Cardback.jpg";
+            case Game::YuGiOh:
+                // Yugipedia English TCG backing (thumbnail — smaller than full scan).
+                return "https://ms.yugipedia.com/thumb/e/e5/Back-EN.png/250px-Back-EN.png";
             default:
                 return {};
         }
@@ -367,25 +378,58 @@ private:
         CardPreviewService* svcPtr = &cardPreview_;
         auto [name, setId, setNo] = previewKey(card);
         const Game game = gameId();
+        const std::string exeDirCopy = exeDirForBundledAssets_;
 
         std::thread([state, gen, svcPtr, name = std::move(name),
-                     setId = std::move(setId), setNo = std::move(setNo), game]() {
+                     setId = std::move(setId), setNo = std::move(setNo), game,
+                     exeDirCopy]() {
             auto bytes = svcPtr->fetchPreviewBytes(game, name, setId, setNo);
             bool ok = bytes.isOk();
             bool usedFallback = false;
             std::string payload = ok ? std::move(bytes).value() : std::string{};
             std::string err     = ok ? std::string{}            : bytes.error();
 
+            auto applyFallbackPayload = [&](std::string p) {
+                if (p.empty()) return;
+                payload = std::move(p);
+                ok = true;
+                usedFallback = true;
+                err.clear();
+            };
+
             if (!ok || payload.empty()) {
-                const std::string fallbackUrl = fallbackImageUrlForGame(game);
-                if (!fallbackUrl.empty()) {
-                    auto fallbackBytes = svcPtr->fetchImageBytesByUrl(fallbackUrl);
-                    if (fallbackBytes.isOk()) {
-                        payload = std::move(fallbackBytes).value();
-                        ok = !payload.empty();
-                        if (ok) {
-                            usedFallback = true;
-                            err.clear();
+                if (game == Game::YuGiOh) {
+                    if (auto fb =
+                            svcPtr->fetchImageBytesByUrl(
+                                "https://ms.yugipedia.com/thumb/e/e5/Back-EN.png/"
+                                "250px-Back-EN.png");
+                        fb.isOk()) {
+                        applyFallbackPayload(std::move(fb).value());
+                    }
+                    if (!ok || payload.empty()) {
+                        if (auto fb = svcPtr->fetchImageBytesByUrl(
+                                "https://ms.yugipedia.com/e/e5/Back-EN.png");
+                            fb.isOk()) {
+                            applyFallbackPayload(std::move(fb).value());
+                        }
+                    }
+                    if (!ok || payload.empty()) {
+                        namespace fs = std::filesystem;
+                        const fs::path asset =
+                            fs::path(exeDirCopy) / "assets" / "ygo_card_back.png";
+                        std::ifstream in(asset, std::ios::binary);
+                        if (in) {
+                            std::ostringstream ss;
+                            ss << in.rdbuf();
+                            applyFallbackPayload(ss.str());
+                        }
+                    }
+                } else {
+                    const std::string fallbackUrl = fallbackImageUrlForGame(game);
+                    if (!fallbackUrl.empty()) {
+                        auto fallbackBytes = svcPtr->fetchImageBytesByUrl(fallbackUrl);
+                        if (fallbackBytes.isOk()) {
+                            applyFallbackPayload(std::move(fallbackBytes).value());
                         }
                     }
                 }
@@ -419,7 +463,16 @@ private:
 
         wxMemoryInputStream stream(bytes.data(), bytes.size());
         wxImage img;
-        if (!img.LoadFile(stream, wxBITMAP_TYPE_ANY)) {
+        // libpng emits iCCP warnings for some upstream PNGs (e.g. Yugipedia
+        // scans with embedded sRGB chunks wx considers invalid). wx forwards
+        // those as wxLogWarning -> modal dialog. Suppress logging for decode
+        // only; the pixels load correctly either way.
+        bool decoded = false;
+        {
+            wxLogNull suppressPngWarnings;
+            decoded = img.LoadFile(stream, wxBITMAP_TYPE_ANY);
+        }
+        if (!decoded) {
             previewStatus_->SetLabelText("(preview decode failed)");
             clearPreview();
             Layout();
@@ -477,6 +530,7 @@ private:
 
     ImageService&       imageService_;
     CardPreviewService& cardPreview_;
+    std::string          exeDirForBundledAssets_;
     std::optional<TCard> card_;
 
     wxStaticBitmap* previewBitmap_{nullptr};

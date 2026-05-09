@@ -4,6 +4,7 @@
 #include "ccm/domain/Enums.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
+#include "ccm/domain/YuGiOhCard.hpp"
 #include "ccm/domain/Set.hpp"
 
 #include <nlohmann/json.hpp>
@@ -18,6 +19,9 @@ TEST_SUITE("domain enums round-trip JSON as strings") {
 
         nlohmann::json j2 = "Pokemon";
         CHECK(j2.get<Game>() == Game::Pokemon);
+
+        nlohmann::json jYgo = "YuGiOh";
+        CHECK(jYgo.get<Game>() == Game::YuGiOh);
 
         nlohmann::json j3 = Theme::Dark;
         CHECK(j3.get<std::string>() == "Dark");
@@ -119,5 +123,34 @@ TEST_SUITE("Configuration JSON matches Rust serde aliases") {
 
         const auto back = j.get<Configuration>();
         CHECK(back == cfg);
+    }
+}
+
+TEST_SUITE("YuGiOhCard JSON") {
+    TEST_CASE("round-trips with setNo and rarity fields") {
+        YuGiOhCard c;
+        c.id = 77;
+        c.amount = 2;
+        c.name = "Blue-Eyes White Dragon";
+        c.set = Set{"SDK-001", "Starter Deck Kaiba", "2002/03/29"};
+        c.setNo = "SDK-001";
+        c.rarity = "Ultra Rare";
+        c.rarityCode = "(UR)";
+        c.note = "classic";
+        c.images = {"77+starter+blue-eyes+0.png"};
+        c.language = Language::English;
+        c.condition = Condition::NearMint;
+        c.firstEdition = true;
+        c.signed_ = false;
+        c.altered = false;
+
+        nlohmann::json j = c;
+        CHECK(j.at("setNo") == "SDK-001");
+        CHECK(j.at("rarity") == "Ultra Rare");
+        CHECK(j.at("rarityCode") == "(UR)");
+        CHECK(j.at("signed") == false);
+
+        const YuGiOhCard back = j.get<YuGiOhCard>();
+        CHECK(back == c);
     }
 }

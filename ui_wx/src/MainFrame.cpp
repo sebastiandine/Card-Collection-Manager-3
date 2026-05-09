@@ -83,7 +83,7 @@ void ensureDataStorageScaffold(const Configuration& cfg) {
 
 MainFrame::MainFrame(AppContext& ctx)
     : wxFrame(nullptr, wxID_ANY, "Card Collection Manager 3",
-              wxDefaultPosition, wxSize(1210, 700)),
+              wxDefaultPosition, wxSize(1210, 770)),
       ctx_(ctx),
       activeGame_(ctx.config.current().defaultGame) {
     buildMenuBar();

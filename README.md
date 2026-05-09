@@ -6,6 +6,11 @@
 
 Card Collection Manager 3 is an extensible desktop application for managing trading card game collections. It is designed as a practical way to track cards and manage per-card images for large collections, with local per-game data, set synchronization workflows, and a desktop-first UX. The app preserves the established JSON layout from earlier CCM versions so existing collections stay compatible.
 
+Currently, the application supports the following TCGs:
+- Magic the Gathering
+- Pokemon TCG
+- Yu-Gi-Oh!
+
 ## Screenshots
 
 ### Magic The Gathering
@@ -15,6 +20,11 @@ Card Collection Manager 3 is an extensible desktop application for managing trad
 ### Pokemon TCG
 
 ![CCM3 Demo - Pokemon](docs/assets/images/demo-pkm.png)
+
+### Yu-Gi-Oh!
+
+![CCM3 Demo - YuGiOh](docs/assets/images/demo-ygo.png)
+
 
 ## Migrating From CCM1 And CCM2
 

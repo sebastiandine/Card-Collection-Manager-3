@@ -90,6 +90,7 @@ protected:
         }
         buildLayout();
         populateChoices();
+        openingSnapshot_ = card_;
         Thaw();
     }
 
@@ -119,6 +120,11 @@ protected:
         return "(no sets cached - use Sets > " + updateMenuName() + ")";
     }
 
+    // Called when the card name field changes. Games that cache upstream print
+    // metadata keyed by `(name, set)` should clear it here so stale "Next"
+    // controls cannot outlive the lookup identity.
+    virtual void onCardLookupContextChanged() {}
+
     // Common helpers ----------------------------------------------------------
 
     void appendRow(wxFlexGridSizer* grid, const wxString& label, wxWindow* ctrl) {
@@ -129,12 +135,26 @@ protected:
 
     [[nodiscard]] TCard&       mutableCard() noexcept       { return card_; }
     [[nodiscard]] const TCard& constCard() const noexcept   { return card_; }
+    void syncCardFromControls() { writeFromControls(); }
+    [[nodiscard]] wxComboBox* setComboControl() const noexcept { return setCombo_; }
+
+    [[nodiscard]] const Set* selectedSetFromControls() const {
+        const auto& available = availableSets();
+        if (!setCombo_ || !setCombo_->IsEnabled()) return nullptr;
+        const int sel = setCombo_->GetSelection();
+        if (sel < 0 || static_cast<std::size_t>(sel) >= available.size()) return nullptr;
+        return &available[static_cast<std::size_t>(sel)];
+    }
 
 private:
     void readSets() {
         auto loaded = setService_.getSets(game_);
         if (loaded.isOk()) {
             sets_ = std::move(loaded).value();
+            std::sort(sets_.begin(), sets_.end(),
+                      [](const Set& a, const Set& b) {
+                          return a.releaseDate < b.releaseDate;
+                      });
         }
     }
 
@@ -148,6 +168,10 @@ private:
         grid->AddGrowableCol(1, 1);
 
         nameCtrl_  = new wxTextCtrl(this, wxID_ANY, wxString::FromUTF8(card_.name.c_str()));
+        nameCtrl_->Bind(wxEVT_TEXT, [this](wxCommandEvent& ev) {
+            onCardLookupContextChanged();
+            ev.Skip();
+        });
         appendRow(grid, "Name", nameCtrl_);
 
         setCombo_ = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0,
@@ -393,6 +417,14 @@ private:
                                     "Add card", wxOK | wxICON_INFORMATION);
             return;
         }
+        if (mode_ == EditMode::Edit && !(card_ == openingSnapshot_)) {
+            if (showThemedConfirmDialog(
+                    this,
+                    wxString::FromUTF8("Save changes to this card?"),
+                    wxString::FromUTF8("Save changes")) != wxID_YES) {
+                return;
+            }
+        }
         ev.Skip();
     }
 
@@ -503,6 +535,7 @@ private:
     SetService&   setService_;
     EditMode      mode_;
     TCard         card_;
+    TCard         openingSnapshot_{};
     Game          game_;
 
     std::vector<Set>        sets_;

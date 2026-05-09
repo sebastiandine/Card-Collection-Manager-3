@@ -70,40 +70,46 @@ std::string PokemonCardPreviewSource::buildSearchUrl(std::string_view name,
     return std::string("https://api.pokemontcg.io/v2/cards?q=") + urlEncode(query);
 }
 
-Result<std::string> PokemonCardPreviewSource::parseResponse(const std::string& body) {
+Result<std::string, PreviewLookupError>
+PokemonCardPreviewSource::parseResponse(const std::string& body) {
+    using R = Result<std::string, PreviewLookupError>;
+    using K = PreviewLookupError::Kind;
     try {
         const auto j = nlohmann::json::parse(body);
         if (!j.contains("data") || !j.at("data").is_array()) {
-            return Result<std::string>::err("Pokemon TCG response missing 'data' array.");
+            return R::err({K::Transient, "Pokemon TCG response missing 'data' array."});
         }
         const auto& data = j.at("data");
         if (data.empty()) {
-            return Result<std::string>::err("Pokemon TCG returned no matching cards.");
+            return R::err({K::NotFound, "Pokemon TCG returned no matching cards."});
         }
         const auto& first = data.at(0);
         if (!first.contains("images") || !first.at("images").is_object()) {
-            return Result<std::string>::err("Card has no 'images' object.");
+            return R::err({K::NotFound, "Card has no 'images' object."});
         }
         const auto& images = first.at("images");
         if (images.contains("large") && images.at("large").is_string()) {
-            return Result<std::string>::ok(images.at("large").get<std::string>());
+            return R::ok(images.at("large").get<std::string>());
         }
         if (images.contains("small") && images.at("small").is_string()) {
-            return Result<std::string>::ok(images.at("small").get<std::string>());
+            return R::ok(images.at("small").get<std::string>());
         }
-        return Result<std::string>::err("Card has no 'large' or 'small' image variant.");
+        return R::err({K::NotFound, "Card has no 'large' or 'small' image variant."});
     } catch (const std::exception& e) {
-        return Result<std::string>::err(
-            std::string("Pokemon TCG JSON parse error: ") + e.what());
+        return R::err({K::Transient,
+            std::string("Pokemon TCG JSON parse error: ") + e.what()});
     }
 }
 
-Result<std::string> PokemonCardPreviewSource::fetchImageUrl(std::string_view name,
-                                                            std::string_view setId,
-                                                            std::string_view setNo) {
+Result<std::string, PreviewLookupError>
+PokemonCardPreviewSource::fetchImageUrl(std::string_view name,
+                                        std::string_view setId,
+                                        std::string_view setNo) {
+    using R = Result<std::string, PreviewLookupError>;
+    using K = PreviewLookupError::Kind;
     const std::string url = buildSearchUrl(name, setId, setNo);
     auto resp = http_.get(url);
-    if (!resp) return Result<std::string>::err(resp.error());
+    if (!resp) return R::err({K::Transient, resp.error()});
     return parseResponse(resp.value());
 }
 

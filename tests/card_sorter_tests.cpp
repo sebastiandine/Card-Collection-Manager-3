@@ -8,6 +8,7 @@
 #include "ccm/domain/Enums.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
+#include "ccm/domain/YuGiOhCard.hpp"
 #include "ccm/domain/Set.hpp"
 #include "ccm/services/CardSorter.hpp"
 
@@ -59,6 +60,22 @@ PokemonCard pc(std::uint32_t id, std::string name,
     return c;
 }
 
+YuGiOhCard yc(std::uint32_t id, std::string name,
+              std::string setName, std::string releaseDate,
+              std::string setNo = "",
+              std::string rarity = "",
+              std::uint8_t amount = 1) {
+    YuGiOhCard c;
+    c.id = id;
+    c.name = std::move(name);
+    c.set.name = std::move(setName);
+    c.set.releaseDate = std::move(releaseDate);
+    c.setNo = std::move(setNo);
+    c.rarity = std::move(rarity);
+    c.amount = amount;
+    return c;
+}
+
 std::vector<std::uint32_t> ids(const std::vector<MagicCard>& v) {
     std::vector<std::uint32_t> out;
     out.reserve(v.size());
@@ -67,6 +84,13 @@ std::vector<std::uint32_t> ids(const std::vector<MagicCard>& v) {
 }
 
 std::vector<std::uint32_t> ids(const std::vector<PokemonCard>& v) {
+    std::vector<std::uint32_t> out;
+    out.reserve(v.size());
+    for (const auto& c : v) out.push_back(c.id);
+    return out;
+}
+
+std::vector<std::uint32_t> ids(const std::vector<YuGiOhCard>& v) {
     std::vector<std::uint32_t> out;
     out.reserve(v.size());
     for (const auto& c : v) out.push_back(c.id);
@@ -244,5 +268,17 @@ TEST_SUITE("CardSorter - empty / single-element inputs are no-ops") {
         sortMagicCards(v, MagicSortColumn::Amount, false);
         CHECK(v.size() == 1);
         CHECK(v.front().id == 42);
+    }
+}
+
+TEST_SUITE("CardSorter - YuGiOh columns") {
+    TEST_CASE("Amount sorts numerically") {
+        std::vector<YuGiOhCard> v = {
+            yc(1, "a", "X", "2000/01/01", "", "", 9),
+            yc(2, "b", "X", "2000/01/01", "", "", 11),
+            yc(3, "c", "X", "2000/01/01", "", "", 1),
+        };
+        sortYuGiOhCards(v, YuGiOhSortColumn::Amount, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{3, 1, 2});
     }
 }
