@@ -6,6 +6,9 @@ on:
       - master
     types:
       - closed
+  push:
+    branches:
+      - master
 
 permissions:
   contents: write
@@ -13,7 +16,7 @@ permissions:
 jobs:
   sonarqube:
     name: SonarQube Cloud scan
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -73,9 +76,7 @@ jobs:
 
   build-windows:
     name: Windows build + tests
-    needs:
-      - sonarqube
-      - compute-version
+    needs: compute-version
     uses: ./.github/workflows/master-windows.yml
     with:
       version: ${{ needs.compute-version.outputs.version }}
