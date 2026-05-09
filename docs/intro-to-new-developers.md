@@ -13,6 +13,8 @@ Card Collection Manager 3 builds as a native C++ desktop binary with CMake. The 
 - build system: CMake 3.22+ with `FetchContent`
 - language/toolchain: C++20, Clang preferred, MinGW-w64 GCC fallback on Windows
 - UI toolkit: wxWidgets (`ui_wx/` only)
+- REST/HTTP client library: `cpr` (libcurl-based, used through `IHttpClient`/`CprHttpClient`)
+- JSON library: `nlohmann/json`
 - test framework: `doctest`
 
 Use [Build Locally Guide](dow-doc-build-locally.md) for exact commands, generator options, runtime DLL notes, and troubleshooting details.

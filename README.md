@@ -1,22 +1,6 @@
 # Card Collection Manager 3
 
-Card Collection Manager 3 is an extensible desktop application for managing trading card game collections. It is designed as a practical way to track cards and manage per-card images for large collections, while preserving the established JSON layout from earlier CCM versions.
-
-> Status: MVP. Magic the Gathering is fully supported end-to-end. Pokemon support is present and still being completed.
-
-## What The App Does
-
-Card Collection Manager 3 lets you maintain local card collections with per-game data, set synchronization, card image management, and desktop-first workflows.
-
-## Technical Overview
-
-This is a C++20 project with a wxWidgets UI:
-
-- `core/`: domain logic, services, and infrastructure adapters
-- `ui_wx/`: wxWidgets presentation layer
-- `app/`: executable composition root
-
-Dependency direction is strict: `app -> ui_wx -> core`.
+Card Collection Manager 3 is an extensible desktop application for managing trading card game collections. It is designed as a practical way to track cards and manage per-card images for large collections, with local per-game data, set synchronization workflows, and a desktop-first UX. The app preserves the established JSON layout from earlier CCM versions so existing collections stay compatible.
 
 ## Migrating From CCM1 And CCM2
 
@@ -31,6 +15,22 @@ Basic migration flow:
 3. Start CCM3 and confirm the data directory in `File > Settings`.
 
 If your files are in the expected layout, collections should load without conversion.
+
+## Technical Overview
+
+This is a C++20 project with a wxWidgets UI:
+
+- `core/`: domain logic, services, and infrastructure adapters
+- `ui_wx/`: wxWidgets presentation layer
+- `app/`: executable composition root
+
+Key libraries used by the project:
+
+- `cpr` (libcurl-based): REST/HTTP calls
+- `nlohmann/json`: JSON serialization/deserialization
+- `doctest`: unit testing
+
+Dependency direction is strict: `app -> ui_wx -> core`.
 
 ## Documentation
 
@@ -53,5 +53,6 @@ This project continues earlier versions of Card Collection Manager:
 
 ## License
 
-This project is a personal implementation. See repository licenses and dependency
-licenses for details on included code and assets.
+This project is licensed under the [MIT License](LICENSE).
+
+Third-party dependencies and assets remain under their respective licenses.
