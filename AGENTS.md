@@ -11,6 +11,7 @@ C++ desktop implementation (originally based on a Tauri Rust+TS version) — sin
 - `docs/` — long-form developer documentation. Start with `docs/adding-a-new-game.md` for the canonical end-to-end procedure for extending the app with a new TCG. See `docs/AGENTS.md`.
 - `cmake/` — `Toolchain.cmake` (Clang first, MinGW-w64 fallback), `Dependencies.cmake` (FetchContent pins), `CompilerWarnings.cmake` (`ccm_warnings` interface target).
 - `CMakeLists.txt` — top-level. Defines options `CCM_USE_SYSTEM_WX` (default OFF) and `CCM_BUILD_TESTS` (default ON).
+  - Build metadata option: `CCM_APP_VERSION` (defaults to `${PROJECT_VERSION} (localbuild)` for local/manual builds, overridden by CI).
 
 ## Architecture rules (do not break)
 
@@ -48,7 +49,7 @@ Run from the **workspace root**.
 - Build everything:  
   `cmake --build build --parallel`
 - Run the app:  
-  `./build/bin/ccm` (`.\build\bin\ccm.exe` on Windows)
+ `./build/bin/ccm3` (`.\build\bin\ccm3.exe` on Windows)
 - Run tests (CCM_BUILD_TESTS defaults to ON):  
   `ctest --test-dir build --output-on-failure` — current baseline: **86 cases / 211 assertions, all green**.
 - Build tests only:  

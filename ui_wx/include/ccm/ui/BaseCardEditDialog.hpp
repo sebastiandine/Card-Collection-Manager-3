@@ -314,8 +314,8 @@ private:
 
         writeFromControls();
         if (card_.name.empty() || card_.set.id.empty()) {
-            wxMessageBox("Set the card name and set before adding images.",
-                         "Add image", wxOK | wxICON_INFORMATION, this);
+            showThemedMessageDialog(this, "Set the card name and set before adding images.",
+                                    "Add image", wxOK | wxICON_INFORMATION);
             return;
         }
         wxArrayString paths;
@@ -345,7 +345,7 @@ private:
             for (const auto& err : failed) {
                 msg += "- " + err + '\n';
             }
-            wxMessageBox(msg, "Add image", wxOK | wxICON_WARNING, this);
+            showThemedMessageDialog(this, msg, "Add image", wxOK | wxICON_WARNING);
         }
     }
 
@@ -355,8 +355,8 @@ private:
         const std::string name = imagesList_->GetString(sel).ToStdString();
         auto rm = imageService_.removeImage(game_, name);
         if (!rm) {
-            wxMessageBox("Failed to remove image: " + rm.error(),
-                         "Error", wxOK | wxICON_ERROR, this);
+            showThemedMessageDialog(this, "Failed to remove image: " + rm.error(),
+                                    "Error", wxOK | wxICON_ERROR);
             return;
         }
         card_.images.erase(card_.images.begin() + sel);
@@ -381,13 +381,13 @@ private:
     void onOk(wxCommandEvent& ev) {
         writeFromControls();
         if (card_.name.empty()) {
-            wxMessageBox("Name is required.", "Add card",
-                         wxOK | wxICON_INFORMATION, this);
+            showThemedMessageDialog(this, "Name is required.", "Add card",
+                                    wxOK | wxICON_INFORMATION);
             return;
         }
         if (card_.set.id.empty()) {
-            wxMessageBox("Pick a set first (use Sets > " + updateMenuName() + " if the list is empty).",
-                         "Add card", wxOK | wxICON_INFORMATION, this);
+            showThemedMessageDialog(this, "Pick a set first (use Sets > " + updateMenuName() + " if the list is empty).",
+                                    "Add card", wxOK | wxICON_INFORMATION);
             return;
         }
         ev.Skip();

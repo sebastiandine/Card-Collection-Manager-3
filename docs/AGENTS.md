@@ -5,6 +5,12 @@ Long-form contributor documentation that lives outside the source tree.
 ## Files
 
 - `adding-a-new-game.md` — the **canonical, end-to-end procedure** for adding a brand-new game module to the project. Covers required external resources (sets API, optional card-preview API, icons), domain type with stable JSON, set source + tests, optional card preview source + tests, `IGameModule` glue, `Game` enum + `dirNameForGame` wiring, deriving the three UI panel templates (`BaseCardListPanel<TCard, TSortColumn>`, `BaseCardEditDialog<TCard>`, `BaseSelectedCardPanel<TCard>`), the `IGameView` adapter, composition-root wiring in `app/main.cpp`, CMake additions, AGENTS.md updates, and the test checklist.
+- `ci-cd-guide.md` — user-facing CI/CD and release procedure: feature/master workflow split, versioning conventions, PR title guard for `master`, artifact naming, and a concrete "create a new release" checklist.
+- `versioning.md` — dedicated versioning reference: branch+sha scheme for feature builds, semantic version bump rules for `master`, tag format, and embedded app version behavior.
+- `dow-doc-build-locally.md` — complete local build/setup reference for Windows and Linux, including dependency management and troubleshooting.
+- `intro-to-new-developers.md` — onboarding map for new contributors: architecture, folder responsibilities, guardrails, anti-patterns, and links to deeper docs.
+- `testing-and-test-code-of-conduct.md` — testing workflow plus expected standards for writing and maintaining deterministic, hermetic, behavior-focused tests.
+- `README.md` — index page that clusters docs by area and links to all documents in this directory.
 
 ## Conventions
 

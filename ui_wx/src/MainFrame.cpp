@@ -10,8 +10,9 @@
 #include "ccm/ui/SvgIcons.hpp"
 #include "ccm/ui/Theme.hpp"
 
-#include <wx/aboutdlg.h>
 #include <wx/bmpbuttn.h>
+#include <wx/button.h>
+#include <wx/dialog.h>
 #include <wx/event.h>
 #include <wx/menu.h>
 #include <wx/menuitem.h>
@@ -375,11 +376,36 @@ void MainFrame::onUpdateSetsForGame(wxCommandEvent& ev) {
 }
 
 void MainFrame::onAbout(wxCommandEvent&) {
-    wxAboutDialogInfo info;
-    info.SetName("Card Collection Manager 3");
-    info.SetVersion(kAppVersion);
-    info.SetDescription("Desktop card collection manager for Magic and Pokemon.");
-    wxAboutBox(info, this);
+    wxDialog dlg(this, wxID_ANY, "About Card Collection Manager 3",
+                 wxDefaultPosition, wxDefaultSize,
+                 wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+
+    auto* root = new wxBoxSizer(wxVERTICAL);
+    auto* name = new wxStaticText(&dlg, wxID_ANY, "Card Collection Manager 3");
+    auto* version = new wxStaticText(&dlg, wxID_ANY, wxString("Version: ") + kAppVersion);
+    auto* desc = new wxStaticText(&dlg, wxID_ANY,
+                                  "Desktop card collection manager for Magic and Pokemon.");
+    wxFont titleFont = name->GetFont();
+    titleFont.MakeBold().MakeLarger();
+    name->SetFont(titleFont);
+
+    root->Add(name, 0, wxALL, 10);
+    root->Add(version, 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
+    root->Add(desc, 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
+    if (auto* buttons = dlg.CreateButtonSizer(wxOK)) {
+        root->Add(buttons, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 10);
+    }
+
+    dlg.SetSizerAndFit(root);
+    const wxSize fitSize = dlg.GetSize();
+    dlg.SetSize(fitSize.GetWidth(), static_cast<int>(fitSize.GetHeight() * 1.10));
+    const Theme currentTheme = ctx_.config.current().theme;
+    const ThemePalette palette = paletteForTheme(currentTheme);
+    applyThemeToWindowTree(&dlg, palette, currentTheme);
+    dlg.SetBackgroundColour(palette.panelBg);
+    dlg.SetForegroundColour(palette.text);
+    dlg.CentreOnParent();
+    dlg.ShowModal();
 }
 
 // Toolbar handlers ------------------------------------------------------------

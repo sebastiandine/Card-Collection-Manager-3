@@ -65,8 +65,8 @@ void PokemonGameView::refreshCollection() {
     if (listPanel_ == nullptr) return;
     auto loaded = collection_.list(Game::Pokemon);
     if (!loaded) {
-        wxMessageBox("Failed to load Pokemon collection: " + loaded.error(),
-                     "Error", wxOK | wxICON_ERROR);
+        showThemedMessageDialog(nullptr, "Failed to load Pokemon collection: " + loaded.error(),
+                                "Error", wxOK | wxICON_ERROR);
         return;
     }
     listPanel_->setCards(std::move(loaded).value());
@@ -102,8 +102,8 @@ void PokemonGameView::onAddCard(wxWindow* parentWindow) {
 
     auto added = collection_.add(Game::Pokemon, dlg.card());
     if (!added) {
-        wxMessageBox("Failed to add card: " + added.error(),
-                     "Error", wxOK | wxICON_ERROR, parentWindow);
+        showThemedMessageDialog(parentWindow, "Failed to add card: " + added.error(),
+                                "Error", wxOK | wxICON_ERROR);
         return;
     }
 
@@ -116,13 +116,13 @@ void PokemonGameView::onAddCard(wxWindow* parentWindow) {
             persisted.images = std::move(normalized).value();
             auto updated = collection_.update(Game::Pokemon, persisted);
             if (!updated) {
-                wxMessageBox("Card added, but image name normalization failed to persist: " + updated.error(),
-                             "Warning", wxOK | wxICON_WARNING, parentWindow);
+                showThemedMessageDialog(parentWindow, "Card added, but image name normalization failed to persist: " + updated.error(),
+                                        "Warning", wxOK | wxICON_WARNING);
             }
         }
     } else {
-        wxMessageBox("Card added, but image rename to ID-prefixed format failed: " + normalized.error(),
-                     "Warning", wxOK | wxICON_WARNING, parentWindow);
+        showThemedMessageDialog(parentWindow, "Card added, but image rename to ID-prefixed format failed: " + normalized.error(),
+                                "Warning", wxOK | wxICON_WARNING);
     }
     refreshCollection();
 }
@@ -131,7 +131,7 @@ void PokemonGameView::onEditCard(wxWindow* parentWindow) {
     if (listPanel_ == nullptr) return;
     auto sel = listPanel_->selected();
     if (!sel) {
-        wxMessageBox("Select a card first.", "Edit", wxOK | wxICON_INFORMATION, parentWindow);
+        showThemedMessageDialog(parentWindow, "Select a card first.", "Edit", wxOK | wxICON_INFORMATION);
         return;
     }
     PokemonCardEditDialog dlg(parentWindow, images_, sets_, EditMode::Edit, *sel,
@@ -146,8 +146,8 @@ void PokemonGameView::onEditCard(wxWindow* parentWindow) {
     if (dlg.ShowModal() != wxID_OK) return;
     auto updated = collection_.update(Game::Pokemon, dlg.card());
     if (!updated) {
-        wxMessageBox("Failed to update card: " + updated.error(),
-                     "Error", wxOK | wxICON_ERROR, parentWindow);
+        showThemedMessageDialog(parentWindow, "Failed to update card: " + updated.error(),
+                                "Error", wxOK | wxICON_ERROR);
         return;
     }
     refreshCollection();
@@ -157,17 +157,17 @@ void PokemonGameView::onDeleteCard(wxWindow* parentWindow) {
     if (listPanel_ == nullptr) return;
     auto sel = listPanel_->selected();
     if (!sel) {
-        wxMessageBox("Select a card first.", "Delete", wxOK | wxICON_INFORMATION, parentWindow);
+        showThemedMessageDialog(parentWindow, "Select a card first.", "Delete", wxOK | wxICON_INFORMATION);
         return;
     }
-    if (wxMessageBox("Delete \"" + sel->name + "\"?",
-                     "Confirm", wxYES_NO | wxICON_QUESTION, parentWindow) != wxYES) {
+    if (showThemedConfirmDialog(parentWindow, "Delete \"" + sel->name + "\"?",
+                                "Confirm") != wxID_YES) {
         return;
     }
     auto removed = collection_.remove(Game::Pokemon, sel->id);
     if (!removed) {
-        wxMessageBox("Failed to delete card: " + removed.error(),
-                     "Error", wxOK | wxICON_ERROR, parentWindow);
+        showThemedMessageDialog(parentWindow, "Failed to delete card: " + removed.error(),
+                                "Error", wxOK | wxICON_ERROR);
         return;
     }
     refreshCollection();
@@ -176,13 +176,13 @@ void PokemonGameView::onDeleteCard(wxWindow* parentWindow) {
 std::string PokemonGameView::onUpdateSets(wxWindow* parentWindow) {
     auto out = sets_.updateSets(Game::Pokemon);
     if (!out) {
-        wxMessageBox("Failed to update sets: " + out.error(),
-                     "Error", wxOK | wxICON_ERROR, parentWindow);
+        showThemedMessageDialog(parentWindow, "Failed to update sets: " + out.error(),
+                                "Error", wxOK | wxICON_ERROR);
         return "Update failed";
     }
     setsCache_ = out.value();
-    wxMessageBox("Updated " + std::to_string(out.value().size()) + " Pokemon sets.",
-                 "Sets updated", wxOK | wxICON_INFORMATION, parentWindow);
+    showThemedMessageDialog(parentWindow, "Updated " + std::to_string(out.value().size()) + " Pokemon sets.",
+                            "Sets updated", wxOK | wxICON_INFORMATION);
     return "Pokemon sets updated.";
 }
 

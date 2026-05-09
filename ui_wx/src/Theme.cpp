@@ -13,6 +13,8 @@
 #include <wx/statbmp.h>
 #include <wx/stattext.h>
 #include <wx/settings.h>
+#include <wx/msgdlg.h>
+#include <wx/sizer.h>
 #include <wx/textctrl.h>
 #include <wx/toplevel.h>
 #include <wx/window.h>
@@ -605,6 +607,78 @@ void applyThemeToWindowTree(wxWindow* root, const ThemePalette& palette, Theme t
     for (wxWindowList::compatibility_iterator it = children.GetFirst(); it; it = it->GetNext()) {
         applyThemeToWindowTree(it->GetData(), palette, theme);
     }
+}
+
+int showThemedMessageDialog(wxWindow* parent, const wxString& message, const wxString& caption, long style) {
+    wxDialog dlg(parent, wxID_ANY, caption, wxDefaultPosition, wxDefaultSize,
+                 wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+    auto* root = new wxBoxSizer(wxVERTICAL);
+    auto* label = new wxStaticText(&dlg, wxID_ANY, message);
+    root->Add(label, 0, wxALL | wxEXPAND, 12);
+
+    const bool yesNo = (style & wxYES_NO) != 0;
+    if (yesNo) {
+        auto* buttons = new wxStdDialogButtonSizer();
+        auto* yesBtn = new wxButton(&dlg, wxID_YES);
+        auto* noBtn = new wxButton(&dlg, wxID_NO);
+        yesBtn->SetLabelText("Yes");
+        noBtn->SetLabelText("No");
+        yesBtn->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) { dlg.EndModal(wxID_YES); });
+        noBtn->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) { dlg.EndModal(wxID_NO); });
+        yesBtn->SetDefault();
+        buttons->AddButton(yesBtn);
+        buttons->AddButton(noBtn);
+        buttons->Realize();
+        root->Add(buttons, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 12);
+    } else {
+        if (auto* buttons = dlg.CreateButtonSizer(wxOK)) {
+            root->Add(buttons, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 12);
+        }
+    }
+
+    dlg.SetSizerAndFit(root);
+    const wxSize fitSize = dlg.GetSize();
+    dlg.SetSize(fitSize.GetWidth(), static_cast<int>(fitSize.GetHeight() * 1.10));
+    const Theme theme = inferThemeFromWindow(parent);
+    const ThemePalette palette = paletteForTheme(theme);
+    applyThemeToWindowTree(&dlg, palette, theme);
+    dlg.SetBackgroundColour(palette.panelBg);
+    dlg.SetForegroundColour(palette.text);
+    dlg.CentreOnParent();
+    return dlg.ShowModal();
+}
+
+int showThemedConfirmDialog(wxWindow* parent, const wxString& message, const wxString& caption) {
+    wxDialog dlg(parent, wxID_ANY, caption, wxDefaultPosition, wxDefaultSize,
+                 wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+    auto* root = new wxBoxSizer(wxVERTICAL);
+    auto* label = new wxStaticText(&dlg, wxID_ANY, message);
+    root->Add(label, 0, wxALL | wxEXPAND, 12);
+
+    auto* buttons = new wxStdDialogButtonSizer();
+    auto* yesBtn = new wxButton(&dlg, wxID_YES);
+    auto* noBtn = new wxButton(&dlg, wxID_NO);
+    yesBtn->SetLabelText("Yes");
+    noBtn->SetLabelText("No");
+    yesBtn->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) { dlg.EndModal(wxID_YES); });
+    noBtn->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) { dlg.EndModal(wxID_NO); });
+    yesBtn->SetDefault();
+    buttons->AddButton(yesBtn);
+    buttons->AddButton(noBtn);
+    buttons->Realize();
+    root->Add(buttons, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 12);
+
+    dlg.SetSizerAndFit(root);
+    const wxSize fitSize = dlg.GetSize();
+    dlg.SetSize(fitSize.GetWidth(), static_cast<int>(fitSize.GetHeight() * 1.10));
+    const Theme theme = inferThemeFromWindow(parent);
+    const ThemePalette palette = paletteForTheme(theme);
+    applyThemeToWindowTree(&dlg, palette, theme);
+    dlg.SetBackgroundColour(palette.panelBg);
+    dlg.SetForegroundColour(palette.text);
+    dlg.CentreOnParent();
+
+    return dlg.ShowModal();
 }
 
 }  // namespace ccm::ui

@@ -1,4 +1,5 @@
 #include "ccm/ui/SettingsDialog.hpp"
+#include "ccm/ui/Theme.hpp"
 
 #include <wx/button.h>
 #include <wx/dirdlg.h>
@@ -86,8 +87,8 @@ void SettingsDialog::onOk(wxCommandEvent& ev) {
     }
     auto stored = config_.store(std::move(next));
     if (!stored) {
-        wxMessageBox("Failed to save settings: " + stored.error(),
-                     "Error", wxOK | wxICON_ERROR, this);
+        showThemedMessageDialog(this, "Failed to save settings: " + stored.error(),
+                                "Error", wxOK | wxICON_ERROR);
         return;
     }
     ev.Skip();
