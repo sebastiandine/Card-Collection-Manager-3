@@ -21,6 +21,10 @@ public:
     std::string lastName;
     std::string lastSetId;
     std::string lastSetNo;
+    std::string detectLastName;
+    std::string detectLastSetId;
+    AutoDetectedPrint detectedPrint{"LOB-001", "Ultra Rare"};
+    bool allowAutoDetect{true};
 
     Result<std::string> fetchImageUrl(std::string_view name,
                                       std::string_view setId,
@@ -30,6 +34,17 @@ public:
         lastSetNo = std::string(setNo);
         return ok ? Result<std::string>::ok(url)
                   : Result<std::string>::err(err);
+    }
+
+    Result<AutoDetectedPrint> detectFirstPrint(std::string_view name,
+                                               std::string_view setId) override {
+        detectLastName = std::string(name);
+        detectLastSetId = std::string(setId);
+        return Result<AutoDetectedPrint>::ok(detectedPrint);
+    }
+
+    [[nodiscard]] bool supportsAutoDetectPrint() const noexcept override {
+        return allowAutoDetect;
     }
 };
 
@@ -148,5 +163,42 @@ TEST_SUITE("CardPreviewService::fetchPreviewBytes") {
         const auto out = svc.fetchPreviewBytes(Game::Magic, "X", "abc", "");
         CHECK(out.isErr());
         CHECK(out.error() == "net down");
+    }
+}
+
+TEST_SUITE("CardPreviewService::detectFirstPrint") {
+    TEST_CASE("routes auto-detect to registered source") {
+        FakeSource source;
+        source.detectedPrint = {"LOB-005", "Secret Rare"};
+        FakeGameModule module;
+        module.gameId = Game::YuGiOh;
+        module.preview = &source;
+
+        FixedHttpClient http;
+        CardPreviewService svc{http};
+        svc.registerModule(module);
+
+        const auto out = svc.detectFirstPrint(Game::YuGiOh, "Dark Magician", "Legend of Blue Eyes White Dragon");
+        REQUIRE(out.isOk());
+        CHECK(out.value().setNo == "LOB-005");
+        CHECK(out.value().rarity == "Secret Rare");
+        CHECK(source.detectLastName == "Dark Magician");
+        CHECK(source.detectLastSetId == "Legend of Blue Eyes White Dragon");
+    }
+
+    TEST_CASE("returns explicit error when game does not enable auto-detect") {
+        FakeSource source;
+        source.allowAutoDetect = false;
+        FakeGameModule module;
+        module.gameId = Game::Magic;
+        module.preview = &source;
+
+        FixedHttpClient http;
+        CardPreviewService svc{http};
+        svc.registerModule(module);
+
+        const auto out = svc.detectFirstPrint(Game::Magic, "Any", "Any Set");
+        CHECK(out.isErr());
+        CHECK(out.error().find("not enabled") != std::string::npos);
     }
 }

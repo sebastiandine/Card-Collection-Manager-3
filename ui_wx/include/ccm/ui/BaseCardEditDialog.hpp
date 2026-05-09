@@ -129,6 +129,16 @@ protected:
 
     [[nodiscard]] TCard&       mutableCard() noexcept       { return card_; }
     [[nodiscard]] const TCard& constCard() const noexcept   { return card_; }
+    void syncCardFromControls() { writeFromControls(); }
+    [[nodiscard]] wxComboBox* setComboControl() const noexcept { return setCombo_; }
+
+    [[nodiscard]] const Set* selectedSetFromControls() const {
+        const auto& available = availableSets();
+        if (!setCombo_ || !setCombo_->IsEnabled()) return nullptr;
+        const int sel = setCombo_->GetSelection();
+        if (sel < 0 || static_cast<std::size_t>(sel) >= available.size()) return nullptr;
+        return &available[static_cast<std::size_t>(sel)];
+    }
 
 private:
     void readSets() {

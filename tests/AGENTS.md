@@ -15,7 +15,7 @@
 - `set_service_tests.cpp` — `SetService` with `FakeSetSource` + `InMemSetRepo`.
 - `magic_set_source_tests.cpp` — `MagicSetSource::parseResponse` (Scryfall mapping). Drives `fetchAll` via `FixedHttpClient` fake.
 - `magic_card_preview_source_tests.cpp` — `MagicCardPreviewSource::buildSearchUrl` URL-encoding rules + `parseResponse` (`data[0].image_uris.normal`). Drives `fetchImageUrl` via `FixedHttpClient`.
-- `card_preview_service_tests.cpp` — `CardPreviewService` registry/orchestration through `registerModule(IGameModule&)` with an inline `FakeGameModule` returning a `FakeSource : ICardPreviewSource` and a `FixedHttpClient`. Pin-down for the "module returning nullptr is silently skipped" rule.
+- `card_preview_service_tests.cpp` — `CardPreviewService` registry/orchestration through `registerModule(IGameModule&)` with an inline `FakeGameModule` returning a `FakeSource : ICardPreviewSource` and a `FixedHttpClient`. Includes pin-downs for the "module returning nullptr is silently skipped" rule and the per-game `detectFirstPrint` opt-in guard.
 - `pokemon_set_source_tests.cpp` — `PokemonSetSource::parseResponse` (api.pokemontcg.io/v2/sets shape — `data[].id`, `name`, `releaseDate` already in `YYYY/MM/DD`) + sort-by-release-date stability. Drives `fetchAll` via `FixedHttpClient` and asserts the public endpoint URL.
 - `pokemon_card_preview_source_tests.cpp` — `PokemonCardPreviewSource::buildSearchUrl` (percent-encoded `name:` / `set.id:` / `number:` triple, with collector-number `4/102` -> `4` normalization) + `parseResponse` (`data[0].images.large` with `images.small` fallback). Drives `fetchImageUrl` via `FixedHttpClient`.
 - `yugioh_set_source_tests.cpp` — `YuGiOhSetSource::parseResponse` for YGOPRODeck `cardsets.php` (`set_code`, `set_name`, `tcg_date`) including `YYYY-MM-DD` -> `YYYY/MM/DD` rewrite and chronological sort checks.
@@ -39,6 +39,7 @@
 - After modifying `formatTextForFs` or `parseIndexFromFilename` you **must** extend `fs_names_tests.cpp` — these are byte-compatibility shims with the original Rust code.
 - After adding a new service in `core/` you **must** add a corresponding `<name>_service_tests.cpp` with at least the happy-path and one error-path test.
 - After adding a new game's set source / card preview source you **must** add `tests/<name>_set_source_tests.cpp` and (if applicable) `tests/<name>_card_preview_source_tests.cpp` mirroring the Magic and Pokemon files. Add them to `tests/CMakeLists.txt`.
+- After adding or changing `ICardPreviewSource` optional capabilities (for example `detectFirstPrint`), you **must** extend `card_preview_service_tests.cpp` and the corresponding game source tests to cover both supported and unsupported paths.
 
 ## Commands
 

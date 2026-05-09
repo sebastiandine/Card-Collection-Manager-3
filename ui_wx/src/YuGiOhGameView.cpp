@@ -98,7 +98,7 @@ void YuGiOhGameView::onAddCard(wxWindow* parentWindow) {
     fresh.language = Language::English;
     fresh.condition = Condition::NearMint;
 
-    YuGiOhCardEditDialog dlg(parentWindow, images_, sets_, EditMode::Create, fresh,
+    YuGiOhCardEditDialog dlg(parentWindow, images_, sets_, cardPreview_, EditMode::Create, fresh,
                              &setsForDialog());
     {
         const Theme currentTheme = config_.current().theme;
@@ -143,7 +143,7 @@ void YuGiOhGameView::onEditCard(wxWindow* parentWindow) {
         showThemedMessageDialog(parentWindow, "Select a card first.", "Edit", wxOK | wxICON_INFORMATION);
         return;
     }
-    YuGiOhCardEditDialog dlg(parentWindow, images_, sets_, EditMode::Edit, *sel,
+    YuGiOhCardEditDialog dlg(parentWindow, images_, sets_, cardPreview_, EditMode::Edit, *sel,
                              &setsForDialog());
     {
         const Theme currentTheme = config_.current().theme;

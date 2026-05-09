@@ -15,6 +15,11 @@
 
 namespace ccm {
 
+struct AutoDetectedPrint {
+    std::string setNo;
+    std::string rarity;
+};
+
 class ICardPreviewSource {
 public:
     virtual ~ICardPreviewSource() = default;
@@ -25,6 +30,17 @@ public:
     virtual Result<std::string> fetchImageUrl(std::string_view name,
                                               std::string_view setId,
                                               std::string_view setNo) = 0;
+
+    // Opt-in switch for per-game print metadata detection.
+    [[nodiscard]] virtual bool supportsAutoDetectPrint() const noexcept { return false; }
+
+    // Optional metadata lookup used by game-specific edit dialogs. The default
+    // implementation returns an explicit "unsupported" error so games without
+    // print metadata APIs do not need to override it.
+    virtual Result<AutoDetectedPrint> detectFirstPrint(std::string_view /*name*/,
+                                                       std::string_view /*setId*/) {
+        return Result<AutoDetectedPrint>::err("Auto-detect not supported by this game.");
+    }
 };
 
 }  // namespace ccm

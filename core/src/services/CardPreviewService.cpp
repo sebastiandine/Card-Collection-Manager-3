@@ -25,6 +25,19 @@ Result<std::string> CardPreviewService::fetchPreviewBytes(Game game,
     return Result<std::string>::ok(std::move(bytes).value());
 }
 
+Result<AutoDetectedPrint> CardPreviewService::detectFirstPrint(Game game,
+                                                               std::string_view name,
+                                                               std::string_view setId) {
+    auto it = sources_.find(game);
+    if (it == sources_.end() || it->second == nullptr) {
+        return Result<AutoDetectedPrint>::err("No preview source registered for this game.");
+    }
+    if (!it->second->supportsAutoDetectPrint()) {
+        return Result<AutoDetectedPrint>::err("Auto-detect not enabled for this game.");
+    }
+    return it->second->detectFirstPrint(name, setId);
+}
+
 Result<std::string> CardPreviewService::fetchImageBytesByUrl(std::string_view url) {
     auto bytes = http_.get(url);
     if (!bytes) return Result<std::string>::err(bytes.error());

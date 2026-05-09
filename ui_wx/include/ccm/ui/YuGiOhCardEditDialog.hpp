@@ -1,7 +1,10 @@
 #pragma once
 
 #include "ccm/domain/YuGiOhCard.hpp"
+#include "ccm/services/CardPreviewService.hpp"
 #include "ccm/ui/BaseCardEditDialog.hpp"
+#include <wx/button.h>
+#include <wx/stattext.h>
 
 namespace ccm::ui {
 
@@ -10,6 +13,7 @@ public:
     YuGiOhCardEditDialog(wxWindow* parent,
                          ImageService& imageService,
                          SetService& setService,
+                         CardPreviewService& cardPreview,
                          EditMode mode,
                          YuGiOhCard initial,
                          const std::vector<Set>* preloadedSets = nullptr);
@@ -22,8 +26,21 @@ protected:
     [[nodiscard]] std::string updateMenuName() const override { return "Update Yu-Gi-Oh!"; }
 
 private:
+    void onAutoDetectSetNo(wxCommandEvent&);
+    void onAutoDetectRarity(wxCommandEvent&);
+    void onSetNoTextChanged(wxCommandEvent&);
+    void onSetSelectionChanged(wxCommandEvent&);
+    void autoDetectFromApi(bool fillSetNo, bool fillRarity);
+    void refreshSetNoFullPreview();
+    [[nodiscard]] std::string extractSetNoNumeric(std::string_view fullSetNo) const;
+    [[nodiscard]] std::string composeFullSetNo(std::string_view numeric) const;
+
+    CardPreviewService& cardPreview_;
     wxTextCtrl* setNoCtrl_{nullptr};
+    wxStaticText* setNoFullPreview_{nullptr};
     wxChoice*   rarityChoice_{nullptr};
+    wxButton*   autoSetNoBtn_{nullptr};
+    wxButton*   autoRarityBtn_{nullptr};
     wxCheckBox* firstEditionCheck_{nullptr};
     wxCheckBox* signedCheck_{nullptr};
     wxCheckBox* alteredCheck_{nullptr};

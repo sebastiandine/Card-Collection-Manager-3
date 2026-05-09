@@ -43,6 +43,10 @@ public:
                                           std::string_view setId,
                                           std::string_view setNo);
 
+    Result<AutoDetectedPrint> detectFirstPrint(Game game,
+                                               std::string_view name,
+                                               std::string_view setId);
+
     // Download image bytes from a fully-qualified URL without going through
     // per-game preview-source resolution.
     Result<std::string> fetchImageBytesByUrl(std::string_view url);

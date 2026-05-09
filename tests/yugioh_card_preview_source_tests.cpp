@@ -47,6 +47,23 @@ TEST_SUITE("YuGiOhCardPreviewSource::parseResponse") {
     }
 }
 
+TEST_SUITE("YuGiOhCardPreviewSource::parseFirstPrint") {
+    TEST_CASE("returns first print for preferred set name") {
+        const std::string json = R"({
+          "data":[
+            {"card_sets":[
+              {"set_name":"Metal Raiders","set_code":"MRD-001","set_rarity":"Ultra Rare"},
+              {"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB-001","set_rarity":"Ultra Rare"}
+            ]}
+          ]
+        })";
+        const auto out = YuGiOhCardPreviewSource::parseFirstPrint(json, "Legend of Blue Eyes White Dragon");
+        REQUIRE(out.isOk());
+        CHECK(out.value().setNo == "LOB-001");
+        CHECK(out.value().rarity == "Ultra Rare");
+    }
+}
+
 TEST_SUITE("YuGiOhCardPreviewSource::fetchImageUrl") {
     TEST_CASE("network success parses with tuple-encoded setNo+rarity") {
         FixedHttpClient http;

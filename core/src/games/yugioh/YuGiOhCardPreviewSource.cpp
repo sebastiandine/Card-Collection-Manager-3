@@ -124,6 +124,46 @@ Result<std::string> YuGiOhCardPreviewSource::parseResponse(const std::string& bo
     }
 }
 
+Result<AutoDetectedPrint> YuGiOhCardPreviewSource::parseFirstPrint(
+    const std::string& body, std::string_view preferredSetName) {
+    try {
+        const auto j = nlohmann::json::parse(body);
+        if (!j.contains("data") || !j.at("data").is_array() || j.at("data").empty()) {
+            return Result<AutoDetectedPrint>::err("YGOPRODeck returned no matching cards.");
+        }
+        const std::string wantedSet = trim(std::string(preferredSetName));
+        for (const auto& card : j.at("data")) {
+            if (!card.contains("card_sets") || !card.at("card_sets").is_array()) continue;
+            for (const auto& print : card.at("card_sets")) {
+                const std::string setName = trim(print.value("set_name", ""));
+                if (!wantedSet.empty() && setName != wantedSet) continue;
+                AutoDetectedPrint out;
+                out.setNo = trim(print.value("set_code", ""));
+                out.rarity = trim(print.value("set_rarity", ""));
+                if (!out.setNo.empty() || !out.rarity.empty()) {
+                    return Result<AutoDetectedPrint>::ok(std::move(out));
+                }
+            }
+        }
+        // Fallback: no preferred-set print found; pick first available print.
+        const auto& firstCard = j.at("data").at(0);
+        if (firstCard.contains("card_sets") && firstCard.at("card_sets").is_array()
+            && !firstCard.at("card_sets").empty()) {
+            const auto& print = firstCard.at("card_sets").at(0);
+            AutoDetectedPrint out;
+            out.setNo = trim(print.value("set_code", ""));
+            out.rarity = trim(print.value("set_rarity", ""));
+            if (!out.setNo.empty() || !out.rarity.empty()) {
+                return Result<AutoDetectedPrint>::ok(std::move(out));
+            }
+        }
+        return Result<AutoDetectedPrint>::err("Could not auto-detect set print metadata.");
+    } catch (const std::exception& e) {
+        return Result<AutoDetectedPrint>::err(
+            std::string("YGOPRODeck JSON parse error: ") + e.what());
+    }
+}
+
 Result<std::string> YuGiOhCardPreviewSource::fetchImageUrl(std::string_view name,
                                                            std::string_view setId,
                                                            std::string_view setNo) {
@@ -146,6 +186,19 @@ Result<std::string> YuGiOhCardPreviewSource::fetchImageUrl(std::string_view name
     auto fallback = http_.get(fallbackUrl);
     if (!fallback) return Result<std::string>::err(fallback.error());
     return parseResponse(fallback.value(), number, rarity);
+}
+
+Result<AutoDetectedPrint> YuGiOhCardPreviewSource::detectFirstPrint(std::string_view name,
+                                                                    std::string_view setId) {
+    const std::string url = buildSearchUrl(name, setId);
+    auto resp = http_.get(url);
+    if (resp) {
+        return parseFirstPrint(resp.value(), setId);
+    }
+    const std::string fallbackUrl = buildSearchUrl(name, "");
+    auto fallback = http_.get(fallbackUrl);
+    if (!fallback) return Result<AutoDetectedPrint>::err(fallback.error());
+    return parseFirstPrint(fallback.value(), setId);
 }
 
 }  // namespace ccm

@@ -141,6 +141,8 @@ Mirror `core/include/ccm/games/pokemon/PokemonCardPreviewSource.hpp`. The header
 - `static std::string buildSearchUrl(std::string_view name, std::string_view setId, std::string_view setNo);`
 - `static Result<std::string> parseResponse(const std::string& body);`
 
+If your game benefits from edit-dialog metadata helpers (for example auto-detecting collector number / rarity), you can also opt in to `ICardPreviewSource::detectFirstPrint(...)` and route it via `CardPreviewService::detectFirstPrint(...)`. Keep this optional per game — default behavior for games that do not opt in should remain an explicit unsupported error.
+
 Both `buildSearchUrl` and `parseResponse` are static and pure on purpose: every URL-encoding and JSON-shape rule is testable without HTTP. Common edge cases your tests must cover:
 
 - Names with spaces, punctuation, or non-ASCII characters (percent-encoding correctness).
@@ -333,6 +335,8 @@ The reference implementation is `ui_wx/src/PokemonCardEditDialog.cpp`.
 
 When an extra field is from a controlled vocabulary (rarity tiers, print types, etc.), prefer a dropdown (`wxChoice`) over free text to keep list/filter values consistent and reduce user-input variants.
 
+If the external API expects a full print code (e.g. `LOB-001`) but users mostly edit only the numeric suffix, expose a numeric input plus a read-only derived preview (for example `(LOB-001)`) and compose/decompose the stored full value in `readExtraFromCard()` / `writeExtraToCard()`.
+
 ### 5.6 `<Name>GameView`
 
 This is the polymorphic glue between the new game's panels and the rest of the app. Create:
@@ -458,6 +462,7 @@ These do not match a single seam in this guide but are worth calling out explici
 
 - **Stale set caches.** Each `IGameView` caches `std::vector<Set> setsCache_`. After `onUpdateSets` succeeds, refresh the cache (assign the new vector). The reference implementations do this.
 - **Set ordering drift.** Keep set lists sorted by release date not only in `<Name>SetSource::parseResponse`, but also at UI consumption points (preloaded/cached vectors passed to `BaseCardEditDialog`). Older on-disk cache data or future parser changes can otherwise surface unsorted set pickers.
+- **Auto-detect feature scope.** Treat print auto-detect as a per-game capability. Do not assume every game supports it; gate UI affordances behind game-specific dialog logic and source opt-in.
 - **`signed_` / `signed`.** The C++ field is `signed_`; the JSON key is `"signed"`. This is intentional and must not be changed. The same convention applies to any new field where the natural name collides with a C++ keyword — pick a trailing-underscore C++ name and an unaliased JSON key.
 - **Spacer column index.** `BaseCardListPanel` reserves index `0` for a hidden zero-width spacer column (MSW comctl32 image-list gutter workaround). Real columns start at index `1`. If you ever need to call into `wxListCtrl` directly from a derived panel (you should not), remember this.
 - **Preview-fetch threading.** The async preview fetch in `BaseSelectedCardPanel` uses a `shared_ptr<State>` + `std::atomic alive` + `std::atomic currentGen` triple. Do not capture `this` raw in any background work you add to a new game's selected panel; copy that pattern verbatim.
