@@ -118,6 +118,18 @@ public:
     }
 };
 
+class AlwaysNegativeUrlCache final : public IPreviewByteCache {
+public:
+    [[nodiscard]] LoadResult load(std::string_view key) override {
+        if (!key.empty() && key.front() == 'u') {
+            return {HitKind::NegativeHit, {}};
+        }
+        return {HitKind::Miss, {}};
+    }
+    void store(std::string_view, const std::string&) override {}
+    void storeNegative(std::string_view) override {}
+};
+
 // Minimal IGameModule fake that exposes a configurable preview source.
 class FakeGameModule final : public IGameModule {
 public:
@@ -655,6 +667,64 @@ TEST_SUITE("CardPreviewService caching") {
         CHECK(second.value() == "card-back-bytes");
         CHECK(http.calls == 1);
     }
+
+    TEST_CASE("empty HTTP body is rejected and not cached") {
+        FakeSource source;
+        source.url = "https://example.com/empty.png";
+        FakeGameModule module;
+        module.gameId = Game::Magic;
+        module.preview = &source;
+
+        FixedHttpClient http;
+        http.body = "";
+
+        CardPreviewService svc{http};
+        svc.registerModule(module);
+
+        const auto first = svc.fetchPreviewBytes(Game::Magic, "Any", "set", "1");
+        CHECK(first.isErr());
+        CHECK(first.error().find("Empty response body") != std::string::npos);
+        CHECK(http.calls == 1);
+
+        const auto second = svc.fetchPreviewBytes(Game::Magic, "Any", "set", "1");
+        CHECK(second.isErr());
+        CHECK(http.calls == 2);
+    }
+
+    TEST_CASE("url negative entry on disk is treated as miss and refetched") {
+        FixedHttpClient http;
+        http.body = "card-back";
+        AlwaysNegativeUrlCache disk;
+        CardPreviewService svc{http, &disk};
+
+        const auto out = svc.fetchImageBytesByUrl("https://cdn.example/back.png");
+        REQUIRE(out.isOk());
+        CHECK(out.value() == "card-back");
+        CHECK(http.calls == 1);
+    }
+
+    TEST_CASE("in-memory LRU evicts oldest entry after exceeding capacity") {
+        FakeSource source;
+        FakeGameModule module;
+        module.gameId = Game::Magic;
+        module.preview = &source;
+
+        FixedHttpClient http;
+        http.body = "x";
+
+        CardPreviewService svc{http};
+        svc.registerModule(module);
+
+        const auto cap = CardPreviewService::kCacheCapacity;
+        for (std::size_t i = 0; i < cap + 1; ++i) {
+            const std::string name = std::string("LRU-") + std::to_string(i);
+            REQUIRE(svc.fetchPreviewBytes(Game::Magic, name, "lea", "").isOk());
+        }
+        REQUIRE(http.calls == cap + 1);
+
+        REQUIRE(svc.fetchPreviewBytes(Game::Magic, "LRU-0", "lea", "").isOk());
+        CHECK(http.calls == cap + 2);
+    }
 }
 
 TEST_SUITE("CardPreviewService::detectFirstPrint") {
@@ -692,6 +762,16 @@ TEST_SUITE("CardPreviewService::detectFirstPrint") {
         CHECK(out.isErr());
         CHECK(out.error().find("not enabled") != std::string::npos);
     }
+
+    TEST_CASE("unregistered game returns explicit error") {
+        FixedHttpClient http;
+        CardPreviewService svc{http};
+        const auto out =
+            svc.detectFirstPrint(Game::YuGiOh, "Dark Magician", "LOB");
+        CHECK(out.isErr());
+        CHECK(out.error().find("No preview source registered") !=
+              std::string::npos);
+    }
 }
 
 TEST_SUITE("CardPreviewService::detectPrintVariants") {
@@ -728,5 +808,15 @@ TEST_SUITE("CardPreviewService::detectPrintVariants") {
         const auto out = svc.detectPrintVariants(Game::Magic, "Any", "Any Set");
         CHECK(out.isErr());
         CHECK(out.error().find("not enabled") != std::string::npos);
+    }
+
+    TEST_CASE("unregistered game returns explicit error") {
+        FixedHttpClient http;
+        CardPreviewService svc{http};
+        const auto out =
+            svc.detectPrintVariants(Game::YuGiOh, "Dark Magician", "LOB");
+        CHECK(out.isErr());
+        CHECK(out.error().find("No preview source registered") !=
+              std::string::npos);
     }
 }

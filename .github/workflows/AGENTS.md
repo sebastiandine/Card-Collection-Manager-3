@@ -37,8 +37,8 @@ GitHub Actions workflows for CI, release automation, and policy checks.
 
 - Prefer minimal, surgical edits; avoid large workflow rewrites unless requested.
 - Reusable workflows should declare explicit `workflow_call` inputs for required context (e.g., version, merge SHA).
-- Sonar coverage steps that use `gcovr` must exclude third-party build trees at discovery time with `--exclude-directories` (for example `build/_deps`) so gcov does not process dependency `.gcda` files.
-- The Sonar scan step passes `-Dsonar.coverage.exclusions=**/ui_wx/**,**/app/**` so the coverage quality gate reflects **`ccm_core_tests`** only (wx UI and the composition root are not executed under test). `sonar.sources` stays `core,ui_wx,app`; bugs/security/duplications still analyze those trees.
+- Sonar coverage steps that use `gcovr` must exclude third-party build trees at discovery time with `--exclude-directories` (for example `build/_deps`) so gcov does not process dependency `.gcda` files. Also exclude the doctest tree from the gcovr report (`--exclude "^tests/"`) so coverage XML never carries test translation units; Sonar already scopes `sonar.sources` without `tests/`, but this keeps the feed explicit.
+- The Sonar scan step passes `-Dsonar.coverage.exclusions=**/ui_wx/**,**/app/**,**/tests/**` so the coverage quality gate reflects exercised **`core/`** lines only (`tests/` is not in `sonar.sources`; this pattern matches upstream feed paths if they ever appear). `sonar.sources` stays `core,ui_wx,app`; bugs/security/duplications still analyze those trees.
 - For Linux Sonar coverage jobs, keep compiler and gcov toolchain aligned; because `cmake/Toolchain.cmake` prefers Clang by default, set `-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++` explicitly in the coverage configure step when using gcovr default `gcov`.
 - Keep `permissions` least-privilege:
   - reusable build workflows: `contents: read`

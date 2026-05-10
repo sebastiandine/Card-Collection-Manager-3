@@ -24,6 +24,8 @@ add_executable(ccm_core_tests
     yugioh_card_preview_source_tests.cpp
     card_sorter_tests.cpp
     card_filter_tests.cpp
+    http_get_mapping_tests.cpp
+    cpr_http_client_tests.cpp
 
     main.cpp
 )

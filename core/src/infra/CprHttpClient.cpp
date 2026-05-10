@@ -1,5 +1,7 @@
 #include "ccm/infra/CprHttpClient.hpp"
 
+#include "ccm/util/HttpGetMapping.hpp"
+
 #include <cpr/cpr.h>
 
 #include <string>
@@ -24,7 +26,24 @@ CprHttpClient::CprHttpClient(std::chrono::milliseconds timeout)
                                         /*follow=*/true,
                                         /*cont_send_cred=*/false,
                                         cpr::PostRedirectFlags::POST_ALL});
+    executor_ = [this](std::string_view url) -> Result<std::string> {
+        session_->SetUrl(cpr::Url{std::string(url)});
+        cpr::Response r = session_->Get();
+
+        if (r.error) {
+            return mapHttpGetResponse(true, r.error.message, r.status_code, {},
+                                      url);
+        }
+        return mapHttpGetResponse(false, {}, r.status_code, std::move(r.text),
+                                  url);
+    };
 }
+
+CprHttpClient::CprHttpClient(GetExecutor executor,
+                             std::chrono::milliseconds timeout)
+    : timeout_(timeout),
+      session_(nullptr),
+      executor_(std::move(executor)) {}
 
 CprHttpClient::~CprHttpClient() = default;
 
@@ -34,18 +53,10 @@ Result<std::string> CprHttpClient::get(std::string_view url) {
     // (one fetch per BaseSelectedCardPanel selection change), so contention
     // is negligible.
     std::lock_guard<std::mutex> lock(sessionMutex_);
-
-    session_->SetUrl(cpr::Url{std::string(url)});
-    cpr::Response r = session_->Get();
-
-    if (r.error) {
-        return Result<std::string>::err("HTTP error: " + r.error.message);
+    if (!executor_) {
+        return Result<std::string>::err("HTTP error: no executor configured");
     }
-    if (r.status_code < 200 || r.status_code >= 300) {
-        return Result<std::string>::err(
-            "HTTP " + std::to_string(r.status_code) + " from " + std::string(url));
-    }
-    return Result<std::string>::ok(std::move(r.text));
+    return executor_(url);
 }
 
 }  // namespace ccm

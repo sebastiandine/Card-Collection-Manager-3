@@ -1,28 +1,14 @@
 #include "ccm/services/CardSorter.hpp"
 
 #include "ccm/domain/Enums.hpp"
+#include "ccm/util/AsciiUtils.hpp"
 
 #include <algorithm>
-#include <cctype>
 #include <string>
 #include <string_view>
 
 namespace ccm {
 namespace {
-
-// The comparator lowercases strings before compare via String.toLowerCase()-style behavior.
-// We use ASCII-only tolower; the original TS app processed the same fields and
-// never special-cased Unicode either, so this stays byte-compatible for the
-// realistic data set (English/German/etc. names already lowercase identically).
-std::string asciiLower(std::string_view s) {
-    std::string out;
-    out.reserve(s.size());
-    for (char c : s) {
-        out.push_back(static_cast<char>(
-            std::tolower(static_cast<unsigned char>(c))));
-    }
-    return out;
-}
 
 // Wrap a less-than predicate so that ascending=false flips its meaning,
 // mirroring `byField(field, asc)` in TableTemplate.tsx.

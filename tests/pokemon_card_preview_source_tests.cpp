@@ -54,6 +54,13 @@ TEST_SUITE("PokemonCardPreviewSource::buildSearchUrl") {
             "Mr. Mime", "base1", "");
         CHECK(url.find("%22Mr.%20Mime%22") != std::string::npos);
     }
+
+    TEST_CASE("empty setId omits the set.id clause") {
+        const auto url =
+            PokemonCardPreviewSource::buildSearchUrl("Pikachu", "", "25");
+        CHECK(url.find("set.id") == std::string::npos);
+        CHECK(url.find("number%3A25") != std::string::npos);
+    }
 }
 
 TEST_SUITE("PokemonCardPreviewSource::parseResponse") {
@@ -95,6 +102,35 @@ TEST_SUITE("PokemonCardPreviewSource::parseResponse") {
         const auto out = PokemonCardPreviewSource::parseResponse(R"({"meta":{}})");
         REQUIRE(out.isErr());
         CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
+    }
+
+    TEST_CASE("'data' present but not an array is Transient") {
+        const auto out = PokemonCardPreviewSource::parseResponse(R"({"data":{}})");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
+    }
+
+    TEST_CASE("'images' present but not an object is NotFound") {
+        const auto out =
+            PokemonCardPreviewSource::parseResponse(R"({"data":[{"images":[]}]})");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::NotFound);
+    }
+
+    TEST_CASE("large unusable type falls back to small string") {
+        const auto out = PokemonCardPreviewSource::parseResponse(R"({
+            "data":[{"images":{"large":123,"small":"https://only.small/img.png"}}]
+        })");
+        REQUIRE(out.isOk());
+        CHECK(out.value() == "https://only.small/img.png");
+    }
+
+    TEST_CASE("no usable large or small string yields NotFound") {
+        const auto out = PokemonCardPreviewSource::parseResponse(R"({
+            "data":[{"images":{"large":null,"small":false}}]
+        })");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::NotFound);
     }
 
     TEST_CASE("entry without images is classified as NotFound") {

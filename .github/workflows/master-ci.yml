@@ -55,6 +55,7 @@ jobs:
           --sonarqube build/sonarqube-coverage.xml
           --exclude "build/_deps/"
           --exclude-directories "build/_deps"
+          --exclude "^tests/"
 
       - name: SonarQube Cloud scan
         uses: SonarSource/sonarqube-scan-action@v5
@@ -69,7 +70,7 @@ jobs:
             -Dsonar.sources=core,ui_wx,app
             -Dsonar.cfamily.compile-commands=build/compile_commands.json
             -Dsonar.coverageReportPaths=build/sonarqube-coverage.xml
-            -Dsonar.coverage.exclusions=**/ui_wx/**,**/app/**
+            -Dsonar.coverage.exclusions=**/ui_wx/**,**/app/**,**/tests/**
 
   compute-version:
     name: Determine semantic version
