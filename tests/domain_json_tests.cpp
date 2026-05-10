@@ -169,23 +169,16 @@ TEST_SUITE("Configuration JSON matches Rust serde aliases") {
         CHECK(back == cfg);
     }
 
-    TEST_CASE("theme defaults to Light when missing from payload") {
+    TEST_CASE("missing theme key defaults to Light") {
         const nlohmann::json j = {
-            {"dataStorage", "/storage"},
-            {"defaultGame", "Magic"},
+            {"dataStorage", "/portable/data"},
+            {"defaultGame", "YuGiOh"},
         };
 
         const auto cfg = j.get<Configuration>();
-        CHECK(cfg.dataStorage == "/storage");
-        CHECK(cfg.defaultGame == Game::Magic);
+        CHECK(cfg.dataStorage == "/portable/data");
+        CHECK(cfg.defaultGame == Game::YuGiOh);
         CHECK(cfg.theme == Theme::Light);
-    }
-
-    TEST_CASE("missing required keys still throws") {
-        const nlohmann::json j = {
-            {"theme", "Dark"},
-        };
-        CHECK_THROWS(j.get<Configuration>());
     }
 }
 
@@ -214,5 +207,93 @@ TEST_SUITE("YuGiOhCard JSON") {
 
         const YuGiOhCard back = j.get<YuGiOhCard>();
         CHECK(back == c);
+    }
+
+    TEST_CASE("missing rarityCode in legacy rows is accepted and mapped to empty") {
+        const nlohmann::json j = {
+            {"id", 1},
+            {"amount", 1},
+            {"name", "Dark Magician"},
+            {"set", nlohmann::json{
+                {"id", "SDY"},
+                {"name", "Starter Deck: Yugi"},
+                {"releaseDate", "2002/03/29"},
+            }},
+            {"setNo", "SDY-006"},
+            {"rarity", "Ultra Rare"},
+            {"note", ""},
+            {"images", nlohmann::json::array()},
+            {"language", "English"},
+            {"condition", "NearMint"},
+            {"firstEdition", false},
+            {"signed", false},
+            {"altered", false},
+        };
+
+        const auto card = j.get<YuGiOhCard>();
+        CHECK(card.rarity == "Ultra Rare");
+        CHECK(card.rarityCode.empty());
+    }
+}
+
+TEST_SUITE("Domain JSON required fields") {
+    TEST_CASE("Set missing required key throws") {
+        const nlohmann::json j = {
+            {"id", "lea"},
+            {"name", "Limited Edition Alpha"},
+        };
+        CHECK_THROWS(j.get<Set>());
+    }
+
+    TEST_CASE("MagicCard missing required key throws") {
+        const nlohmann::json j = {
+            {"id", 10},
+            {"amount", 1},
+            {"name", "Lightning Bolt"},
+            {"set", nlohmann::json{
+                {"id", "lea"},
+                {"name", "Limited Edition Alpha"},
+                {"releaseDate", "1993/08/05"},
+            }},
+            // note missing on purpose
+            {"images", nlohmann::json::array()},
+            {"language", "English"},
+            {"condition", "NearMint"},
+            {"foil", false},
+            {"signed", false},
+            {"altered", false},
+        };
+        CHECK_THROWS(j.get<MagicCard>());
+    }
+
+    TEST_CASE("PokemonCard missing required key throws") {
+        const nlohmann::json j = {
+            {"id", 7},
+            {"amount", 1},
+            {"name", "Charizard"},
+            {"set", nlohmann::json{
+                {"id", "base1"},
+                {"name", "Base Set"},
+                {"releaseDate", "1999/01/09"},
+            }},
+            {"setNo", "4/102"},
+            {"note", ""},
+            {"images", nlohmann::json::array()},
+            {"language", "English"},
+            {"condition", "Excellent"},
+            {"firstEdition", true},
+            // holo missing on purpose
+            {"signed", false},
+            {"altered", false},
+        };
+        CHECK_THROWS(j.get<PokemonCard>());
+    }
+
+    TEST_CASE("Configuration missing required key throws") {
+        const nlohmann::json j = {
+            {"defaultGame", "Magic"},
+            {"theme", "Dark"},
+        };
+        CHECK_THROWS(j.get<Configuration>());
     }
 }

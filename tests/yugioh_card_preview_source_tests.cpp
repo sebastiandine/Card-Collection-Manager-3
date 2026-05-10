@@ -54,6 +54,23 @@ public:
     }
 };
 
+// First GET (filtered `cardset=` URL) fails; second GET (unfiltered) succeeds.
+// Exercises `YuGiOhCardPreviewSource::detectPrintVariants` narrow-query fallback.
+class FailFilteredThenOkHttpClient final : public IHttpClient {
+public:
+    std::string unfilteredBody;
+    int calls{0};
+
+    Result<std::string> get(std::string_view url) override {
+        ++calls;
+        std::string u(url);
+        if (u.find("cardset=") != std::string::npos) {
+            return Result<std::string>::err("filtered endpoint unavailable");
+        }
+        return Result<std::string>::ok(unfilteredBody);
+    }
+};
+
 }  // namespace
 
 TEST_SUITE("ygoPrintingSlotsMatch") {
@@ -250,6 +267,90 @@ TEST_SUITE("YuGiOhCardPreviewSource::parseYugipediaResponse") {
         REQUIRE(out.isErr());
         CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
     }
+
+    TEST_CASE("missing top-level query object is Transient") {
+        const auto out = YuGiOhCardPreviewSource::parseYugipediaResponse(
+            R"({"not_query":{}})", {"File.png"});
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
+    }
+
+    TEST_CASE("query.pages not an object is Transient") {
+        const auto out = YuGiOhCardPreviewSource::parseYugipediaResponse(
+            R"({"query":{"pages":[]}})", {"X.png"});
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
+    }
+}
+
+TEST_SUITE("YuGiOhCardPreviewSource::parseFallbackImageUrl") {
+    TEST_CASE("missing data array is Transient") {
+        const auto out = YuGiOhCardPreviewSource::parseFallbackImageUrl(R"({"meta":{}})", "Dark Magician");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
+    }
+
+    TEST_CASE("data present but not an array is Transient") {
+        const auto out =
+            YuGiOhCardPreviewSource::parseFallbackImageUrl(R"({"data":{}})", "X");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
+    }
+
+    TEST_CASE("empty data array is NotFound") {
+        const auto out = YuGiOhCardPreviewSource::parseFallbackImageUrl(R"({"data":[]})", "X");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::NotFound);
+    }
+
+    TEST_CASE("prefers exact-name row with image_url_small when image_url absent") {
+        const std::string json = R"({"data":[
+          {"name":"Dark Magician Girl","card_images":[{"image_url_small":"https://small.only/a.jpg"}]},
+          {"name":"Dark Magician","card_images":[{"image_url":"https://ignored/wrong.jpg"}]}
+        ]})";
+        const auto out = YuGiOhCardPreviewSource::parseFallbackImageUrl(json, "Dark Magician Girl");
+        REQUIRE(out.isOk());
+        CHECK(out.value() == "https://small.only/a.jpg");
+    }
+
+    TEST_CASE("exact-name match uses image_url_cropped when earlier slots absent") {
+        const std::string json = R"({"data":[{
+          "name":"Slifer",
+          "card_images":[{"image_url_cropped":"https://crop/z.jpg"}]
+        }]})";
+        const auto out = YuGiOhCardPreviewSource::parseFallbackImageUrl(json, "Slifer");
+        REQUIRE(out.isOk());
+        CHECK(out.value() == "https://crop/z.jpg");
+    }
+
+    TEST_CASE("no exact name match falls back to first ranked card_images row") {
+        const std::string json = R"({"data":[{
+          "name":"Dark Magician Girl",
+          "card_images":[{"image_url":"https://images/std-from-ranked-first.jpg"}]
+        }]})";
+        const auto out =
+            YuGiOhCardPreviewSource::parseFallbackImageUrl(json, "Dark Magician");
+        REQUIRE(out.isOk());
+        CHECK(out.value() == "https://images/std-from-ranked-first.jpg");
+    }
+
+    TEST_CASE("matching cards without usable images is NotFound") {
+        const std::string json = R"({"data":[{
+          "name":"Empty Card",
+          "card_images":[{}]
+        }]})";
+        const auto out =
+            YuGiOhCardPreviewSource::parseFallbackImageUrl(json, "Empty Card");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::NotFound);
+    }
+
+    TEST_CASE("malformed JSON is Transient") {
+        const auto out =
+            YuGiOhCardPreviewSource::parseFallbackImageUrl("{not json", "Any");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
+    }
 }
 
 TEST_SUITE("YuGiOhCardPreviewSource::parseFirstPrint") {
@@ -267,6 +368,18 @@ TEST_SUITE("YuGiOhCardPreviewSource::parseFirstPrint") {
         REQUIRE(out.isOk());
         CHECK(out.value().setNo == "LOB-001");
         CHECK(out.value().rarity == "Ultra Rare");
+    }
+
+    TEST_CASE("empty data array yields error") {
+        const auto out =
+            YuGiOhCardPreviewSource::parseFirstPrint(R"({"data":[]})", "Any Set");
+        CHECK(out.isErr());
+    }
+
+    TEST_CASE("card row without card_sets yields error") {
+        const auto out = YuGiOhCardPreviewSource::parseFirstPrint(
+            R"({"data":[{"name":"Solo"}]})", "Any Display Set");
+        CHECK(out.isErr());
     }
 }
 
@@ -325,6 +438,34 @@ TEST_SUITE("YuGiOhCardPreviewSource::parsePrintVariants") {
         REQUIRE(out.value().size() == 1);
         CHECK(out.value()[0].setNo == "SDY-043");
         CHECK(out.value()[0].rarity == "Super Rare");
+    }
+
+    TEST_CASE("malformed JSON surfaces as parse error") {
+        const auto out =
+            YuGiOhCardPreviewSource::parsePrintVariants("{bad json", "Mega Pack", "X");
+        REQUIRE(out.isErr());
+        CHECK(out.error().find("YGOPRODeck JSON parse error") != std::string::npos);
+    }
+}
+
+TEST_SUITE("YuGiOhCardPreviewSource::detectPrintVariants HTTP fallback") {
+    TEST_CASE("retries without cardset when the filtered request fails") {
+        FailFilteredThenOkHttpClient http;
+        http.unfilteredBody = R"({
+          "data":[{
+            "name":"Test Goblin",
+            "card_sets":[
+              {"set_name":"Mega Pack","set_code":"MP21-EN001","set_rarity":"Common"}
+            ]
+          }]
+        })";
+
+        YuGiOhCardPreviewSource src{http};
+        const auto out = src.detectPrintVariants("Test Goblin", "Mega Pack");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value()[0].setNo == "MP21-EN001");
+        REQUIRE(http.calls == 2);
     }
 }
 

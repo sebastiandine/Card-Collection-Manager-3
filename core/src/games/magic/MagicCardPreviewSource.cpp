@@ -1,39 +1,15 @@
 #include "ccm/games/magic/MagicCardPreviewSource.hpp"
 
+#include "ccm/util/Rfc3986.hpp"
+
 #include <nlohmann/json.hpp>
 
 #include <cctype>
-#include <sstream>
 #include <string>
 
 namespace ccm {
 
 namespace {
-
-// Percent-encode all bytes that are not unreserved per RFC 3986
-// (A-Z / a-z / 0-9 / - . _ ~). Spaces become %20, quotes become %22, etc.
-// Used to keep Scryfall's `q=...` parameter syntactically valid through cpr,
-// which does not URL-encode the URL string we hand it.
-std::string urlEncode(std::string_view in) {
-    std::ostringstream out;
-    out.fill('0');
-    out << std::hex << std::uppercase;
-    for (unsigned char c : in) {
-        const bool unreserved =
-            (c >= 'A' && c <= 'Z') ||
-            (c >= 'a' && c <= 'z') ||
-            (c >= '0' && c <= '9') ||
-            c == '-' || c == '.' || c == '_' || c == '~';
-        if (unreserved) {
-            out << static_cast<char>(c);
-        } else {
-            out << '%';
-            out.width(2);
-            out << static_cast<unsigned int>(c);
-        }
-    }
-    return out.str();
-}
 
 // Apply the same name massaging as the legacy query path before sending.
 std::string sanitizeName(std::string_view name) {
@@ -59,7 +35,8 @@ std::string MagicCardPreviewSource::buildSearchUrl(std::string_view name,
     query += sanitized;
     query += "\" AND set:";
     query += std::string(setId);
-    return std::string("https://api.scryfall.com/cards/search?q=") + urlEncode(query);
+    return std::string("https://api.scryfall.com/cards/search?q=") +
+           rfc3986PercentEncode(query);
 }
 
 Result<std::string, PreviewLookupError>

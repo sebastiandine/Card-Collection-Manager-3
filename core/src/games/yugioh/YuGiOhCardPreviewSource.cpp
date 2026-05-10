@@ -1,11 +1,12 @@
 #include "ccm/games/yugioh/YuGiOhCardPreviewSource.hpp"
 #include "ccm/util/YuGiOhPrintingSlot.hpp"
 
+#include "ccm/util/Rfc3986.hpp"
+
 #include <nlohmann/json.hpp>
 
 #include <array>
 #include <cctype>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -16,31 +17,6 @@
 namespace ccm {
 
 namespace {
-
-// RFC 3986 percent-encoder. Same rules as the Magic implementation; private
-// here so the YGO and Magic code paths can drift independently if the future
-// requires it (Yugipedia's MediaWiki API is fine with %20 for spaces and %7C
-// for the `|` separator inside `titles=`).
-std::string urlEncode(std::string_view in) {
-    std::ostringstream out;
-    out.fill('0');
-    out << std::hex << std::uppercase;
-    for (unsigned char c : in) {
-        const bool unreserved =
-            (c >= 'A' && c <= 'Z') ||
-            (c >= 'a' && c <= 'z') ||
-            (c >= '0' && c <= '9') ||
-            c == '-' || c == '.' || c == '_' || c == '~';
-        if (unreserved) {
-            out << static_cast<char>(c);
-        } else {
-            out << '%';
-            out.width(2);
-            out << static_cast<unsigned int>(c);
-        }
-    }
-    return out.str();
-}
 
 std::string trim(std::string s) {
     while (!s.empty() && std::isspace(static_cast<unsigned char>(s.front()))) s.erase(s.begin());
@@ -271,7 +247,7 @@ std::string YuGiOhCardPreviewSource::buildYugipediaQueryUrl(
     std::string url =
         "https://yugipedia.com/api.php?action=query&format=json"
         "&prop=imageinfo&iiprop=url&titles=";
-    url += urlEncode(joined);
+    url += rfc3986PercentEncode(joined);
     return url;
 }
 
@@ -335,10 +311,10 @@ Result<std::string, PreviewLookupError> YuGiOhCardPreviewSource::parseYugipediaR
 std::string YuGiOhCardPreviewSource::buildSearchUrl(std::string_view name,
                                                     std::string_view setName) {
     std::string url =
-        std::string("https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=") + urlEncode(name);
+        std::string("https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=") + rfc3986PercentEncode(name);
     if (!setName.empty()) {
         url += "&cardset=";
-        url += urlEncode(setName);
+        url += rfc3986PercentEncode(setName);
     }
     return url;
 }

@@ -1,38 +1,15 @@
 #include "ccm/games/pokemon/PokemonCardPreviewSource.hpp"
 
+#include "ccm/util/Rfc3986.hpp"
+
 #include <nlohmann/json.hpp>
 
 #include <cctype>
-#include <sstream>
 #include <string>
 
 namespace ccm {
 
 namespace {
-
-// RFC 3986 percent-encoder for the search-query payload. Same rules as the
-// Magic implementation; kept private so the two can drift independently if a
-// future API requires it.
-std::string urlEncode(std::string_view in) {
-    std::ostringstream out;
-    out.fill('0');
-    out << std::hex << std::uppercase;
-    for (unsigned char c : in) {
-        const bool unreserved =
-            (c >= 'A' && c <= 'Z') ||
-            (c >= 'a' && c <= 'z') ||
-            (c >= '0' && c <= '9') ||
-            c == '-' || c == '.' || c == '_' || c == '~';
-        if (unreserved) {
-            out << static_cast<char>(c);
-        } else {
-            out << '%';
-            out.width(2);
-            out << static_cast<unsigned int>(c);
-        }
-    }
-    return out.str();
-}
 
 // Strip everything after the first '/' in a Pokemon collector number.
 // The Pokemon TCG API expects `number:"4"`, but cards are commonly stored as
@@ -67,7 +44,8 @@ std::string PokemonCardPreviewSource::buildSearchUrl(std::string_view name,
         query += " number:";
         query += num;
     }
-    return std::string("https://api.pokemontcg.io/v2/cards?q=") + urlEncode(query);
+    return std::string("https://api.pokemontcg.io/v2/cards?q=") +
+           rfc3986PercentEncode(query);
 }
 
 Result<std::string, PreviewLookupError>

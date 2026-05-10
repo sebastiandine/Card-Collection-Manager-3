@@ -55,6 +55,7 @@ jobs:
           --sonarqube build/sonarqube-coverage.xml
           --exclude "build/_deps/"
           --exclude-directories "build/_deps"
+          --exclude "^tests/"
 
       - name: SonarQube Cloud scan
         uses: SonarSource/sonarqube-scan-action@v5

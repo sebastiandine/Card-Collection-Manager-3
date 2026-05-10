@@ -7,6 +7,7 @@
 #include "ccm/ports/IHttpClient.hpp"
 
 #include <chrono>
+#include <functional>
 #include <memory>
 #include <mutex>
 
@@ -23,7 +24,11 @@ namespace ccm {
 // only fires one outbound request at a time anyway.
 class CprHttpClient final : public IHttpClient {
 public:
+    using GetExecutor = std::function<Result<std::string>(std::string_view)>;
+
     explicit CprHttpClient(std::chrono::milliseconds timeout = std::chrono::milliseconds{30000});
+    CprHttpClient(GetExecutor executor,
+                  std::chrono::milliseconds timeout = std::chrono::milliseconds{30000});
     ~CprHttpClient() override;
 
     Result<std::string> get(std::string_view url) override;
@@ -31,6 +36,7 @@ public:
 private:
     std::chrono::milliseconds timeout_;
     std::unique_ptr<cpr::Session> session_;
+    GetExecutor executor_;
     std::mutex sessionMutex_;
 };
 

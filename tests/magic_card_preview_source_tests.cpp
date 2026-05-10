@@ -79,6 +79,26 @@ TEST_SUITE("MagicCardPreviewSource::parseResponse") {
         CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
     }
 
+    TEST_CASE("'data' present but not an array is Transient") {
+        const auto out = MagicCardPreviewSource::parseResponse(R"({"data":{}})");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
+    }
+
+    TEST_CASE("image_uris present but not an object is NotFound") {
+        const auto out = MagicCardPreviewSource::parseResponse(
+            R"({"data":[{"name":"X","image_uris":[]}]})");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::NotFound);
+    }
+
+    TEST_CASE("'normal' present but not a string is NotFound") {
+        const auto out = MagicCardPreviewSource::parseResponse(
+            R"({"data":[{"image_uris":{"normal":null}}]})");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::NotFound);
+    }
+
     TEST_CASE("entry without image_uris is classified as NotFound (double-faced cards)") {
         const std::string json = R"({
             "data": [

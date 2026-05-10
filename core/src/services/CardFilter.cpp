@@ -1,28 +1,13 @@
 #include "ccm/services/CardFilter.hpp"
 
 #include "ccm/domain/Enums.hpp"
-#include "ccm/util/YuGiOhPrintingSlot.hpp"
+#include "ccm/util/AsciiUtils.hpp"
 
-#include <cctype>
 #include <string>
 #include <string_view>
 
 namespace ccm {
 namespace {
-
-// Plain ASCII tolower, same approach as CardSorter::asciiLower. The old JS path used
-// String.prototype.toLowerCase() which on the realistic ASCII-only data set
-// (English/German set names, Scryfall-fed labels, integer amounts) behaves
-// identically.
-std::string asciiLower(std::string_view s) {
-    std::string out;
-    out.reserve(s.size());
-    for (char c : s) {
-        out.push_back(static_cast<char>(
-            std::tolower(static_cast<unsigned char>(c))));
-    }
-    return out;
-}
 
 bool containsLower(std::string_view haystack, std::string_view needleLower) {
     return asciiLower(haystack).find(needleLower) != std::string::npos;
