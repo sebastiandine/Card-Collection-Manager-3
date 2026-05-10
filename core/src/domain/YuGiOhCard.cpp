@@ -15,7 +15,6 @@ void to_json(nlohmann::json& j, const YuGiOhCard& c) {
         {"condition",    c.condition},
         {"firstEdition", c.firstEdition},
         {"rarity",       c.rarity},
-        {"rarityCode",   c.rarityCode},
         {"signed",       c.signed_},
         {"altered",      c.altered},
     };
@@ -33,8 +32,6 @@ void from_json(const nlohmann::json& j, YuGiOhCard& c) {
     j.at("condition").get_to(c.condition);
     j.at("firstEdition").get_to(c.firstEdition);
     j.at("rarity").get_to(c.rarity);
-    if (j.contains("rarityCode")) j.at("rarityCode").get_to(c.rarityCode);
-    else c.rarityCode.clear();
     j.at("signed").get_to(c.signed_);
     j.at("altered").get_to(c.altered);
 }

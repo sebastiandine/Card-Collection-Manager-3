@@ -135,7 +135,6 @@ TEST_SUITE("YuGiOhCard JSON") {
         c.set = Set{"SDK-001", "Starter Deck Kaiba", "2002/03/29"};
         c.setNo = "SDK-001";
         c.rarity = "Ultra Rare";
-        c.rarityCode = "(UR)";
         c.note = "classic";
         c.images = {"77+starter+blue-eyes+0.png"};
         c.language = Language::English;
@@ -147,7 +146,7 @@ TEST_SUITE("YuGiOhCard JSON") {
         nlohmann::json j = c;
         CHECK(j.at("setNo") == "SDK-001");
         CHECK(j.at("rarity") == "Ultra Rare");
-        CHECK(j.at("rarityCode") == "(UR)");
+        CHECK_FALSE(j.contains("rarityCode"));
         CHECK(j.at("signed") == false);
 
         const YuGiOhCard back = j.get<YuGiOhCard>();

@@ -272,6 +272,16 @@ TEST_SUITE("CardSorter - empty / single-element inputs are no-ops") {
 }
 
 TEST_SUITE("CardSorter - YuGiOh columns") {
+    TEST_CASE("Rarity sorts by rarity shorthand") {
+        std::vector<YuGiOhCard> v = {
+            yc(1, "a", "X", "2000/01/01", "", "Ultra Rare", 1),
+            yc(2, "b", "X", "2000/01/01", "", "Common", 1),
+            yc(3, "c", "X", "2000/01/01", "", "Secret Rare", 1),
+        };
+        sortYuGiOhCards(v, YuGiOhSortColumn::Rarity, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{2, 3, 1});  // C, ScR, UR
+    }
+
     TEST_CASE("Amount sorts numerically") {
         std::vector<YuGiOhCard> v = {
             yc(1, "a", "X", "2000/01/01", "", "", 9),

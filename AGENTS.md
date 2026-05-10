@@ -52,7 +52,7 @@ Run from the **workspace root**.
 - Run the app:  
  `./build/bin/ccm3` (`.\build\bin\ccm3.exe` on Windows)
 - Run tests (CCM_BUILD_TESTS defaults to ON):  
-  `ctest --test-dir build --output-on-failure` — current baseline: **185 tests, all green**.
+  `ctest --test-dir build --output-on-failure` — current baseline: **187 tests, all green**.
 - Build tests only:  
   `cmake --build build --target ccm_core_tests`
 

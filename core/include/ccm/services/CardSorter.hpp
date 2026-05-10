@@ -59,6 +59,7 @@ enum class YuGiOhSortColumn {
     Language,
     Condition,
     Amount,
+    Rarity,
     FirstEdition,
     Signed,
     Altered,

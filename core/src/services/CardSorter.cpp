@@ -1,6 +1,7 @@
 #include "ccm/services/CardSorter.hpp"
 
 #include "ccm/domain/Enums.hpp"
+#include "ccm/util/YuGiOhPrintingSlot.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -201,6 +202,12 @@ void sortYuGiOhCards(std::vector<YuGiOhCard>& cards, YuGiOhSortColumn column,
         std::stable_sort(cards.begin(), cards.end(), directional(
             [](const YuGiOhCard& a, const YuGiOhCard& b) {
                 return a.amount < b.amount;
+            }, ascending));
+        break;
+    case YuGiOhSortColumn::Rarity:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhCard& a, const YuGiOhCard& b) {
+                return asciiLower(ygoRarityShortCode(a.rarity)) < asciiLower(ygoRarityShortCode(b.rarity));
             }, ascending));
         break;
     case YuGiOhSortColumn::FirstEdition:
