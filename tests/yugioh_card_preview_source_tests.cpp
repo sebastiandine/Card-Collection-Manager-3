@@ -95,6 +95,23 @@ TEST_SUITE("ygoPrintingSlotsMatch") {
     }
 }
 
+TEST_SUITE("ygoRarityShortCode") {
+    TEST_CASE("maps supported Yu-Gi-Oh rarity names to short form") {
+        CHECK(ygoRarityShortCode("Common") == "C");
+        CHECK(ygoRarityShortCode("Rare") == "R");
+        CHECK(ygoRarityShortCode("Super Rare") == "SR");
+        CHECK(ygoRarityShortCode("Ultra Rare") == "UR");
+        CHECK(ygoRarityShortCode("Secret Rare") == "ScR");
+        CHECK(ygoRarityShortCode("Quarter Century Secret Rare") == "QCScR");
+        CHECK(ygoRarityShortCode("Starlight Rare") == "StR");
+        CHECK(ygoRarityShortCode("Collector's Rare") == "CR");
+        CHECK(ygoRarityShortCode("Ghost Rare") == "GR");
+        CHECK(ygoRarityShortCode("Ultimate Rare") == "UtR");
+        CHECK(ygoRarityShortCode("Platinum Secret Rare") == "PlScR");
+        CHECK(ygoRarityShortCode("Prismatic Secret Rare") == "PScR");
+    }
+}
+
 TEST_SUITE("YuGiOhCardPreviewSource::normalizeName") {
     TEST_CASE("strips whitespace and policy-banned punctuation") {
         // Yugipedia's image policy: whitespace and a fixed punctuation set
@@ -118,6 +135,8 @@ TEST_SUITE("YuGiOhCardPreviewSource::rarityCodeFor") {
         CHECK(YuGiOhCardPreviewSource::rarityCodeFor("Secret Rare") == "ScR");
         CHECK(YuGiOhCardPreviewSource::rarityCodeFor("Quarter Century Secret Rare")
               == "QCScR");
+        CHECK(YuGiOhCardPreviewSource::rarityCodeFor("Collector's Rare") == "CR");
+        CHECK(YuGiOhCardPreviewSource::rarityCodeFor("Platinum Secret Rare") == "PlScR");
     }
     TEST_CASE("returns empty string for unknown rarity names") {
         // Unknown rarity should fall through to the rarity-less filename

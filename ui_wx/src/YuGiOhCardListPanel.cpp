@@ -2,6 +2,7 @@
 
 #include "ccm/services/CardFilter.hpp"
 #include "ccm/ui/SvgIcons.hpp"
+#include "ccm/util/YuGiOhPrintingSlot.hpp"
 
 #include <string>
 
@@ -15,12 +16,13 @@ YuGiOhCardListPanel::YuGiOhCardListPanel(wxWindow* parent)
 std::vector<YuGiOhCardListPanel::TextColumnSpec>
 YuGiOhCardListPanel::declareTextColumns() const {
     return {
-        {"Name",      200, wxLIST_FORMAT_LEFT,  YuGiOhSortColumn::Name},
-        {"Set",       160, wxLIST_FORMAT_LEFT,  YuGiOhSortColumn::SetReleaseDate},
-        {"Amount",    70,  wxLIST_FORMAT_RIGHT, YuGiOhSortColumn::Amount},
-        {"Condition", 100, wxLIST_FORMAT_LEFT,  YuGiOhSortColumn::Condition},
-        {"Language",  100, wxLIST_FORMAT_LEFT,  YuGiOhSortColumn::Language},
-        {"Note",      180, wxLIST_FORMAT_LEFT,  YuGiOhSortColumn::Note},
+        {"Name",      200, wxLIST_FORMAT_LEFT,   YuGiOhSortColumn::Name},
+        {"Set",       160, wxLIST_FORMAT_LEFT,   YuGiOhSortColumn::SetReleaseDate},
+        {"Amount",    70,  wxLIST_FORMAT_RIGHT,  YuGiOhSortColumn::Amount},
+        {"Rarity",    90,  wxLIST_FORMAT_LEFT,   YuGiOhSortColumn::Rarity},
+        {"Condition", 100, wxLIST_FORMAT_LEFT,   YuGiOhSortColumn::Condition},
+        {"Language",  100, wxLIST_FORMAT_LEFT,   YuGiOhSortColumn::Language},
+        {"Note",      180, wxLIST_FORMAT_LEFT,   YuGiOhSortColumn::Note},
     };
 }
 
@@ -40,9 +42,10 @@ std::string YuGiOhCardListPanel::renderTextCell(const YuGiOhCard& card,
     case 0: return card.name;
     case 1: return card.set.name;
     case 2: return std::to_string(card.amount);
-    case 3: return std::string(to_string(card.condition));
-    case 4: return std::string(to_string(card.language));
-    case 5: return card.note;
+    case 3: return ygoRarityShortCode(card.rarity);
+    case 4: return std::string(to_string(card.condition));
+    case 5: return std::string(to_string(card.language));
+    case 6: return card.note;
     }
     return {};
 }

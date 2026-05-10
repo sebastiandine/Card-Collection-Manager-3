@@ -189,6 +189,12 @@ void sortYuGiOhCards(std::vector<YuGiOhCard>& cards, YuGiOhSortColumn column,
                 return a.amount < b.amount;
             }, ascending));
         break;
+    case YuGiOhSortColumn::Rarity:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhCard& a, const YuGiOhCard& b) {
+                return asciiLower(ygoRarityShortCode(a.rarity)) < asciiLower(ygoRarityShortCode(b.rarity));
+            }, ascending));
+        break;
     case YuGiOhSortColumn::FirstEdition:
         std::stable_sort(cards.begin(), cards.end(), directional(
             [](const YuGiOhCard& a, const YuGiOhCard& b) {

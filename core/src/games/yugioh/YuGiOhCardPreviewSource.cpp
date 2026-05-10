@@ -1,4 +1,5 @@
 #include "ccm/games/yugioh/YuGiOhCardPreviewSource.hpp"
+#include "ccm/util/YuGiOhPrintingSlot.hpp"
 
 #include "ccm/util/Rfc3986.hpp"
 
@@ -110,6 +111,10 @@ std::string YuGiOhCardPreviewSource::normalizeName(std::string_view name) {
 }
 
 std::string YuGiOhCardPreviewSource::rarityCodeFor(std::string_view rarityName) {
+    if (const std::string canonical = ygoRarityShortCode(rarityName); !canonical.empty()) {
+        return canonical;
+    }
+
     // Compare case-insensitively, ignoring whitespace, against a table of
     // CCM3 dialog values (see ui_wx/src/YuGiOhCardEditDialog.cpp:kRarityOptions)
     // plus a few extras occasionally seen in imported collections. The codes
@@ -147,7 +152,7 @@ std::string YuGiOhCardPreviewSource::rarityCodeFor(std::string_view rarityName) 
         {"ultraparallelrare",            "UPR"},
         {"holographicrare",              "HGR"},
         {"starlightrare",                "StR"},
-        {"collectorsrare",               "ColR"},
+        {"collectorsrare",               "CR"},
         {"prismaticcollectorsrare",      "PColR"},
         {"quartercenturysecretrare",     "QCScR"},
         {"prismaticultimaterare",        "PUtR"},

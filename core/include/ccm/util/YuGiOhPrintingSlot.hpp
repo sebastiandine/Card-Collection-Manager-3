@@ -69,4 +69,31 @@ namespace ccm {
         && std::isdigit(static_cast<unsigned char>(tail[1])) != 0;
 }
 
+// Canonical short-form for Yu-Gi-Oh rarities used by the overview table.
+// Returns empty when rarity is unknown.
+[[nodiscard]] inline std::string ygoRarityShortCode(std::string_view rarity) {
+    std::string normalized;
+    normalized.reserve(rarity.size());
+    for (unsigned char c : rarity) {
+        if (std::isspace(c) != 0) continue;
+        if (c == '\'' || c == '`' || c == '-') continue;
+        normalized.push_back(static_cast<char>(std::tolower(c)));
+    }
+
+    if (normalized == "common") return "C";
+    if (normalized == "rare") return "R";
+    if (normalized == "superrare") return "SR";
+    if (normalized == "ultrarare") return "UR";
+    if (normalized == "secretrare") return "ScR";
+    if (normalized == "quartercenturysecretrare") return "QCScR";
+    if (normalized == "qcsr") return "QCScR";
+    if (normalized == "starlightrare") return "StR";
+    if (normalized == "collectorsrare") return "CR";
+    if (normalized == "ghostrare") return "GR";
+    if (normalized == "ultimaterare") return "UtR";
+    if (normalized == "platinumsecretrare") return "PlScR";
+    if (normalized == "prismaticsecretrare") return "PScR";
+    return {};
+}
+
 }  // namespace ccm

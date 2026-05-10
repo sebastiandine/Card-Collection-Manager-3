@@ -52,9 +52,17 @@ Run from the **workspace root**.
 - Run the app:  
  `./build/bin/ccm3` (`.\build\bin\ccm3.exe` on Windows)
 - Run tests (CCM_BUILD_TESTS defaults to ON):  
-  `ctest --test-dir build --output-on-failure` — current baseline: **185 tests, all green**.
+  `ctest --test-dir build --output-on-failure` — current baseline: **215 tests, all green**.
 - Build tests only:  
   `cmake --build build --target ccm_core_tests`
+- Local coverage env setup (one-time, Windows/MSYS2):  
+  `python -m venv .venv_cov`  
+  `& "P:/msys2/msys64/usr/bin/pacman.exe" -S --noconfirm mingw-w64-ucrt-x86_64-python-lxml mingw-w64-ucrt-x86_64-python-gcovr`
+- Coverage check (core-focused):  
+  `cmake -S . -B build-cov -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DCCM_BUILD_TESTS=ON -DCMAKE_C_FLAGS=--coverage -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`  
+  `cmake --build build-cov --target ccm_core_tests --parallel`  
+  `ctest --test-dir build-cov --output-on-failure`  
+  `& "P:/msys2/msys64/ucrt64/bin/gcovr.exe" -r . --object-directory build-cov --filter "core/" --exclude "build/_deps/" --exclude "build-cov/_deps/" --exclude-directories "build/_deps" --exclude-directories "build-cov/_deps" --print-summary`
 
 > **Windows runtime note**: `cpr` is built as a shared library, so `build/bin/` ends up with `libcpr.dll`, `libcurl.dll`, `libzlib.dll` next to `ccm3.exe`. With MinGW-w64 you also need `libgcc_s_seh-1.dll` and `libstdc++-6.dll` from your MSYS2 UCRT64 `bin/` on `PATH` (or copied alongside the exe) to launch from Explorer.
 >
@@ -96,7 +104,10 @@ Run from the **workspace root**.
 - After modifying a domain type's fields or JSON layout you **must** update the matching round-trip test in `tests/domain_json_tests.cpp` and re-run tests.
 - After adding a new `.cpp` to `core/` or `ui_wx/` you **must** add it to that package's `CMakeLists.txt`. There is no glob.
 - After adding a new dependency you **must** verify its license is compatible with this repository's MIT license before merging.
-- After changing SonarQube coverage generation, keep dependency build outputs excluded at gcov discovery time (for example `gcovr --exclude-directories "build/_deps"`); output-only excludes are not enough for third-party `.gcda` files. Also exclude `tests/` from the gcovr Sonarqube XML (`--exclude "^tests/"`) so doctest translation units never appear in the coverage feed. The Sonar scan uses `sonar.coverage.exclusions` for `**/ui_wx/**`, `**/app/**`, and `**/tests/**` so the coverage gate reflects exercised `core/` lines only (`tests/` is not in `sonar.sources`, but these exclusions document intent); analyzed sources are unchanged for other Sonar metrics.
+- After changing SonarQube coverage generation, keep dependency build outputs excluded at gcov discovery time (for example `gcovr --exclude-directories "build/_deps"`); output-only excludes are not enough for third-party `.gcda` files. The Sonar scan uses `sonar.coverage.exclusions` for `**/ui_wx/**` and `**/app/**` so the coverage percentage matches the hermetic `ccm_core_tests` surface (`core/`); analyzed sources are unchanged for other Sonar metrics.
+- For new code, keep duplication to an absolute minimum: prefer extracting shared helpers/components instead of copy/paste so Sonar duplication stays comfortably below the quality gate.
+- For new code, add or update unit tests so behavior is covered and overall test coverage remains high.
+- For new code, run the local coverage workflow (`build-cov` + `gcovr` with `--filter "core/"`) and keep core line coverage at or above 80% before opening or updating a PR.
 - After adding a new game module you **must**: (1) extend `Game` enum + string mappings in `core/include/ccm/domain/Enums.hpp`, (2) register the module in `app/main.cpp`, (3) add a directory mapping in `app/main.cpp::dirNameForGame`, (4) implement an `IGameView` derived class (or `<Name>GameView`) and add it to `AppContext::gameViews` in the composition root.
 - After changing the per-game seams (`IGameModule`, `IGameView`, the `BaseCard*Panel` template hooks) you **must** update `docs/adding-a-new-game.md` so the canonical "add a new game" walkthrough stays in sync with the code.
 - After changing `formatTextForFs` or `parseIndexFromFilename` you **must** update `tests/fs_names_tests.cpp` — these functions exist to stay byte-compatible with the original Rust `util/fs.rs`.

@@ -58,6 +58,7 @@ bool matchesYuGiOhFilter(const YuGiOhCard& card, std::string_view filter) {
     if (containsLower(card.set.name, needle))                 return true;
     if (containsLower(card.setNo, needle))                    return true;
     if (containsLower(card.rarity, needle))                   return true;
+    if (containsLower(ygoRarityShortCode(card.rarity), needle)) return true;
     if (containsLower(to_string(card.language), needle))      return true;
     if (containsLower(to_string(card.condition), needle))     return true;
     if (containsLower(std::to_string(card.amount), needle))   return true;
