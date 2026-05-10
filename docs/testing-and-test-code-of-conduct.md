@@ -30,7 +30,7 @@ Windows and Linux use the same logical flow; only generator and compiler setup d
 
 ## Coverage Surface
 
-**SonarCloud:** The CI Sonar scan reports coverage against `core/` paths that `ccm_core_tests` can execute. `ui_wx/` and the `app/` composition root are excluded from Sonar’s **coverage** calculation (`sonar.coverage.exclusions`) because they are not run under the doctest suite; UI behavior is covered by manual validation below. Other Sonar metrics still include those directories.
+**SonarCloud:** The CI Sonar scan reports coverage against `core/` paths that `ccm_core_tests` can execute. `ui_wx/` and the `app/` composition root are excluded from Sonar’s **coverage** calculation (`sonar.coverage.exclusions`) because they are not run under the doctest suite; UI behavior is covered by manual validation below. For duplication, the scan excludes intentionally parallel per-game wx scaffolding (`sonar.cpd.exclusions` on `*GameView.cpp`, `*CardEditDialog.cpp`, `*SelectedCardPanel.cpp`) so CPD focuses on shared logic rather than mirrored UI wiring.
 
 Current automated tests cover non-UI behavior, including:
 

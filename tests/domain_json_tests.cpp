@@ -42,6 +42,50 @@ TEST_SUITE("domain enums round-trip JSON as strings") {
         nlohmann::json bad = "Spanglish";
         CHECK_THROWS(bad.get<Language>());
     }
+
+    TEST_CASE("all enum values round-trip through string helpers") {
+        for (const auto game : allGames()) {
+            const auto name = to_string(game);
+            CHECK(gameFromString(name).has_value());
+            CHECK(*gameFromString(name) == game);
+        }
+
+        for (const auto language : allLanguages()) {
+            const auto name = to_string(language);
+            CHECK(languageFromString(name).has_value());
+            CHECK(*languageFromString(name) == language);
+        }
+
+        for (const auto condition : allConditions()) {
+            const auto name = to_string(condition);
+            CHECK(conditionFromString(name).has_value());
+            CHECK(*conditionFromString(name) == condition);
+        }
+
+        for (const auto theme : allThemes()) {
+            const auto name = to_string(theme);
+            CHECK(themeFromString(name).has_value());
+            CHECK(*themeFromString(name) == theme);
+        }
+    }
+
+    TEST_CASE("invalid enum helper inputs return nullopt") {
+        CHECK_FALSE(gameFromString("magic").has_value());
+        CHECK_FALSE(languageFromString("EN").has_value());
+        CHECK_FALSE(conditionFromString("Near Mint").has_value());
+        CHECK_FALSE(themeFromString("OLED").has_value());
+    }
+
+    TEST_CASE("invalid game, condition and theme JSON values throw") {
+        nlohmann::json badGame = "YGO";
+        CHECK_THROWS(badGame.get<Game>());
+
+        nlohmann::json badCondition = "Pristine";
+        CHECK_THROWS(badCondition.get<Condition>());
+
+        nlohmann::json badTheme = "Midnight";
+        CHECK_THROWS(badTheme.get<Theme>());
+    }
 }
 
 TEST_SUITE("Set JSON shape stays stable") {
@@ -123,6 +167,25 @@ TEST_SUITE("Configuration JSON matches Rust serde aliases") {
 
         const auto back = j.get<Configuration>();
         CHECK(back == cfg);
+    }
+
+    TEST_CASE("theme defaults to Light when missing from payload") {
+        const nlohmann::json j = {
+            {"dataStorage", "/storage"},
+            {"defaultGame", "Magic"},
+        };
+
+        const auto cfg = j.get<Configuration>();
+        CHECK(cfg.dataStorage == "/storage");
+        CHECK(cfg.defaultGame == Game::Magic);
+        CHECK(cfg.theme == Theme::Light);
+    }
+
+    TEST_CASE("missing required keys still throws") {
+        const nlohmann::json j = {
+            {"theme", "Dark"},
+        };
+        CHECK_THROWS(j.get<Configuration>());
     }
 }
 

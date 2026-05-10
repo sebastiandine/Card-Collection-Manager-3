@@ -19,7 +19,7 @@ The repository uses GitHub Actions workflows split by branch intent, with one or
 
 ### SonarQube Cloud (coverage quality gate)
 
-Both `feature-ci.yml` and `master-ci.yml` include a Linux job that configures with GCC coverage flags, builds, runs `ctest`, generates `build/sonarqube-coverage.xml` via `gcovr`, and runs the SonarCloud scan. **`sonar.coverage.exclusions`** omit `ui_wx/` and `app/` from the coverage denominator because only `ccm_core` is exercised by automated tests; Sonar still analyzes those directories for bugs, vulnerabilities, and duplications. See [Testing Guide And Test Code Of Conduct](testing-and-test-code-of-conduct.md).
+Both `feature-ci.yml` and `master-ci.yml` include a Linux job that configures with GCC coverage flags, builds, runs `ctest`, generates `build/sonarqube-coverage.xml` via `gcovr`, and runs the SonarCloud scan. **`sonar.coverage.exclusions`** omit `ui_wx/` and `app/` from the coverage denominator because only `ccm_core` is exercised by automated tests. The scan also sets **`sonar.cpd.exclusions`** for the repeated per-game wx scaffolding files (`*GameView.cpp`, `*CardEditDialog.cpp`, `*SelectedCardPanel.cpp`) so intentional parallel UI implementations do not drive the duplication gate. See [Testing Guide And Test Code Of Conduct](testing-and-test-code-of-conduct.md).
 
 ## Version Flow
 
