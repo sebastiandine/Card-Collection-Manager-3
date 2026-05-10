@@ -46,7 +46,10 @@ PokemonCard pc(std::uint32_t id, std::string name,
                std::string setName, std::string releaseDate,
                std::uint8_t amount = 1,
                bool holo = false, bool firstEdition = false,
-               bool sgnd = false, bool altered = false) {
+               bool sgnd = false, bool altered = false,
+               Language lang = Language::English,
+               Condition cond = Condition::NearMint,
+               std::string note = "") {
     PokemonCard c;
     c.id = id;
     c.name = std::move(name);
@@ -57,6 +60,9 @@ PokemonCard pc(std::uint32_t id, std::string name,
     c.firstEdition = firstEdition;
     c.signed_ = sgnd;
     c.altered = altered;
+    c.language = lang;
+    c.condition = cond;
+    c.note = std::move(note);
     return c;
 }
 
@@ -64,7 +70,13 @@ YuGiOhCard yc(std::uint32_t id, std::string name,
               std::string setName, std::string releaseDate,
               std::string setNo = "",
               std::string rarity = "",
-              std::uint8_t amount = 1) {
+              std::uint8_t amount = 1,
+              Language lang = Language::English,
+              Condition cond = Condition::NearMint,
+              bool firstEdition = false,
+              bool sgnd = false,
+              bool altered = false,
+              std::string note = "") {
     YuGiOhCard c;
     c.id = id;
     c.name = std::move(name);
@@ -73,6 +85,12 @@ YuGiOhCard yc(std::uint32_t id, std::string name,
     c.setNo = std::move(setNo);
     c.rarity = std::move(rarity);
     c.amount = amount;
+    c.language = lang;
+    c.condition = cond;
+    c.firstEdition = firstEdition;
+    c.signed_ = sgnd;
+    c.altered = altered;
+    c.note = std::move(note);
     return c;
 }
 
@@ -141,6 +159,9 @@ TEST_SUITE("CardSorter - Magic columns") {
         };
         sortMagicCards(v, MagicSortColumn::Amount, /*ascending=*/true);
         CHECK(ids(v) == std::vector<std::uint32_t>{2, 3, 1});  // 2 < 4 < 10
+
+        sortMagicCards(v, MagicSortColumn::Amount, /*ascending=*/false);
+        CHECK(ids(v) == std::vector<std::uint32_t>{1, 3, 2});
     }
 
     TEST_CASE("boolean flag column orders false < true (asc puts unset first)") {
@@ -254,6 +275,67 @@ TEST_SUITE("CardSorter - Pokemon-specific columns") {
         sortPokemonCards(v, PokemonSortColumn::Amount, /*ascending=*/true);
         CHECK(ids(v) == std::vector<std::uint32_t>{3, 1, 2});
     }
+
+    TEST_CASE("Name sorts case-insensitively") {
+        std::vector<PokemonCard> v = {
+            pc(1, "piKAchu", "X", "2000/01/01"),
+            pc(2, "abra",    "X", "2000/01/01"),
+            pc(3, "CHARMANDER", "X", "2000/01/01"),
+        };
+        sortPokemonCards(v, PokemonSortColumn::Name, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{2, 3, 1});
+    }
+
+    TEST_CASE("Language and Condition sort by lowercased labels") {
+        std::vector<PokemonCard> v = {
+            pc(1, "a", "X", "2000/01/01", 1, false, false, false, false,
+               Language::Japanese, Condition::Mint),
+            pc(2, "b", "X", "2000/01/01", 1, false, false, false, false,
+               Language::English, Condition::Played),
+            pc(3, "c", "X", "2000/01/01", 1, false, false, false, false,
+               Language::German, Condition::NearMint),
+        };
+        sortPokemonCards(v, PokemonSortColumn::Language, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{2, 3, 1});
+
+        sortPokemonCards(v, PokemonSortColumn::Condition, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{1, 3, 2});
+    }
+
+    TEST_CASE("Signed and Altered sort like Magic booleans") {
+        std::vector<PokemonCard> v = {
+            pc(1, "a", "X", "2000/01/01", 1, false, false, /*sgnd=*/false, /*alt=*/true),
+            pc(2, "b", "X", "2000/01/01", 1, false, false, /*sgnd=*/true,  /*alt=*/false),
+        };
+        sortPokemonCards(v, PokemonSortColumn::Signed, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{1, 2});
+
+        sortPokemonCards(v, PokemonSortColumn::Altered, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{2, 1});
+    }
+
+    TEST_CASE("Note sorts case-insensitively") {
+        std::vector<PokemonCard> v = {
+            pc(1, "a", "X", "2000/01/01", 1, false, false, false, false,
+               Language::English, Condition::NearMint, "ZETA"),
+            pc(2, "b", "X", "2000/01/01", 1, false, false, false, false,
+               Language::English, Condition::NearMint, "alpha"),
+            pc(3, "c", "X", "2000/01/01", 1, false, false, false, false,
+               Language::English, Condition::NearMint, "Beta"),
+        };
+        sortPokemonCards(v, PokemonSortColumn::Note, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{2, 3, 1});
+    }
+
+    TEST_CASE("descending SetReleaseDate reverses chronological order") {
+        std::vector<PokemonCard> v = {
+            pc(1, "x", "Late",  "2020/01/01"),
+            pc(2, "y", "Early", "1999/01/01"),
+            pc(3, "z", "Mid",   "2015/06/01"),
+        };
+        sortPokemonCards(v, PokemonSortColumn::SetReleaseDate, /*ascending=*/false);
+        CHECK(ids(v) == std::vector<std::uint32_t>{1, 3, 2});
+    }
 }
 
 TEST_SUITE("CardSorter - empty / single-element inputs are no-ops") {
@@ -272,6 +354,82 @@ TEST_SUITE("CardSorter - empty / single-element inputs are no-ops") {
 }
 
 TEST_SUITE("CardSorter - YuGiOh columns") {
+    TEST_CASE("Name sorts case-insensitively") {
+        std::vector<YuGiOhCard> v = {
+            yc(1, "BLUE-EYES", "X", "2000/01/01"),
+            yc(2, "dark magician", "X", "2000/01/01"),
+            yc(3, "CELTIC_GUARDIAN", "X", "2000/01/01"),
+        };
+        sortYuGiOhCards(v, YuGiOhSortColumn::Name, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{1, 3, 2});
+    }
+
+    TEST_CASE("SetReleaseDate sorts chronologically") {
+        std::vector<YuGiOhCard> v = {
+            yc(1, "a", "Late",  "2020/01/01"),
+            yc(2, "b", "Early", "1999/01/01"),
+            yc(3, "c", "Mid",   "2015/06/01"),
+        };
+        sortYuGiOhCards(v, YuGiOhSortColumn::SetReleaseDate, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{2, 3, 1});
+
+        sortYuGiOhCards(v, YuGiOhSortColumn::SetReleaseDate, /*ascending=*/false);
+        CHECK(ids(v) == std::vector<std::uint32_t>{1, 3, 2});
+    }
+
+    TEST_CASE("Language and Condition sort by lowercased labels") {
+        std::vector<YuGiOhCard> v = {
+            yc(1, "a", "X", "2000/01/01", "", "", 1,
+               Language::Japanese, Condition::Mint),
+            yc(2, "b", "X", "2000/01/01", "", "", 1,
+               Language::English, Condition::Played),
+            yc(3, "c", "X", "2000/01/01", "", "", 1,
+               Language::German, Condition::NearMint),
+        };
+        sortYuGiOhCards(v, YuGiOhSortColumn::Language, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{2, 3, 1});
+
+        sortYuGiOhCards(v, YuGiOhSortColumn::Condition, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{1, 3, 2});
+    }
+
+    TEST_CASE("FirstEdition Signed Altered and Note columns sort consistently") {
+        std::vector<YuGiOhCard> v = {
+            yc(1, "a", "X", "2000/01/01", "", "", 1,
+               Language::English, Condition::NearMint,
+               /*firstEdition=*/true, /*sgnd=*/false, /*alt=*/true, "Z"),
+            yc(2, "b", "X", "2000/01/01", "", "", 1,
+               Language::English, Condition::NearMint,
+               /*firstEdition=*/false, /*sgnd=*/true, /*alt=*/false, "a"),
+            yc(3, "c", "X", "2000/01/01", "", "", 1,
+               Language::English, Condition::NearMint,
+               /*firstEdition=*/false, /*sgnd=*/false, /*alt=*/false, "m"),
+        };
+        sortYuGiOhCards(v, YuGiOhSortColumn::FirstEdition, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{2, 3, 1});
+
+        sortYuGiOhCards(v, YuGiOhSortColumn::Signed, /*ascending=*/true);
+        // After FirstEdition sort order is {2,3,1}: signed=false wins first (stable: 3 then 1).
+        CHECK(ids(v) == std::vector<std::uint32_t>{3, 1, 2});
+
+        sortYuGiOhCards(v, YuGiOhSortColumn::Altered, /*ascending=*/true);
+        // Previous order {3,1,2}: altered=false entries are 3 and 2 before true (1).
+        CHECK(ids(v) == std::vector<std::uint32_t>{3, 2, 1});
+
+        sortYuGiOhCards(v, YuGiOhSortColumn::Note, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{2, 3, 1});  // a, m, Z (case-insensitive)
+    }
+
+    TEST_CASE("Rarity sorts by rarity shorthand") {
+        std::vector<YuGiOhCard> v = {
+            yc(1, "a", "X", "2000/01/01", "", "Ultra Rare", 1),
+            yc(2, "b", "X", "2000/01/01", "", "Common", 1),
+            yc(3, "c", "X", "2000/01/01", "", "Secret Rare", 1),
+        };
+        sortYuGiOhCards(v, YuGiOhSortColumn::Rarity, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{2, 3, 1});  // C, ScR, UR
+    }
+
     TEST_CASE("Amount sorts numerically") {
         std::vector<YuGiOhCard> v = {
             yc(1, "a", "X", "2000/01/01", "", "", 9),

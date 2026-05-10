@@ -180,6 +180,7 @@ TEST_SUITE("CardFilter::matchesYuGiOhFilter") {
         const YuGiOhCard c = yc("Dark Magician", "Legend of Blue Eyes", "LOB-005", "Ultra Rare");
         CHECK(matchesYuGiOhFilter(c, "lob-005"));
         CHECK(matchesYuGiOhFilter(c, "ultra"));
+        CHECK(matchesYuGiOhFilter(c, "ur"));
         CHECK_FALSE(matchesYuGiOhFilter(c, "secret rare"));
     }
 }

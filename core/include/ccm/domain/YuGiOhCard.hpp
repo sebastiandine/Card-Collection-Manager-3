@@ -20,7 +20,6 @@ struct YuGiOhCard {
     Set           set;
     std::string   setNo;
     std::string   rarity;
-    std::string   rarityCode;
     std::string   note;
     std::vector<std::string> images;
     Language      language{Language::English};

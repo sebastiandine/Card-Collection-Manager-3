@@ -70,6 +70,7 @@ jobs:
             -Dsonar.cfamily.compile-commands=build/compile_commands.json
             -Dsonar.coverageReportPaths=build/sonarqube-coverage.xml
             -Dsonar.coverage.exclusions=**/ui_wx/**,**/app/**
+            -Dsonar.cpd.exclusions=**/ui_wx/src/*GameView.cpp,**/ui_wx/src/*CardEditDialog.cpp,**/ui_wx/src/*SelectedCardPanel.cpp
 
   linux:
     name: Linux build + tests

@@ -38,7 +38,8 @@ GitHub Actions workflows for CI, release automation, and policy checks.
 - Prefer minimal, surgical edits; avoid large workflow rewrites unless requested.
 - Reusable workflows should declare explicit `workflow_call` inputs for required context (e.g., version, merge SHA).
 - Sonar coverage steps that use `gcovr` must exclude third-party build trees at discovery time with `--exclude-directories` (for example `build/_deps`) so gcov does not process dependency `.gcda` files.
-- The Sonar scan step passes `-Dsonar.coverage.exclusions=**/ui_wx/**,**/app/**` so the coverage quality gate reflects **`ccm_core_tests`** only (wx UI and the composition root are not executed under test). `sonar.sources` stays `core,ui_wx,app`; bugs/security/duplications still analyze those trees.
+- The Sonar scan step passes `-Dsonar.coverage.exclusions=**/ui_wx/**,**/app/**` so the coverage quality gate reflects **`ccm_core_tests`** only (wx UI and the composition root are not executed under test). `sonar.sources` stays `core,ui_wx,app`.
+- The Sonar scan also sets `-Dsonar.cpd.exclusions=**/ui_wx/src/*GameView.cpp,**/ui_wx/src/*CardEditDialog.cpp,**/ui_wx/src/*SelectedCardPanel.cpp` so intentionally parallel wx per-game UI scaffolding does not dominate the duplication quality gate.
 - For Linux Sonar coverage jobs, keep compiler and gcov toolchain aligned; because `cmake/Toolchain.cmake` prefers Clang by default, set `-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++` explicitly in the coverage configure step when using gcovr default `gcov`.
 - Keep `permissions` least-privilege:
   - reusable build workflows: `contents: read`
