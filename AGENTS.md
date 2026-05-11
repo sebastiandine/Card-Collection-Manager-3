@@ -112,6 +112,11 @@ Run from the **workspace root**.
 - After changing the per-game seams (`IGameModule`, `IGameView`, the `BaseCard*Panel` template hooks) you **must** update `docs/adding-a-new-game.md` so the canonical "add a new game" walkthrough stays in sync with the code.
 - After changing `formatTextForFs` or `parseIndexFromFilename` you **must** update `tests/fs_names_tests.cpp` — these functions exist to stay byte-compatible with the original Rust `util/fs.rs`.
 
+## Agent collaboration (Cursor / AI)
+
+- **Never** `git commit` or `git push` unless the user **explicitly** asked you to commit and/or push (e.g. “commit this”, “push to origin”). Preparing diffs and suggesting commands is fine; performing those Git writes without explicit instruction is not.
+- **Never** check out another branch **to change it** unless the user **explicitly** asked you to work on that branch. Temporarily checking out another branch **read-only** (inspect history, compare files, run `git show`) is fine without asking; switch back to the working branch before making edits unless instructed otherwise.
+
 ## Anti-patterns
 
 - Don't include `wx/...` headers from `core/` (breaks layering and tests will refuse to build).
