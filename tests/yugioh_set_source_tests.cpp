@@ -77,6 +77,27 @@ TEST_SUITE("YuGiOhSetSource::parseResponse") {
         CHECK(foundLob25th);
         CHECK(foundIoc25th);
     }
+
+    TEST_CASE("does not duplicate aliases that already exist by name") {
+        const auto out = YuGiOhSetSource::parseResponse(R"json([
+            {"set_name":"Legend of Blue Eyes White Dragon (25th Anniversary Edition)","set_code":"LOB-25TH","tcg_date":"2023-04-20"}
+        ])json");
+        REQUIRE(out.isOk());
+
+        int aliasCount = 0;
+        for (const auto& set : out.value()) {
+            if (set.name == "Legend of Blue Eyes White Dragon (25th Anniversary Edition)") {
+                ++aliasCount;
+            }
+        }
+        CHECK(aliasCount == 1);
+    }
+
+    TEST_CASE("malformed json returns parse error") {
+        const auto out = YuGiOhSetSource::parseResponse("{bad json");
+        REQUIRE(out.isErr());
+        CHECK(out.error().find("YGOPRODeck set parse error:") != std::string::npos);
+    }
 }
 
 TEST_SUITE("YuGiOhSetSource::fetchAll") {
@@ -88,5 +109,14 @@ TEST_SUITE("YuGiOhSetSource::fetchAll") {
         REQUIRE(out.isOk());
         CHECK(out.value().front().id == "X");
         CHECK(http.lastUrl == "https://db.ygoprodeck.com/api/v7/cardsets.php");
+    }
+
+    TEST_CASE("network error is propagated") {
+        FixedHttpClient http;
+        http.ok = false;
+        YuGiOhSetSource src{http};
+        const auto out = src.fetchAll();
+        REQUIRE(out.isErr());
+        CHECK(out.error() == "offline");
     }
 }

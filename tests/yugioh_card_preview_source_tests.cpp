@@ -642,6 +642,12 @@ TEST_SUITE("YuGiOhCardPreviewSource::parsePrintVariants yugioh_same_card_set_var
 }
 
 TEST_SUITE("YuGiOhCardPreviewSource::fetchImageUrl") {
+    TEST_CASE("supports auto-detect print metadata") {
+        FixedHttpClient http;
+        YuGiOhCardPreviewSource src{http};
+        CHECK(src.supportsAutoDetectPrint());
+    }
+
     TEST_CASE("queries Yugipedia first and uses the per-printing scan when found") {
         // Two same-passcode reprints with genuinely different art (LOB vs
         // SDK Blue-Eyes). Yugipedia hosts both, so we should always pick the
