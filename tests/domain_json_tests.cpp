@@ -209,7 +209,7 @@ TEST_SUITE("YuGiOhCard JSON") {
         CHECK(back == c);
     }
 
-    TEST_CASE("missing rarityCode in legacy rows is accepted and mapped to empty") {
+    TEST_CASE("legacy JSON without rarityCode key parses (domain uses rarity only)") {
         const nlohmann::json j = {
             {"id", 1},
             {"amount", 1},
@@ -232,7 +232,8 @@ TEST_SUITE("YuGiOhCard JSON") {
 
         const auto card = j.get<YuGiOhCard>();
         CHECK(card.rarity == "Ultra Rare");
-        CHECK(card.rarityCode.empty());
+        CHECK(card.setNo == "SDY-006");
+        CHECK(card.set.id == "SDY");
     }
 }
 

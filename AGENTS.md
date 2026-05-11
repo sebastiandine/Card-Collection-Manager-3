@@ -52,7 +52,7 @@ Run from the **workspace root**.
 - Run the app:  
  `./build/bin/ccm3` (`.\build\bin\ccm3.exe` on Windows)
 - Run tests (CCM_BUILD_TESTS defaults to ON):  
-  `ctest --test-dir build --output-on-failure` — current baseline: **215 tests, all green**.
+  `ctest --test-dir build --output-on-failure` — current baseline: **226 tests, all green**.
 - Build tests only:  
   `cmake --build build --target ccm_core_tests`
 - Local coverage env setup (one-time, Windows/MSYS2):  
@@ -111,6 +111,11 @@ Run from the **workspace root**.
 - After adding a new game module you **must**: (1) extend `Game` enum + string mappings in `core/include/ccm/domain/Enums.hpp`, (2) register the module in `app/main.cpp`, (3) add a directory mapping in `app/main.cpp::dirNameForGame`, (4) implement an `IGameView` derived class (or `<Name>GameView`) and add it to `AppContext::gameViews` in the composition root.
 - After changing the per-game seams (`IGameModule`, `IGameView`, the `BaseCard*Panel` template hooks) you **must** update `docs/adding-a-new-game.md` so the canonical "add a new game" walkthrough stays in sync with the code.
 - After changing `formatTextForFs` or `parseIndexFromFilename` you **must** update `tests/fs_names_tests.cpp` — these functions exist to stay byte-compatible with the original Rust `util/fs.rs`.
+
+## Agent collaboration (Cursor / AI)
+
+- **Never** `git commit` or `git push` unless the user **explicitly** asked you to commit and/or push (e.g. “commit this”, “push to origin”). Preparing diffs and suggesting commands is fine; performing those Git writes without explicit instruction is not.
+- **Never** check out another branch **to change it** unless the user **explicitly** asked you to work on that branch. Temporarily checking out another branch **read-only** (inspect history, compare files, run `git show`) is fine without asking; switch back to the working branch before making edits unless instructed otherwise.
 
 ## Anti-patterns
 
