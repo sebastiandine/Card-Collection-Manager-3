@@ -703,6 +703,29 @@ TEST_SUITE("CardPreviewService caching") {
         CHECK(http.calls == 1);
     }
 
+    TEST_CASE("fetchImageBytesByUrl serves from persistent cache hit without HTTP") {
+        FixedHttpClient http;
+        http.body = "warm-card-back";
+        InMemoryByteCache disk;
+
+        // Seed persistent cache via first service instance.
+        {
+            CardPreviewService seed{http, &disk};
+            const auto seeded = seed.fetchImageBytesByUrl("https://cdn.example/back.png");
+            REQUIRE(seeded.isOk());
+            CHECK(seeded.value() == "warm-card-back");
+        }
+        REQUIRE(http.calls == 1);
+
+        // Fresh service instance: force HTTP failure and ensure disk hit is used.
+        CardPreviewService warm{http, &disk};
+        http.ok = false;
+        const auto warmHit = warm.fetchImageBytesByUrl("https://cdn.example/back.png");
+        REQUIRE(warmHit.isOk());
+        CHECK(warmHit.value() == "warm-card-back");
+        CHECK(http.calls == 1);
+    }
+
     TEST_CASE("in-memory LRU evicts oldest entry after exceeding capacity") {
         FakeSource source;
         FakeGameModule module;

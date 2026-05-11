@@ -19,16 +19,24 @@ public:
     std::vector<Call> copies;
     std::vector<std::pair<Game, std::string>> removes;
     std::string returnedExt = ".png";
+    int failCopyAt = -1;
+    int failRemoveAt = -1;
 
     Result<std::string> copyIn(Game game,
                                const std::filesystem::path& srcPath,
                                const std::string& targetName) override {
         copies.push_back({game, srcPath, targetName});
+        if (failCopyAt >= 0 && static_cast<int>(copies.size()) == failCopyAt) {
+            return Result<std::string>::err("copy failed at " + std::to_string(failCopyAt));
+        }
         return Result<std::string>::ok(targetName + returnedExt);
     }
 
     Result<void> remove(Game game, const std::string& imageName) override {
         removes.emplace_back(game, imageName);
+        if (failRemoveAt >= 0 && static_cast<int>(removes.size()) == failRemoveAt) {
+            return Result<void>::err("remove failed at " + std::to_string(failRemoveAt));
+        }
         return Result<void>::ok();
     }
 
@@ -54,6 +62,11 @@ TEST_SUITE("ImageService::nextImageIndex") {
         CHECK(ImageService::nextImageIndex(imgs) == 0);
         std::vector<std::string> imgs2 = {"otherIMG_BACK.png"};
         CHECK(ImageService::nextImageIndex(imgs2) == 0);
+    }
+
+    TEST_CASE("index increments from two-digit legacy cap") {
+        std::vector<std::string> imgs = {"set+name+99.png"};
+        CHECK(ImageService::nextImageIndex(imgs) == 100);
     }
 }
 
@@ -127,5 +140,39 @@ TEST_SUITE("ImageService::normalizeNamesForPersistedCard") {
         CHECK(normalized.value() == images);
         CHECK(store.copies.empty());
         CHECK(store.removes.empty());
+    }
+
+    TEST_CASE("copy failure rolls back already-created names and returns error") {
+        RecordingImageStore store;
+        store.failCopyAt = 2;
+        ImageService svc{store};
+
+        const std::vector<std::string> images{
+            "Beta+BlackLotus+0.png",
+            "Beta+BlackLotus+1.jpg"
+        };
+        const auto out = svc.normalizeNamesForPersistedCard(
+            Game::Magic, 42, "Beta", "Black Lotus", images);
+
+        REQUIRE(out.isErr());
+        CHECK(out.error().find("copy failed at 2") != std::string::npos);
+        // Second copy failed, so first created file should be rolled back.
+        REQUIRE(store.removes.size() == 1);
+        CHECK(store.removes[0].second == "42+Beta+BlackLotus+0.png");
+    }
+
+    TEST_CASE("remove failure after rename returns error") {
+        RecordingImageStore store;
+        store.failRemoveAt = 1;
+        ImageService svc{store};
+
+        const std::vector<std::string> images{
+            "Beta+BlackLotus+0.png"
+        };
+        const auto out = svc.normalizeNamesForPersistedCard(
+            Game::Magic, 42, "Beta", "Black Lotus", images);
+
+        REQUIRE(out.isErr());
+        CHECK(out.error().find("remove failed at 1") != std::string::npos);
     }
 }

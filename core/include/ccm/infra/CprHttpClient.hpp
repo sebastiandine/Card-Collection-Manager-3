@@ -24,10 +24,20 @@ namespace ccm {
 // only fires one outbound request at a time anyway.
 class CprHttpClient final : public IHttpClient {
 public:
+    struct RawResponse {
+        bool        transportError{false};
+        std::string transportMessage;
+        int         statusCode{0};
+        std::string body;
+    };
+
     using GetExecutor = std::function<Result<std::string>(std::string_view)>;
+    using RawGetExecutor = std::function<RawResponse(std::string_view)>;
 
     explicit CprHttpClient(std::chrono::milliseconds timeout = std::chrono::milliseconds{30000});
     CprHttpClient(GetExecutor executor,
+                  std::chrono::milliseconds timeout = std::chrono::milliseconds{30000});
+    CprHttpClient(RawGetExecutor rawExecutor,
                   std::chrono::milliseconds timeout = std::chrono::milliseconds{30000});
     ~CprHttpClient() override;
 
@@ -37,6 +47,7 @@ private:
     std::chrono::milliseconds timeout_;
     std::unique_ptr<cpr::Session> session_;
     GetExecutor executor_;
+    RawGetExecutor rawExecutor_;
     std::mutex sessionMutex_;
 };
 
