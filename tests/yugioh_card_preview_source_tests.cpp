@@ -446,6 +446,22 @@ TEST_SUITE("YuGiOhCardPreviewSource::parsePrintVariants") {
         REQUIRE(out.isErr());
         CHECK(out.error().find("YGOPRODeck JSON parse error") != std::string::npos);
     }
+
+    TEST_CASE("maps 25th Anniversary display-set alias to original set name") {
+        const std::string json = R"({
+          "data":[
+            {"name":"Dark Magician",
+             "card_sets":[
+               {"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB-005","set_rarity":"Ultra Rare"}
+             ]}
+          ]
+        })";
+        const auto out = YuGiOhCardPreviewSource::parsePrintVariants(
+            json, "Legend of Blue Eyes White Dragon (25th Anniversary Edition)", "Dark Magician");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value()[0].setNo == "LOB-005");
+    }
 }
 
 TEST_SUITE("YuGiOhCardPreviewSource::detectPrintVariants HTTP fallback") {
@@ -466,6 +482,26 @@ TEST_SUITE("YuGiOhCardPreviewSource::detectPrintVariants HTTP fallback") {
         REQUIRE(out.value().size() == 1);
         CHECK(out.value()[0].setNo == "MP21-EN001");
         REQUIRE(http.calls == 2);
+    }
+
+    TEST_CASE("uses original set name in cardset query for 25th alias") {
+        FixedHttpClient http;
+        http.body = R"({
+          "data":[{
+            "name":"Dark Magician",
+            "card_sets":[
+              {"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB-005","set_rarity":"Ultra Rare"}
+            ]
+          }]
+        })";
+
+        YuGiOhCardPreviewSource src{http};
+        const auto out = src.detectPrintVariants(
+            "Dark Magician", "Legend of Blue Eyes White Dragon (25th Anniversary Edition)");
+        REQUIRE(out.isOk());
+        CHECK(http.lastUrl.find("cardset=Legend%20of%20Blue%20Eyes%20White%20Dragon")
+              != std::string::npos);
+        CHECK(http.lastUrl.find("25th") == std::string::npos);
     }
 }
 

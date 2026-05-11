@@ -31,6 +31,17 @@ std::string toLower(std::string s) {
     return s;
 }
 
+std::string canonicalizeSetNameForAutoDetect(std::string_view setName) {
+    std::string canonical = trim(std::string(setName));
+    constexpr std::string_view k25thSuffix = " (25th Anniversary Edition)";
+    if (canonical.size() > k25thSuffix.size()
+        && canonical.ends_with(k25thSuffix)) {
+        canonical.erase(canonical.size() - k25thSuffix.size());
+        canonical = trim(std::move(canonical));
+    }
+    return canonical;
+}
+
 // Pull the standard art URL out of a YGOPRODeck card object. We deliberately
 // always return card_images[0]: when no `cardset=` filter is applied, that
 // slot is the original/standard artwork (alt-art passcodes follow), which is
@@ -366,7 +377,7 @@ Result<std::vector<AutoDetectedPrint>> YuGiOhCardPreviewSource::parsePrintVarian
         if (!j.contains("data") || !j.at("data").is_array() || j.at("data").empty()) {
             return R::err("YGOPRODeck returned no matching cards.");
         }
-        const std::string wantedSet = trim(std::string(preferredSetName));
+        const std::string wantedSet = canonicalizeSetNameForAutoDetect(preferredSetName);
         const std::string wantedNameLower = toLower(trim(std::string(wantedCardName)));
 
         std::vector<AutoDetectedPrint> collected;
@@ -532,15 +543,16 @@ Result<std::vector<AutoDetectedPrint>> YuGiOhCardPreviewSource::detectPrintVaria
     std::string_view name,
     std::string_view setId) {
     using R = Result<std::vector<AutoDetectedPrint>>;
-    const std::string url = buildSearchUrl(name, setId);
+    const std::string canonicalSetName = canonicalizeSetNameForAutoDetect(setId);
+    const std::string url = buildSearchUrl(name, canonicalSetName);
     auto resp = http_.get(url);
     if (resp) {
-        return parsePrintVariants(resp.value(), setId, name);
+        return parsePrintVariants(resp.value(), canonicalSetName, name);
     }
     const std::string fallbackUrl = buildSearchUrl(name, "");
     auto fallback = http_.get(fallbackUrl);
     if (!fallback) return R::err(fallback.error());
-    return parsePrintVariants(fallback.value(), setId, name);
+    return parsePrintVariants(fallback.value(), canonicalSetName, name);
 }
 
 }  // namespace ccm
