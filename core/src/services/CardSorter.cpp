@@ -2,6 +2,7 @@
 
 #include "ccm/domain/Enums.hpp"
 #include "ccm/util/AsciiUtils.hpp"
+#include "ccm/util/YuGiOhPrintingSlot.hpp"
 
 #include <algorithm>
 #include <string>
