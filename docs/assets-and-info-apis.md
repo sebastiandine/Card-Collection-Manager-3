@@ -39,6 +39,8 @@ Upstream documentation:
 `https://db.ygoprodeck.com/api/v7/cardsets.php`  
 Used by `YuGiOhSetSource`. The response is a top-level JSON array. Each object maps `set_code` → internal `Set.id`, `set_name` → `Set.name`, and `tcg_date` → `Set.releaseDate` with `-` rewritten to `/` for consistency with other games’ date strings. Results are sorted ascending by `releaseDate`.
 
+CCM3 also applies a deterministic local patch step in `YuGiOhSetSource::appendMissingSetAliases(...)` after parsing: if upstream omits known 25th Anniversary TCG reprints, the app injects missing aliases for `LOB-25TH`, `MRD-25TH`, `SRL-25TH`, `PSV-25TH`, `DCR-25TH`, and `IOC-25TH` (with fixed release dates) so users can still select those products in the set picker.
+
 ### Asset API: Yugipedia `api.php` (primary)
 
 `https://yugipedia.com/api.php?action=query&prop=imageinfo&iiprop=url&titles=...`  

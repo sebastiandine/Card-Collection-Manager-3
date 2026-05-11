@@ -446,6 +446,22 @@ TEST_SUITE("YuGiOhCardPreviewSource::parsePrintVariants") {
         REQUIRE(out.isErr());
         CHECK(out.error().find("YGOPRODeck JSON parse error") != std::string::npos);
     }
+
+    TEST_CASE("maps 25th Anniversary display-set alias to original set name") {
+        const std::string json = R"({
+          "data":[
+            {"name":"Dark Magician",
+             "card_sets":[
+               {"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB-005","set_rarity":"Ultra Rare"}
+             ]}
+          ]
+        })";
+        const auto out = YuGiOhCardPreviewSource::parsePrintVariants(
+            json, "Legend of Blue Eyes White Dragon (25th Anniversary Edition)", "Dark Magician");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value()[0].setNo == "LOB-005");
+    }
 }
 
 TEST_SUITE("YuGiOhCardPreviewSource::detectPrintVariants HTTP fallback") {
@@ -466,6 +482,26 @@ TEST_SUITE("YuGiOhCardPreviewSource::detectPrintVariants HTTP fallback") {
         REQUIRE(out.value().size() == 1);
         CHECK(out.value()[0].setNo == "MP21-EN001");
         REQUIRE(http.calls == 2);
+    }
+
+    TEST_CASE("uses original set name in cardset query for 25th alias") {
+        FixedHttpClient http;
+        http.body = R"({
+          "data":[{
+            "name":"Dark Magician",
+            "card_sets":[
+              {"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB-005","set_rarity":"Ultra Rare"}
+            ]
+          }]
+        })";
+
+        YuGiOhCardPreviewSource src{http};
+        const auto out = src.detectPrintVariants(
+            "Dark Magician", "Legend of Blue Eyes White Dragon (25th Anniversary Edition)");
+        REQUIRE(out.isOk());
+        CHECK(http.lastUrl.find("cardset=Legend%20of%20Blue%20Eyes%20White%20Dragon")
+              != std::string::npos);
+        CHECK(http.lastUrl.find("25th") == std::string::npos);
     }
 }
 
@@ -760,6 +796,34 @@ TEST_SUITE("YuGiOhCardPreviewSource::fetchImageUrl") {
         CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
     }
 
+    TEST_CASE("Yugipedia clean-miss + YGOPRODeck transient is overall Transient") {
+        RoutingHttpClient http;
+        http.yugipediaBody = R"({"query":{"pages":{
+          "-1":{"title":"File:Whatever-LOB-EN-UR-UE.png","missing":""}
+        }}})";
+        http.ygoprodeckOk = false;
+
+        YuGiOhCardPreviewSource src{http};
+        const auto out = src.fetchImageUrl(
+            "No Such Card", "Legend of Blue Eyes White Dragon", "LOB-999||Ultra Rare||UE");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
+    }
+
+    TEST_CASE("tuple-style setNo parsing trims fields and supports empty set code") {
+        FixedHttpClient http;
+        http.ok = true;
+        http.body = R"({"data":[{"name":"Dark Magician",
+          "card_images":[{"image_url":"https://images.ygoprodeck.com/std-dm.jpg"}]}]})";
+
+        YuGiOhCardPreviewSource src{http};
+        const auto out = src.fetchImageUrl(
+            "Dark Magician", "Legend of Blue Eyes White Dragon", "  || Ultra Rare || 1E ");
+        REQUIRE(out.isOk());
+        CHECK(out.value() == "https://images.ygoprodeck.com/std-dm.jpg");
+        CHECK(http.lastUrl.find("ygoprodeck.com") != std::string::npos);
+    }
+
     TEST_CASE("skips Yugipedia entirely when the set code is missing") {
         // Without a set code we can't construct any candidate filename - go
         // straight to the YGOPRODeck fallback to avoid wasting an HTTP call.
@@ -775,5 +839,38 @@ TEST_SUITE("YuGiOhCardPreviewSource::fetchImageUrl") {
         CHECK(out.value() == "https://images.ygoprodeck.com/std-dm.jpg");
         CHECK(http.lastUrl.find("ygoprodeck.com") != std::string::npos);
         CHECK(http.lastUrl.find("yugipedia.com") == std::string::npos);
+    }
+}
+
+TEST_SUITE("YuGiOhCardPreviewSource::detectFirstPrint") {
+    TEST_CASE("returns first variant from filtered request") {
+        FixedHttpClient http;
+        http.body = R"({
+          "data":[
+            {"name":"Dark Magician",
+             "card_sets":[
+               {"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB-005","set_rarity":"Ultra Rare"}
+             ]}
+          ]
+        })";
+        YuGiOhCardPreviewSource src{http};
+
+        const auto out = src.detectFirstPrint(
+            "Dark Magician", "Legend of Blue Eyes White Dragon");
+        REQUIRE(out.isOk());
+        CHECK(out.value().setNo == "LOB-005");
+        CHECK(out.value().rarity == "Ultra Rare");
+        CHECK(http.lastUrl.find("cardset=Legend%20of%20Blue%20Eyes%20White%20Dragon")
+              != std::string::npos);
+    }
+
+    TEST_CASE("propagates unfiltered fallback errors when both requests fail") {
+        FixedHttpClient http;
+        http.ok = false;
+        YuGiOhCardPreviewSource src{http};
+
+        const auto out = src.detectFirstPrint("Any", "Any Set");
+        REQUIRE(out.isErr());
+        CHECK(out.error() == "offline");
     }
 }

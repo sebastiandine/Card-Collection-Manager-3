@@ -352,11 +352,14 @@ private:
         failed.reserve(static_cast<std::size_t>(paths.size()));
 
         for (const auto& path : paths) {
+            const std::string setNameForImage = (game_ == Game::YuGiOh && !card_.set.id.empty())
+                                                    ? card_.set.id
+                                                    : card_.set.name;
             auto added = imageService_.addImage(game_,
                                                 std::filesystem::path(path.ToStdString()),
                                                 mode_ == EditMode::Create,
                                                 card_.id,
-                                                card_.set.name,
+                                                setNameForImage,
                                                 card_.name,
                                                 card_.images);
             if (!added) {

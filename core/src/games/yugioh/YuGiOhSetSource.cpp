@@ -16,6 +16,7 @@ struct YuGiOhSetAlias {
 };
 
 constexpr std::array<YuGiOhSetAlias, 6> kMissing25thAnniversaryReprints{{
+    // Keep this list in sync with docs/assets-and-info-apis.md (Info API section).
     {"LOB-25TH", "Legend of Blue Eyes White Dragon (25th Anniversary Edition)", "2023/04/20"},
     {"MRD-25TH", "Metal Raiders (25th Anniversary Edition)", "2023/04/20"},
     {"SRL-25TH", "Spell Ruler (25th Anniversary Edition)", "2023/04/20"},

@@ -68,6 +68,11 @@ TEST_SUITE("ImageService::nextImageIndex") {
         std::vector<std::string> imgs = {"set+name+99.png"};
         CHECK(ImageService::nextImageIndex(imgs) == 100);
     }
+
+    TEST_CASE("three-digit filename index follows two-digit compatibility parser") {
+        std::vector<std::string> imgs = {"set+name+255.png"};
+        CHECK(ImageService::nextImageIndex(imgs) == 56);
+    }
 }
 
 TEST_SUITE("ImageService::buildTargetName") {
@@ -97,6 +102,40 @@ TEST_SUITE("ImageService::addImage") {
         REQUIRE(store.copies.size() == 1);
         CHECK(store.copies[0].game == Game::Magic);
         CHECK(store.copies[0].target == "Beta+BlackLotus+0");
+    }
+
+    TEST_CASE("propagates copyIn failures") {
+        RecordingImageStore store;
+        store.failCopyAt = 1;
+        ImageService svc{store};
+
+        std::vector<std::string> existing;
+        const auto out = svc.addImage(Game::Magic, "/tmp/source.png",
+                                      /*newEntry=*/true, /*cardId=*/0,
+                                      "Beta", "Black Lotus", existing);
+        REQUIRE(out.isErr());
+        CHECK(out.error().find("copy failed at 1") != std::string::npos);
+    }
+}
+
+TEST_SUITE("ImageService::removeImage and resolveImagePath") {
+    TEST_CASE("removeImage delegates to store remove") {
+        RecordingImageStore store;
+        ImageService svc{store};
+
+        const auto out = svc.removeImage(Game::Magic, "x.png");
+        REQUIRE(out.isOk());
+        REQUIRE(store.removes.size() == 1);
+        CHECK(store.removes[0].first == Game::Magic);
+        CHECK(store.removes[0].second == "x.png");
+    }
+
+    TEST_CASE("resolveImagePath delegates to store resolvePath") {
+        RecordingImageStore store;
+        ImageService svc{store};
+
+        const auto p = svc.resolveImagePath(Game::Pokemon, "pikachu.jpg");
+        CHECK(p == std::filesystem::path("/fake/pikachu.jpg"));
     }
 }
 
@@ -129,6 +168,20 @@ TEST_SUITE("ImageService::normalizeNamesForPersistedCard") {
     }
 
     TEST_CASE("keeps already-prefixed names untouched") {
+        RecordingImageStore store;
+        ImageService svc{store};
+
+        const std::vector<std::string> images{"42+Beta+BlackLotus+0.png"};
+        auto normalized = svc.normalizeNamesForPersistedCard(
+            Game::Magic, 42, "Beta", "Black Lotus", images);
+
+        REQUIRE(normalized.isOk());
+        CHECK(normalized.value() == images);
+        CHECK(store.copies.empty());
+        CHECK(store.removes.empty());
+    }
+
+    TEST_CASE("skips rename when computed output name equals input") {
         RecordingImageStore store;
         ImageService svc{store};
 

@@ -234,6 +234,55 @@ TEST_SUITE("LocalPreviewByteCache") {
         CHECK(cache.load("real-key").kind == IPreviewByteCache::HitKind::Miss);
     }
 
+    TEST_CASE("entry with payload but missing sidecar is treated as miss") {
+        TempDir td;
+        StdFileSystem fs;
+        LocalPreviewByteCache cache(fs, td.path);
+        cache.store("real-key", "REAL");
+
+        for (const auto& entry : fs::directory_iterator(td.path)) {
+            if (entry.path().extension() == ".idx") {
+                std::error_code ec;
+                fs::remove(entry.path(), ec);
+            }
+        }
+
+        CHECK(cache.load("real-key").kind == IPreviewByteCache::HitKind::Miss);
+    }
+
+    TEST_CASE("entry with negative marker but missing sidecar is treated as miss") {
+        TempDir td;
+        StdFileSystem fs;
+        LocalPreviewByteCache cache(fs, td.path);
+        cache.storeNegative("real-key");
+
+        for (const auto& entry : fs::directory_iterator(td.path)) {
+            if (entry.path().extension() == ".idx") {
+                std::error_code ec;
+                fs::remove(entry.path(), ec);
+            }
+        }
+
+        CHECK(cache.load("real-key").kind == IPreviewByteCache::HitKind::Miss);
+    }
+
+    TEST_CASE("entry with unreadable payload file is treated as miss") {
+        TempDir td;
+        StdFileSystem fs;
+        LocalPreviewByteCache cache(fs, td.path);
+        cache.store("real-key", "REAL");
+
+        for (const auto& entry : fs::directory_iterator(td.path)) {
+            if (entry.path().extension() == ".bin") {
+                std::error_code ec;
+                fs::remove(entry.path(), ec);
+                break;
+            }
+        }
+
+        CHECK(cache.load("real-key").kind == IPreviewByteCache::HitKind::Miss);
+    }
+
     TEST_CASE("evicts oldest entry when the size cap would be exceeded") {
         TempDir td;
         StdFileSystem fs;

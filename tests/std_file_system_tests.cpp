@@ -112,6 +112,22 @@ TEST_SUITE("StdFileSystem") {
         CHECK(r.value() == "hi");
     }
 
+    TEST_CASE("writeText/readText work for top-level relative files") {
+        TempDir td;
+        StdFileSystem fs;
+        const auto oldCwd = fs::current_path();
+        fs::current_path(td.path);
+
+        const fs::path topLevel = "top-level.txt";
+        REQUIRE(fs.writeText(topLevel, "hello").isOk());
+        const auto r = fs.readText(topLevel);
+        REQUIRE(r.isOk());
+        CHECK(r.value() == "hello");
+
+        std::error_code ec;
+        fs::current_path(oldCwd, ec);
+    }
+
     TEST_CASE("copyFile copies bytes and respects overwrite flag") {
         TempDir td;
         StdFileSystem fs;

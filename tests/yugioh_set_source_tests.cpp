@@ -98,6 +98,44 @@ TEST_SUITE("YuGiOhSetSource::parseResponse") {
         REQUIRE(out.isErr());
         CHECK(out.error().find("YGOPRODeck set parse error:") != std::string::npos);
     }
+
+    TEST_CASE("missing fields fall back to empty strings and keep parsing") {
+        const std::string json = R"([
+            {"set_name":"Set A"},
+            {"set_code":"BBB","tcg_date":"2021-02-03"}
+        ])";
+        const auto out = YuGiOhSetSource::parseResponse(json);
+        REQUIRE(out.isOk());
+        bool foundMissingCode = false;
+        bool foundMissingName = false;
+        for (const auto& set : out.value()) {
+            if (set.name == "Set A" && set.id.empty() && set.releaseDate.empty()) {
+                foundMissingCode = true;
+            }
+            if (set.id == "BBB" && set.name.empty() && set.releaseDate == "2021/02/03") {
+                foundMissingName = true;
+            }
+        }
+        CHECK(foundMissingCode);
+        CHECK(foundMissingName);
+    }
+
+    TEST_CASE("preserves slash-formatted dates and normalizes hyphen dates") {
+        const std::string json = R"([
+            {"set_name":"Slash Date","set_code":"S","tcg_date":"2024/01/01"},
+            {"set_name":"Hyphen Date","set_code":"H","tcg_date":"2024-01-02"}
+        ])";
+        const auto out = YuGiOhSetSource::parseResponse(json);
+        REQUIRE(out.isOk());
+        bool sawSlash = false;
+        bool sawHyphenNormalized = false;
+        for (const auto& set : out.value()) {
+            if (set.id == "S" && set.releaseDate == "2024/01/01") sawSlash = true;
+            if (set.id == "H" && set.releaseDate == "2024/01/02") sawHyphenNormalized = true;
+        }
+        CHECK(sawSlash);
+        CHECK(sawHyphenNormalized);
+    }
 }
 
 TEST_SUITE("YuGiOhSetSource::fetchAll") {

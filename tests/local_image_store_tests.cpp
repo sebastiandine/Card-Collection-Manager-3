@@ -21,6 +21,37 @@ std::string dirNameForGame(Game g) {
     return "magic";
 }
 
+class FailingImageFs final : public IFileSystem {
+public:
+    bool ensureOk{true};
+    bool copyOk{true};
+    bool removeOk{true};
+
+    [[nodiscard]] bool exists(const std::filesystem::path&) const override { return true; }
+    [[nodiscard]] bool isDirectory(const std::filesystem::path&) const override { return true; }
+    Result<void> ensureDirectory(const std::filesystem::path&) override {
+        if (!ensureOk) return Result<void>::err("ensure failed");
+        return Result<void>::ok();
+    }
+    Result<std::string> readText(const std::filesystem::path&) override {
+        return Result<std::string>::ok({});
+    }
+    Result<void> writeText(const std::filesystem::path&, std::string_view) override {
+        return Result<void>::ok();
+    }
+    Result<void> copyFile(const std::filesystem::path&, const std::filesystem::path&, bool) override {
+        if (!copyOk) return Result<void>::err("copy failed");
+        return Result<void>::ok();
+    }
+    Result<void> remove(const std::filesystem::path&) override {
+        if (!removeOk) return Result<void>::err("remove failed");
+        return Result<void>::ok();
+    }
+    Result<std::vector<std::filesystem::path>> listDirectory(const std::filesystem::path&) override {
+        return Result<std::vector<std::filesystem::path>>::ok({});
+    }
+};
+
 }  // namespace
 
 TEST_SUITE("LocalImageStore") {
@@ -86,5 +117,31 @@ TEST_SUITE("LocalImageStore") {
 
         const std::filesystem::path got = store.resolvePath(Game::Pokemon, "pic.jpg");
         CHECK(got.generic_string() == "/coll/pokemon/images/pic.jpg");
+    }
+
+    TEST_CASE("copyIn propagates ensureDirectory failure") {
+        InMemoryFileSystem configFs;
+        ConfigService cfg{configFs, "/app/config.json", "/coll"};
+        REQUIRE(cfg.initialize().isOk());
+        FailingImageFs fs;
+        fs.ensureOk = false;
+        LocalImageStore store(fs, cfg, dirNameForGame);
+
+        const auto out = store.copyIn(Game::Magic, "/incoming/a.png", "id001");
+        REQUIRE(out.isErr());
+        CHECK(out.error() == "ensure failed");
+    }
+
+    TEST_CASE("remove propagates filesystem remove failure when file exists") {
+        InMemoryFileSystem configFs;
+        ConfigService cfg{configFs, "/app/config.json", "/coll"};
+        REQUIRE(cfg.initialize().isOk());
+        FailingImageFs fs;
+        fs.removeOk = false;
+        LocalImageStore store(fs, cfg, dirNameForGame);
+
+        const auto out = store.remove(Game::Magic, "a.png");
+        REQUIRE(out.isErr());
+        CHECK(out.error() == "remove failed");
     }
 }

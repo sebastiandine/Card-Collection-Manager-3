@@ -59,6 +59,16 @@ MagicCard makeCard(const std::string& name, std::vector<std::string> imgs = {}) 
 }  // namespace
 
 TEST_SUITE("CollectionService<MagicCard>") {
+    TEST_CASE("nextId uses highest existing id plus one") {
+        InMemoryRepo repo;
+        StubImageStore store;
+        CollectionService<MagicCard> svc{repo, store};
+
+        repo.storage.emplace(2, makeCard("A"));
+        repo.storage.emplace(9, makeCard("B"));
+        CHECK(CollectionService<MagicCard>::nextId(repo.storage) == 10);
+    }
+
     TEST_CASE("nextId on empty map is 0, then strictly increments") {
         InMemoryRepo repo;
         StubImageStore store;
@@ -163,6 +173,21 @@ TEST_SUITE("CollectionService<MagicCard>") {
         CHECK(updateRes.error() == "save failed");
     }
 
+    TEST_CASE("add overwrites input card id with generated id") {
+        InMemoryRepo repo;
+        StubImageStore store;
+        CollectionService<MagicCard> svc{repo, store};
+
+        MagicCard card = makeCard("Has User Id");
+        card.id = 777;
+        const auto out = svc.add(Game::Magic, card);
+        REQUIRE(out.isOk());
+        CHECK(out.value() == 0);
+        REQUIRE(repo.storage.count(0) == 1);
+        CHECK(repo.storage.at(0).name == "Has User Id");
+        CHECK(repo.storage.count(777) == 0);
+    }
+
     TEST_CASE("findById returns nullopt for missing id") {
         InMemoryRepo repo;
         StubImageStore store;
@@ -192,5 +217,23 @@ TEST_SUITE("CollectionService<MagicCard>") {
         const auto listed = svc.list(Game::Magic);
         REQUIRE(listed.isOk());
         CHECK(listed.value().empty());
+    }
+
+    TEST_CASE("remove propagates save failure after image cleanup") {
+        InMemoryRepo repo;
+        StubImageStore store;
+        CollectionService<MagicCard> svc{repo, store};
+
+        const auto id = svc.add(
+            Game::Magic, makeCard("With Images", {"a.png", "b.png"}));
+        REQUIRE(id.isOk());
+
+        repo.failSave = true;
+        const auto removed = svc.remove(Game::Magic, id.value());
+        REQUIRE(removed.isErr());
+        CHECK(removed.error() == "save failed");
+        REQUIRE(store.removed.size() == 2);
+        CHECK(store.removed[0].second == "a.png");
+        CHECK(store.removed[1].second == "b.png");
     }
 }

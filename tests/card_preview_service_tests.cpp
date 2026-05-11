@@ -703,6 +703,17 @@ TEST_SUITE("CardPreviewService caching") {
         CHECK(http.calls == 1);
     }
 
+    TEST_CASE("fetchImageBytesByUrl propagates HTTP errors when uncached") {
+        FixedHttpClient http;
+        http.ok = false;
+        http.err = "url fetch failed";
+        CardPreviewService svc{http};
+
+        const auto out = svc.fetchImageBytesByUrl("https://cdn.example/back.png");
+        REQUIRE(out.isErr());
+        CHECK(out.error() == "url fetch failed");
+    }
+
     TEST_CASE("fetchImageBytesByUrl serves from persistent cache hit without HTTP") {
         FixedHttpClient http;
         http.body = "warm-card-back";
