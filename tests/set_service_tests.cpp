@@ -39,11 +39,13 @@ class InMemSetRepo final : public ISetRepository {
 public:
     std::vector<Set> stored;
     bool hasStored = false;
+    bool failSave = false;
     Result<std::vector<Set>> load(Game) override {
         if (!hasStored) return Result<std::vector<Set>>::err("no cache");
         return Result<std::vector<Set>>::ok(stored);
     }
     Result<void> save(Game, const std::vector<Set>& s) override {
+        if (failSave) return Result<void>::err("save failed");
         stored = s;
         hasStored = true;
         return Result<void>::ok();
@@ -144,5 +146,37 @@ TEST_SUITE("SetService") {
         CHECK(magic.source.calls == 1);
         CHECK(pokemon.source.calls == 1);
         CHECK(yugioh.source.calls == 1);
+    }
+
+    TEST_CASE("updateSets propagates repository save failures") {
+        InMemSetRepo repo;
+        repo.failSave = true;
+        SetService svc{repo};
+        FakeGameModule magic{Game::Magic};
+        magic.source.result = Result<std::vector<Set>>::ok({{"lea", "Alpha", "1993/08/05"}});
+        svc.registerModule(&magic);
+
+        const auto out = svc.updateSets(Game::Magic);
+        REQUIRE(out.isErr());
+        CHECK(out.error() == "save failed");
+    }
+
+    TEST_CASE("registering a second module for same game id overwrites previous one") {
+        InMemSetRepo repo;
+        SetService svc{repo};
+        FakeGameModule firstMagic{Game::Magic};
+        firstMagic.source.result = Result<std::vector<Set>>::ok({{"a", "First", "2000/01/01"}});
+        FakeGameModule secondMagic{Game::Magic};
+        secondMagic.source.result = Result<std::vector<Set>>::ok({{"b", "Second", "2001/01/01"}});
+
+        svc.registerModule(&firstMagic);
+        svc.registerModule(&secondMagic);
+
+        const auto out = svc.updateSets(Game::Magic);
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value().front().id == "b");
+        CHECK(firstMagic.source.calls == 0);
+        CHECK(secondMagic.source.calls == 1);
     }
 }

@@ -31,6 +31,7 @@ public:
     std::string readPayload{"[]"};
     std::filesystem::path lastWritePath;
     std::string lastWriteBody;
+    std::filesystem::path lastReadPath;
 
     [[nodiscard]] bool exists(const std::filesystem::path&) const override { return true; }
     [[nodiscard]] bool isDirectory(const std::filesystem::path&) const override { return true; }
@@ -40,6 +41,7 @@ public:
         return Result<void>::ok();
     }
     Result<std::string> readText(const std::filesystem::path&) override {
+        lastReadPath = std::filesystem::path("/tracked/read/path");
         if (!readOk) return Result<std::string>::err("read failed");
         return Result<std::string>::ok(readPayload);
     }
@@ -109,6 +111,18 @@ TEST_SUITE("JsonSetRepository") {
         CHECK(loaded.error().find("sets.json parse error:") != std::string::npos);
     }
 
+    TEST_CASE("load reports parse error for wrong JSON shape") {
+        InMemoryFileSystem configFs;
+        auto cfg = makeConfig(configFs, "/data");
+        FailingSetFs fs;
+        fs.readPayload = R"({"not":"an array"})";
+        JsonSetRepository repo{fs, cfg, dirNameFn};
+
+        const auto loaded = repo.load(Game::Magic);
+        REQUIRE(loaded.isErr());
+        CHECK(loaded.error().find("sets.json parse error:") != std::string::npos);
+    }
+
     TEST_CASE("save propagates ensureDirectory and writeText failures") {
         InMemoryFileSystem configFs;
         auto cfg = makeConfig(configFs, "/data");
@@ -127,5 +141,15 @@ TEST_SUITE("JsonSetRepository") {
         const auto writeFail = repo.save(Game::Magic, sets);
         REQUIRE(writeFail.isErr());
         CHECK(writeFail.error() == "write failed");
+    }
+
+    TEST_CASE("paths are composed from dataStorage and game dir") {
+        InMemoryFileSystem fs;
+        auto cfg = makeConfig(fs, "/data");
+        JsonSetRepository repo{fs, cfg, dirNameFn};
+        const std::vector<Set> sets = {{"base1", "Base Set", "1999/01/09"}};
+
+        REQUIRE(repo.save(Game::Pokemon, sets).isOk());
+        CHECK(fs.files().count("/data/pokemon/sets.json") == 1);
     }
 }

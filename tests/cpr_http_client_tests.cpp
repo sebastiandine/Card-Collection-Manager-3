@@ -79,6 +79,59 @@ TEST_SUITE("CprHttpClient injected raw executor") {
         REQUIRE(out.isErr());
         CHECK(out.error().find("timeout") != std::string::npos);
     }
+
+    TEST_CASE("passes URL through raw executor unchanged") {
+        std::string seenUrl;
+        CprHttpClient client{
+            [&seenUrl](std::string_view url) -> CprHttpClient::RawResponse {
+                seenUrl = std::string(url);
+                return CprHttpClient::RawResponse{
+                    .transportError = false,
+                    .transportMessage = "",
+                    .statusCode = 200,
+                    .body = "ok",
+                };
+            }
+        };
+
+        const auto out = client.get("https://example.com/raw?q=a%20b");
+        REQUIRE(out.isOk());
+        CHECK(seenUrl == "https://example.com/raw?q=a%20b");
+    }
+
+    TEST_CASE("maps non-2xx status to error") {
+        CprHttpClient client{
+            [](std::string_view) -> CprHttpClient::RawResponse {
+                return CprHttpClient::RawResponse{
+                    .transportError = false,
+                    .transportMessage = "",
+                    .statusCode = 503,
+                    .body = "service unavailable",
+                };
+            }
+        };
+
+        const auto out = client.get("https://example.com/fail");
+        REQUIRE(out.isErr());
+        CHECK(out.error().find("HTTP 503") != std::string::npos);
+    }
+
+    TEST_CASE("transport error takes precedence over status code") {
+        CprHttpClient client{
+            [](std::string_view) -> CprHttpClient::RawResponse {
+                return CprHttpClient::RawResponse{
+                    .transportError = true,
+                    .transportMessage = "socket closed",
+                    .statusCode = 200,
+                    .body = "ignored",
+                };
+            }
+        };
+
+        const auto out = client.get("https://example.com/transport");
+        REQUIRE(out.isErr());
+        CHECK(out.error().find("socket closed") != std::string::npos);
+    }
 }
 
 TEST_SUITE("CprHttpClient real session") {

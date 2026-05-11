@@ -8,6 +8,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include <filesystem>
+
 using namespace ccm;
 using ccm::testing::InMemoryFileSystem;
 
@@ -26,6 +28,37 @@ ConfigService makeConfig(InMemoryFileSystem& fs, const std::string& dataDir) {
 }
 
 std::string magicDir(Game g) { return g == Game::Magic ? "magic" : "pokemon"; }
+
+class FailingCollectionFs final : public IFileSystem {
+public:
+    bool existsValue{true};
+    bool ensureOk{true};
+    bool writeOk{true};
+    bool readOk{true};
+    std::string readPayload{"{}"};
+
+    [[nodiscard]] bool exists(const std::filesystem::path&) const override { return existsValue; }
+    [[nodiscard]] bool isDirectory(const std::filesystem::path&) const override { return true; }
+    Result<void> ensureDirectory(const std::filesystem::path&) override {
+        if (!ensureOk) return Result<void>::err("ensure failed");
+        return Result<void>::ok();
+    }
+    Result<std::string> readText(const std::filesystem::path&) override {
+        if (!readOk) return Result<std::string>::err("read failed");
+        return Result<std::string>::ok(readPayload);
+    }
+    Result<void> writeText(const std::filesystem::path&, std::string_view) override {
+        if (!writeOk) return Result<void>::err("write failed");
+        return Result<void>::ok();
+    }
+    Result<void> copyFile(const std::filesystem::path&, const std::filesystem::path&, bool) override {
+        return Result<void>::ok();
+    }
+    Result<void> remove(const std::filesystem::path&) override { return Result<void>::ok(); }
+    Result<std::vector<std::filesystem::path>> listDirectory(const std::filesystem::path&) override {
+        return Result<std::vector<std::filesystem::path>>::ok({});
+    }
+};
 
 }  // namespace
 
@@ -84,5 +117,50 @@ TEST_SUITE("JsonCollectionRepository<MagicCard>") {
         const auto j = nlohmann::json::parse(contents);
         REQUIRE(j.contains("17"));
         CHECK(j.at("17").at("id") == 17);
+    }
+
+    TEST_CASE("load returns parse error for non-object root") {
+        InMemoryFileSystem fs;
+        auto cfg = makeConfig(fs, "/data");
+        JsonCollectionRepository<MagicCard> repo{fs, cfg, magicDir};
+        fs.writeText("/data/magic/collection.json", R"(["not","an","object"])");
+
+        const auto loaded = repo.load(Game::Magic);
+        REQUIRE(loaded.isErr());
+        CHECK(loaded.error().find("JSON parse error:") != std::string::npos);
+    }
+
+    TEST_CASE("load returns parse error for non-numeric object keys") {
+        InMemoryFileSystem fs;
+        auto cfg = makeConfig(fs, "/data");
+        JsonCollectionRepository<MagicCard> repo{fs, cfg, magicDir};
+        fs.writeText("/data/magic/collection.json", R"({"abc":{"id":1}})");
+
+        const auto loaded = repo.load(Game::Magic);
+        REQUIRE(loaded.isErr());
+        CHECK(loaded.error().find("JSON parse error:") != std::string::npos);
+    }
+
+    TEST_CASE("save and initialize-on-load propagate ensureDirectory/write errors") {
+        InMemoryFileSystem configFs;
+        auto cfg = makeConfig(configFs, "/data");
+        FailingCollectionFs fs;
+        JsonCollectionRepository<MagicCard> repo{fs, cfg, magicDir};
+
+        fs.ensureOk = false;
+        const auto saveEnsureFail = repo.save(Game::Magic, {});
+        REQUIRE(saveEnsureFail.isErr());
+        CHECK(saveEnsureFail.error() == "ensure failed");
+
+        fs.ensureOk = true;
+        fs.writeOk = false;
+        const auto saveWriteFail = repo.save(Game::Magic, {});
+        REQUIRE(saveWriteFail.isErr());
+        CHECK(saveWriteFail.error() == "write failed");
+
+        fs.existsValue = false;
+        const auto loadCreateFail = repo.load(Game::Magic);
+        REQUIRE(loadCreateFail.isErr());
+        CHECK(loadCreateFail.error() == "write failed");
     }
 }

@@ -290,10 +290,42 @@ TEST_SUITE("Domain JSON required fields") {
         CHECK_THROWS(j.get<PokemonCard>());
     }
 
+    TEST_CASE("YuGiOhCard missing required key throws") {
+        const nlohmann::json j = {
+            {"id", 7},
+            {"amount", 1},
+            {"name", "Blue-Eyes White Dragon"},
+            {"set", nlohmann::json{
+                {"id", "sdk"},
+                {"name", "Starter Deck Kaiba"},
+                {"releaseDate", "2002/03/29"},
+            }},
+            {"setNo", "SDK-001"},
+            {"note", ""},
+            {"images", nlohmann::json::array()},
+            {"language", "English"},
+            {"condition", "NearMint"},
+            {"firstEdition", true},
+            // rarity missing on purpose
+            {"signed", false},
+            {"altered", false},
+        };
+        CHECK_THROWS(j.get<YuGiOhCard>());
+    }
+
     TEST_CASE("Configuration missing required key throws") {
         const nlohmann::json j = {
             {"defaultGame", "Magic"},
             {"theme", "Dark"},
+        };
+        CHECK_THROWS(j.get<Configuration>());
+    }
+
+    TEST_CASE("Configuration invalid theme value throws when present") {
+        const nlohmann::json j = {
+            {"dataStorage", "/portable/data"},
+            {"defaultGame", "Magic"},
+            {"theme", "Neon"},
         };
         CHECK_THROWS(j.get<Configuration>());
     }
