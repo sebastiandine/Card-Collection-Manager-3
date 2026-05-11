@@ -113,8 +113,11 @@ void YuGiOhGameView::onAddCard(wxWindow* parentWindow) {
 
     YuGiOhCard persisted = dlg.card();
     persisted.id = added.value();
+    const std::string setNameForImage = persisted.set.id.empty()
+                                            ? persisted.set.name
+                                            : persisted.set.id;
     auto normalized = images_.normalizeNamesForPersistedCard(
-        Game::YuGiOh, persisted.id, persisted.set.name, persisted.name, persisted.images);
+        Game::YuGiOh, persisted.id, setNameForImage, persisted.name, persisted.images);
     if (normalized) {
         if (normalized.value() != persisted.images) {
             persisted.images = std::move(normalized).value();
