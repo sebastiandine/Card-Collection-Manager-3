@@ -29,9 +29,18 @@ TEST_SUITE("YuGiOhSetSource::parseResponse") {
         ])";
         const auto out = YuGiOhSetSource::parseResponse(json);
         REQUIRE(out.isOk());
-        REQUIRE(out.value().size() == 2);
-        CHECK(out.value()[0].id == "AAA");
-        CHECK(out.value()[0].releaseDate == "2020/01/01");
+        bool foundA = false;
+        bool foundB = false;
+        for (const auto& set : out.value()) {
+            if (set.id == "AAA" && set.name == "Set A" && set.releaseDate == "2020/01/01") {
+                foundA = true;
+            }
+            if (set.id == "BBB" && set.name == "Set B" && set.releaseDate == "2021/02/03") {
+                foundB = true;
+            }
+        }
+        CHECK(foundA);
+        CHECK(foundB);
     }
 
     TEST_CASE("sorts by release date ascending") {
@@ -46,6 +55,27 @@ TEST_SUITE("YuGiOhSetSource::parseResponse") {
 
     TEST_CASE("missing array returns error") {
         CHECK(YuGiOhSetSource::parseResponse(R"({"data":[]})").isErr());
+    }
+
+    TEST_CASE("adds 25th Anniversary aliases when upstream list misses them") {
+        const auto out = YuGiOhSetSource::parseResponse(R"([
+            {"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB","tcg_date":"2002-03-08"}
+        ])");
+        REQUIRE(out.isOk());
+
+        bool foundLob25th = false;
+        bool foundIoc25th = false;
+        for (const auto& set : out.value()) {
+            if (set.name == "Legend of Blue Eyes White Dragon (25th Anniversary Edition)"
+                && set.id == "LOB-25TH") {
+                foundLob25th = true;
+            }
+            if (set.name == "Invasion of Chaos (25th Anniversary Edition)" && set.id == "IOC-25TH") {
+                foundIoc25th = true;
+            }
+        }
+        CHECK(foundLob25th);
+        CHECK(foundIoc25th);
     }
 }
 
