@@ -57,6 +57,20 @@ TEST_SUITE("YuGiOhSetSource::parseResponse") {
         CHECK(YuGiOhSetSource::parseResponse(R"({"data":[]})").isErr());
     }
 
+    TEST_CASE("empty upstream array still appends missing 25th aliases") {
+        const auto out = YuGiOhSetSource::parseResponse("[]");
+        REQUIRE(out.isOk());
+        CHECK(out.value().size() == 6);
+        bool foundLob25th = false;
+        bool foundIoc25th = false;
+        for (const auto& set : out.value()) {
+            if (set.id == "LOB-25TH") foundLob25th = true;
+            if (set.id == "IOC-25TH") foundIoc25th = true;
+        }
+        CHECK(foundLob25th);
+        CHECK(foundIoc25th);
+    }
+
     TEST_CASE("adds 25th Anniversary aliases when upstream list misses them") {
         const auto out = YuGiOhSetSource::parseResponse(R"([
             {"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB","tcg_date":"2002-03-08"}

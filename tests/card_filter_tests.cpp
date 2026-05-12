@@ -57,7 +57,13 @@ YuGiOhCard yc(std::string name,
               std::string setName,
               std::string setNo = "",
               std::string rarity = "",
-              std::uint8_t amount = 1) {
+              std::uint8_t amount = 1,
+              Language lang = Language::English,
+              Condition cond = Condition::NearMint,
+              std::string note = "",
+              bool firstEdition = false,
+              bool sgnd = false,
+              bool altered = false) {
     YuGiOhCard c;
     c.id = 1;
     c.name = std::move(name);
@@ -65,6 +71,12 @@ YuGiOhCard yc(std::string name,
     c.setNo = std::move(setNo);
     c.rarity = std::move(rarity);
     c.amount = amount;
+    c.language = lang;
+    c.condition = cond;
+    c.note = std::move(note);
+    c.firstEdition = firstEdition;
+    c.signed_ = sgnd;
+    c.altered = altered;
     return c;
 }
 
@@ -176,11 +188,53 @@ TEST_SUITE("CardFilter::matchesPokemonFilter") {
 }
 
 TEST_SUITE("CardFilter::matchesYuGiOhFilter") {
+    TEST_CASE("empty filter matches every row") {
+        CHECK(matchesYuGiOhFilter(yc("Dark Magician", "Legend of Blue Eyes"), ""));
+    }
+
     TEST_CASE("matches by set number and rarity") {
         const YuGiOhCard c = yc("Dark Magician", "Legend of Blue Eyes", "LOB-005", "Ultra Rare");
         CHECK(matchesYuGiOhFilter(c, "lob-005"));
         CHECK(matchesYuGiOhFilter(c, "ultra"));
         CHECK(matchesYuGiOhFilter(c, "ur"));
         CHECK_FALSE(matchesYuGiOhFilter(c, "secret rare"));
+    }
+
+    TEST_CASE("matches by name and set.name") {
+        const YuGiOhCard c = yc("Dark Magician", "Legend of Blue Eyes", "LOB-005", "Ultra Rare");
+        CHECK(matchesYuGiOhFilter(c, "dark"));
+        CHECK(matchesYuGiOhFilter(c, "blue eyes"));
+        CHECK_FALSE(matchesYuGiOhFilter(c, "spell"));
+    }
+
+    TEST_CASE("matches by language, condition, amount, and note") {
+        const YuGiOhCard c = yc("Dark Magician", "Legend of Blue Eyes", "LOB-005", "Ultra Rare",
+                                 12, Language::German, Condition::Played, "binder copy");
+        CHECK(matchesYuGiOhFilter(c, "german"));
+        CHECK(matchesYuGiOhFilter(c, "played"));
+        CHECK(matchesYuGiOhFilter(c, "12"));
+        CHECK(matchesYuGiOhFilter(c, "binder"));
+        CHECK_FALSE(matchesYuGiOhFilter(c, "english"));
+    }
+
+    TEST_CASE("matches rarity shorthand when the long rarity string does not") {
+        const YuGiOhCard c = yc("Dark Magician", "Legend of Blue Eyes", "LOB-005",
+                                "Quarter Century Secret Rare");
+        CHECK(matchesYuGiOhFilter(c, "qcscr"));
+        CHECK_FALSE(matchesYuGiOhFilter(c, "mythic"));
+    }
+
+    TEST_CASE("boolean flag columns are not matched") {
+        const YuGiOhCard c = yc("Dark Magician", "Legend of Blue Eyes", "LOB-005", "Ultra Rare",
+                                 1, Language::English, Condition::NearMint, "",
+                                 /*firstEdition=*/true, /*sgnd=*/true, /*altered=*/true);
+        CHECK_FALSE(matchesYuGiOhFilter(c, "true"));
+        CHECK_FALSE(matchesYuGiOhFilter(c, "false"));
+        CHECK(matchesYuGiOhFilter(c, "dark"));
+    }
+
+    TEST_CASE("no column hit returns false") {
+        const YuGiOhCard c = yc("Dark Magician", "Legend of Blue Eyes", "LOB-005", "Ultra Rare");
+        CHECK_FALSE(matchesYuGiOhFilter(c, "zzznomatch"));
     }
 }

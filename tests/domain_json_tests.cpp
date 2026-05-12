@@ -235,6 +235,103 @@ TEST_SUITE("YuGiOhCard JSON") {
         CHECK(card.setNo == "SDY-006");
         CHECK(card.set.id == "SDY");
     }
+
+    TEST_CASE("serializes non-default flags and metadata fields") {
+        YuGiOhCard c;
+        c.id = 3;
+        c.amount = 4;
+        c.name = "Red-Eyes Black Dragon";
+        c.set = Set{"lob", "Legend of Blue Eyes", "2002/03/08"};
+        c.setNo = "LOB-070";
+        c.rarity = "Secret Rare";
+        c.note = "graded";
+        c.images = {};
+        c.language = Language::German;
+        c.condition = Condition::Played;
+        c.firstEdition = false;
+        c.signed_ = true;
+        c.altered = true;
+
+        const nlohmann::json j = c;
+        CHECK(j.at("firstEdition") == false);
+        CHECK(j.at("signed") == true);
+        CHECK(j.at("altered") == true);
+        CHECK(j.at("language") == "German");
+        CHECK(j.at("condition") == "Played");
+        CHECK(j.at("images") == nlohmann::json::array());
+
+        const YuGiOhCard back = j.get<YuGiOhCard>();
+        CHECK(back == c);
+    }
+
+    TEST_CASE("operator== distinguishes each field") {
+        YuGiOhCard base;
+        base.id = 10;
+        base.amount = 2;
+        base.name = "Dark Magician";
+        base.set = Set{"lob", "Legend of Blue Eyes", "2002/03/08"};
+        base.setNo = "LOB-005";
+        base.rarity = "Ultra Rare";
+        base.note = "note";
+        base.images = {"a.png"};
+        base.language = Language::English;
+        base.condition = Condition::NearMint;
+        base.firstEdition = true;
+        base.signed_ = false;
+        base.altered = false;
+
+        auto changed = base;
+        changed.id = 11;
+        CHECK_FALSE(changed == base);
+
+        changed = base;
+        changed.amount = 3;
+        CHECK_FALSE(changed == base);
+
+        changed = base;
+        changed.name = "Other";
+        CHECK_FALSE(changed == base);
+
+        changed = base;
+        changed.set.name = "Other Set";
+        CHECK_FALSE(changed == base);
+
+        changed = base;
+        changed.setNo = "LOB-006";
+        CHECK_FALSE(changed == base);
+
+        changed = base;
+        changed.rarity = "Rare";
+        CHECK_FALSE(changed == base);
+
+        changed = base;
+        changed.note = "other";
+        CHECK_FALSE(changed == base);
+
+        changed = base;
+        changed.images = {};
+        CHECK_FALSE(changed == base);
+
+        changed = base;
+        changed.language = Language::Japanese;
+        CHECK_FALSE(changed == base);
+
+        changed = base;
+        changed.condition = Condition::Played;
+        CHECK_FALSE(changed == base);
+
+        changed = base;
+        changed.firstEdition = false;
+        CHECK_FALSE(changed == base);
+
+        changed = base;
+        changed.signed_ = true;
+        CHECK_FALSE(changed == base);
+
+        changed = base;
+        changed.altered = true;
+        CHECK_FALSE(changed == base);
+    }
 }
 
 TEST_SUITE("Domain JSON required fields") {
@@ -311,6 +408,36 @@ TEST_SUITE("Domain JSON required fields") {
             {"altered", false},
         };
         CHECK_THROWS(j.get<YuGiOhCard>());
+    }
+
+    TEST_CASE("YuGiOhCard missing each required key throws") {
+        const nlohmann::json full = {
+            {"id", 7},
+            {"amount", 1},
+            {"name", "Blue-Eyes White Dragon"},
+            {"set", nlohmann::json{
+                {"id", "sdk"},
+                {"name", "Starter Deck Kaiba"},
+                {"releaseDate", "2002/03/29"},
+            }},
+            {"setNo", "SDK-001"},
+            {"rarity", "Ultra Rare"},
+            {"note", ""},
+            {"images", nlohmann::json::array()},
+            {"language", "English"},
+            {"condition", "NearMint"},
+            {"firstEdition", true},
+            {"signed", false},
+            {"altered", false},
+        };
+
+        for (const char* key : {
+                 "id", "amount", "name", "set", "setNo", "note", "images",
+                 "language", "condition", "firstEdition", "rarity", "signed", "altered"}) {
+            nlohmann::json partial = full;
+            partial.erase(key);
+            CHECK_THROWS(partial.get<YuGiOhCard>());
+        }
     }
 
     TEST_CASE("Configuration missing required key throws") {

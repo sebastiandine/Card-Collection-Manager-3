@@ -92,6 +92,23 @@ TEST_SUITE("ygoPrintingSlotsMatch") {
         CHECK_FALSE(ygoLikelyEuropeanRegionalSetCode("LOB-005"));
         CHECK_FALSE(ygoLikelyEuropeanRegionalSetCode("LOB-DE005"));
         CHECK_FALSE(ygoLikelyEuropeanRegionalSetCode("SOD-EN015"));
+        CHECK_FALSE(ygoLikelyEuropeanRegionalSetCode("LOB-E"));
+    }
+}
+
+TEST_SUITE("YuGiOhPrintingSlot helpers") {
+    TEST_CASE("trimAsciiSpaces handles empty and surrounding whitespace") {
+        CHECK(trimAsciiSpaces("").empty());
+        CHECK(trimAsciiSpaces("   ").empty());
+        CHECK(trimAsciiSpaces("  LOB-005  ") == "LOB-005");
+    }
+
+    TEST_CASE("ygoAbbrevBeforeDash and ygoCollectorDigitsOnly cover no-dash and mixed tails") {
+        CHECK(ygoAbbrevBeforeDash("lob") == "lob");
+        CHECK(ygoAbbrevBeforeDash("  SOD-015  ") == "sod");
+        CHECK(ygoCollectorDigitsOnly("SOD").empty());
+        CHECK(ygoCollectorDigitsOnly("SOD-EN015") == "015");
+        CHECK(ygoCollectorDigitsOnly("SOD-ABC") == "");
     }
 }
 
@@ -109,6 +126,16 @@ TEST_SUITE("ygoRarityShortCode") {
         CHECK(ygoRarityShortCode("Ultimate Rare") == "UtR");
         CHECK(ygoRarityShortCode("Platinum Secret Rare") == "PlScR");
         CHECK(ygoRarityShortCode("Prismatic Secret Rare") == "PScR");
+    }
+
+    TEST_CASE("normalizes punctuation and spacing and accepts QCSR alias") {
+        CHECK(ygoRarityShortCode("Ultra-Rare") == "UR");
+        CHECK(ygoRarityShortCode("Collector`s Rare") == "CR");
+        CHECK(ygoRarityShortCode("QCSR") == "QCScR");
+    }
+
+    TEST_CASE("unknown rarity returns empty") {
+        CHECK(ygoRarityShortCode("Mythic Cosmic Rare").empty());
     }
 }
 
@@ -280,6 +307,33 @@ TEST_SUITE("YuGiOhCardPreviewSource::parseYugipediaResponse") {
             R"({"query":{"pages":[]}})", {"X.png"});
         REQUIRE(out.isErr());
         CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
+    }
+
+    TEST_CASE("page without imageinfo is treated as missing") {
+        const std::string body = R"({
+          "query":{"pages":{
+            "1":{"title":"File:DarkMagician-LOB-EN-UR-UE.png"}
+          }}
+        })";
+        const auto out = YuGiOhCardPreviewSource::parseYugipediaResponse(
+            body, {"DarkMagician-LOB-EN-UR-UE.png"});
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::NotFound);
+    }
+}
+
+TEST_SUITE("YuGiOhCardPreviewSource::buildSearchUrl") {
+    TEST_CASE("percent-encodes name and optional set name filter") {
+        const auto url = YuGiOhCardPreviewSource::buildSearchUrl(
+            "Dark Magician", "Legend of Blue Eyes White Dragon");
+        CHECK(url.find("https://db.ygoprodeck.com/api/v7/cardinfo.php") == 0);
+        CHECK(url.find("fname=Dark%20Magician") != std::string::npos);
+        CHECK(url.find("cardset=Legend%20of%20Blue%20Eyes%20White%20Dragon") != std::string::npos);
+    }
+
+    TEST_CASE("omits cardset when set name is empty") {
+        const auto url = YuGiOhCardPreviewSource::buildSearchUrl("Dark Magician", "");
+        CHECK(url.find("cardset=") == std::string::npos);
     }
 }
 

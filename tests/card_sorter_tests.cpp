@@ -430,6 +430,17 @@ TEST_SUITE("CardSorter - YuGiOh columns") {
         CHECK(ids(v) == std::vector<std::uint32_t>{2, 3, 1});  // C, ScR, UR
     }
 
+    TEST_CASE("Rarity treats unknown labels as equal empty shorthand") {
+        std::vector<YuGiOhCard> v = {
+            yc(1, "alpha", "X", "2000/01/01", "", "Mythic Cosmic Rare", 1),
+            yc(2, "beta", "X", "2000/01/01", "", "Other Unknown", 1),
+        };
+        sortYuGiOhCards(v, YuGiOhSortColumn::Rarity, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{1, 2});
+        sortYuGiOhCards(v, YuGiOhSortColumn::Rarity, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{1, 2});
+    }
+
     TEST_CASE("Amount sorts numerically") {
         std::vector<YuGiOhCard> v = {
             yc(1, "a", "X", "2000/01/01", "", "", 9),

@@ -328,4 +328,26 @@ TEST_SUITE("PokemonCardPreviewSource::detectPrintVariants") {
         REQUIRE(out.value().size() == 2);
         CHECK(http.calls == 2);
     }
+
+    TEST_CASE("detectFirstPrint errors when variant listing succeeds but is empty") {
+        FixedHttpClient http;
+        http.body = R"({"data":[{"name":"Promo","number":"","rarity":"","set":{"id":"promo1"}}]})";
+        PokemonCardPreviewSource src{http};
+        const auto out = src.detectFirstPrint("Promo", "promo1");
+        REQUIRE(out.isErr());
+        CHECK(out.error() == "Could not auto-detect set print metadata.");
+    }
+
+    TEST_CASE("parsePrintVariants ignores cards whose set field is not an object") {
+        const auto out = PokemonCardPreviewSource::parsePrintVariants(R"({
+            "data":[
+                {"name":"Pikachu","number":"25","rarity":"Common","set":"not-an-object"},
+                {"name":"Pikachu","number":"26","rarity":"Rare","set":{"id":"base1"}}
+            ]
+        })",
+            "base1", "Pikachu");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value().front().setNo == "26");
+    }
 }
