@@ -46,4 +46,11 @@ TEST_SUITE("mapHttpGetResponse") {
         REQUIRE(out.isErr());
         CHECK(out.error() == "HTTP 404 from https://api.example/r");
     }
+
+    TEST_CASE("HTTP 200 with empty body still maps to success") {
+        const auto out =
+            mapHttpGetResponse(false, {}, 200, "", "https://api.example/empty");
+        REQUIRE(out.isOk());
+        CHECK(out.value().empty());
+    }
 }

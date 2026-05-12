@@ -334,6 +334,78 @@ TEST_SUITE("CardPreviewService caching") {
         CHECK(http.calls == 1);
     }
 
+    TEST_CASE("memory-only caching works when no persistent cache is configured") {
+        FakeSource source;
+        source.url = "https://example.com/img.png";
+        FakeGameModule module;
+        module.gameId = Game::Magic;
+        module.preview = &source;
+
+        FixedHttpClient http;
+        http.body = "PNG-bytes";
+
+        CardPreviewService svc{http, nullptr};
+        svc.registerModule(module);
+
+        REQUIRE(svc.fetchPreviewBytes(Game::Magic, "Lightning Bolt", "lea", "").isOk());
+        http.body = "OTHER";
+        const auto second = svc.fetchPreviewBytes(Game::Magic, "Lightning Bolt", "lea", "");
+        REQUIRE(second.isOk());
+        CHECK(second.value() == "PNG-bytes");
+        CHECK(http.calls == 1);
+    }
+
+    TEST_CASE("registerModule replaces the preview source for the same game") {
+        FakeSource firstSource;
+        firstSource.url = "https://example.com/first.png";
+        FakeGameModule firstModule;
+        firstModule.gameId = Game::Magic;
+        firstModule.preview = &firstSource;
+
+        FakeSource secondSource;
+        secondSource.url = "https://example.com/second.png";
+        FakeGameModule secondModule;
+        secondModule.gameId = Game::Magic;
+        secondModule.preview = &secondSource;
+
+        FixedHttpClient http;
+        http.body = "SECOND";
+
+        CardPreviewService svc{http};
+        svc.registerModule(firstModule);
+        svc.registerModule(secondModule);
+
+        const auto out = svc.fetchPreviewBytes(Game::Magic, "Lightning Bolt", "lea", "");
+        REQUIRE(out.isOk());
+        CHECK(out.value() == "SECOND");
+        CHECK(http.lastUrl == "https://example.com/second.png");
+        CHECK(firstSource.calls == 0);
+        CHECK(secondSource.calls == 1);
+    }
+
+    TEST_CASE("NotFound without persistent cache still negative-caches in memory") {
+        FakeSource source;
+        source.ok = false;
+        source.errKind = PreviewLookupError::Kind::NotFound;
+        source.err = "not found";
+        FakeGameModule module;
+        module.gameId = Game::Magic;
+        module.preview = &source;
+
+        FixedHttpClient http;
+        CardPreviewService svc{http, nullptr};
+        svc.registerModule(module);
+
+        REQUIRE(svc.fetchPreviewBytes(Game::Magic, "X", "abc", "").isErr());
+        CHECK(source.calls == 1);
+
+        const auto second = svc.fetchPreviewBytes(Game::Magic, "X", "abc", "");
+        REQUIRE(second.isErr());
+        CHECK(second.error() == "No preview available for this card.");
+        CHECK(source.calls == 1);
+        CHECK(http.calls == 0);
+    }
+
     TEST_CASE("HTTP success writes through to the persistent cache") {
         // The persistent tier is fire-and-forget on the way down (HTTP -> disk)
         // and consulted on the way up (cache miss -> disk -> HTTP). This first

@@ -90,7 +90,7 @@ void PokemonGameView::onAddCard(wxWindow* parentWindow) {
     fresh.language = Language::English;
     fresh.condition = Condition::NearMint;
 
-    PokemonCardEditDialog dlg(parentWindow, images_, sets_, EditMode::Create, fresh,
+    PokemonCardEditDialog dlg(parentWindow, images_, sets_, cardPreview_, EditMode::Create, fresh,
                               &setsForDialog());
     themeModalDialog(&dlg, config_.current().theme);
     if (dlg.ShowModal() != wxID_OK) return;
@@ -129,7 +129,7 @@ void PokemonGameView::onEditCard(wxWindow* parentWindow) {
         showThemedMessageDialog(parentWindow, "Select a card first.", "Edit", wxOK | wxICON_INFORMATION);
         return;
     }
-    PokemonCardEditDialog dlg(parentWindow, images_, sets_, EditMode::Edit, *sel,
+    PokemonCardEditDialog dlg(parentWindow, images_, sets_, cardPreview_, EditMode::Edit, *sel,
                               &setsForDialog());
     themeModalDialog(&dlg, config_.current().theme);
     if (dlg.ShowModal() != wxID_OK) return;

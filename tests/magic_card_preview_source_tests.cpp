@@ -43,6 +43,12 @@ TEST_SUITE("MagicCardPreviewSource::buildSearchUrl") {
         const auto url = MagicCardPreviewSource::buildSearchUrl("X", "swsh10");
         CHECK(url.find("set%3Aswsh10") != std::string::npos);
     }
+
+    TEST_CASE("replaces every ampersand in the card name") {
+        const auto url = MagicCardPreviewSource::buildSearchUrl("A & B & C", "abc");
+        CHECK(url.find("A%20and%20B%20and%20C") != std::string::npos);
+        CHECK(url.find("%26") == std::string::npos);
+    }
 }
 
 TEST_SUITE("MagicCardPreviewSource::parseResponse") {

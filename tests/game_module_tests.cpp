@@ -27,6 +27,7 @@ TEST_SUITE("game modules expose stable identity and wiring") {
         CHECK(module.dirName() == "magic");
         CHECK(module.displayName() == "Magic");
         CHECK(module.cardPreviewSource() != nullptr);
+        CHECK(static_cast<void*>(&module.setSource()) != static_cast<void*>(module.cardPreviewSource()));
     }
 
     TEST_CASE("Pokemon module reports canonical metadata") {
@@ -37,6 +38,7 @@ TEST_SUITE("game modules expose stable identity and wiring") {
         CHECK(module.dirName() == "pokemon");
         CHECK(module.displayName() == "Pokemon");
         CHECK(module.cardPreviewSource() != nullptr);
+        CHECK(static_cast<void*>(&module.setSource()) != static_cast<void*>(module.cardPreviewSource()));
     }
 
     TEST_CASE("YuGiOh module reports canonical metadata") {
@@ -47,5 +49,6 @@ TEST_SUITE("game modules expose stable identity and wiring") {
         CHECK(module.dirName() == "yugioh");
         CHECK(module.displayName() == "Yu-Gi-Oh!");
         CHECK(module.cardPreviewSource() != nullptr);
+        CHECK(static_cast<void*>(&module.setSource()) != static_cast<void*>(module.cardPreviewSource()));
     }
 }

@@ -12,6 +12,8 @@
 #include "ccm/infra/LocalPreviewByteCache.hpp"
 #include "ccm/infra/StdFileSystem.hpp"
 
+#include "fakes/InMemoryFileSystem.hpp"
+
 #include <chrono>
 #include <filesystem>
 #include <random>
@@ -55,6 +57,59 @@ void backdate(const fs::path& p, int seconds) {
     if (ec) return;
     fs::last_write_time(p, t - std::chrono::seconds(seconds), ec);
 }
+
+class FailingEnsureDirFs final : public IFileSystem {
+public:
+    explicit FailingEnsureDirFs(ccm::testing::InMemoryFileSystem& inner) : inner_(inner) {}
+
+    [[nodiscard]] bool exists(const fs::path& p) const override { return inner_.exists(p); }
+    [[nodiscard]] bool isDirectory(const fs::path& p) const override { return inner_.isDirectory(p); }
+    Result<void> ensureDirectory(const fs::path& p) override {
+        (void)p;
+        return Result<void>::err("ensure failed");
+    }
+    Result<std::string> readText(const fs::path& p) override { return inner_.readText(p); }
+    Result<void> writeText(const fs::path& p, std::string_view contents) override {
+        return inner_.writeText(p, contents);
+    }
+    Result<void> copyFile(const fs::path& from, const fs::path& to, bool overwrite) override {
+        return inner_.copyFile(from, to, overwrite);
+    }
+    Result<void> remove(const fs::path& p) override { return inner_.remove(p); }
+    Result<std::vector<fs::path>> listDirectory(const fs::path& p) override {
+        return inner_.listDirectory(p);
+    }
+
+private:
+    ccm::testing::InMemoryFileSystem& inner_;
+};
+
+class FailingIndexWriteFs final : public IFileSystem {
+public:
+    explicit FailingIndexWriteFs(ccm::testing::InMemoryFileSystem& inner) : inner_(inner) {}
+
+    [[nodiscard]] bool exists(const fs::path& p) const override { return inner_.exists(p); }
+    [[nodiscard]] bool isDirectory(const fs::path& p) const override { return inner_.isDirectory(p); }
+    Result<void> ensureDirectory(const fs::path& p) override { return inner_.ensureDirectory(p); }
+    Result<std::string> readText(const fs::path& p) override { return inner_.readText(p); }
+    Result<void> writeText(const fs::path& p, std::string_view contents) override {
+        const auto path = p.generic_string();
+        if (path.size() >= 4 && path.compare(path.size() - 4, 4, ".idx") == 0) {
+            return Result<void>::err("idx write failed");
+        }
+        return inner_.writeText(p, contents);
+    }
+    Result<void> copyFile(const fs::path& from, const fs::path& to, bool overwrite) override {
+        return inner_.copyFile(from, to, overwrite);
+    }
+    Result<void> remove(const fs::path& p) override { return inner_.remove(p); }
+    Result<std::vector<fs::path>> listDirectory(const fs::path& p) override {
+        return inner_.listDirectory(p);
+    }
+
+private:
+    ccm::testing::InMemoryFileSystem& inner_;
+};
 
 }  // namespace
 
@@ -338,5 +393,34 @@ TEST_SUITE("LocalPreviewByteCache") {
         CHECK(cache.load("k-b").kind == IPreviewByteCache::HitKind::Miss);
         CHECK(cache.load("k-a").kind == IPreviewByteCache::HitKind::Hit);
         CHECK(cache.load("k-c").kind == IPreviewByteCache::HitKind::Hit);
+    }
+}
+
+TEST_SUITE("LocalPreviewByteCache in-memory filesystem failures") {
+    TEST_CASE("store is a silent no-op when ensureDirectory fails") {
+        ccm::testing::InMemoryFileSystem inner;
+        FailingEnsureDirFs fs{inner};
+        LocalPreviewByteCache cache(fs, "/cache");
+
+        cache.store("k", "payload");
+        CHECK(cache.load("k").kind == IPreviewByteCache::HitKind::Miss);
+    }
+
+    TEST_CASE("store rolls back payload when sidecar write fails") {
+        ccm::testing::InMemoryFileSystem inner;
+        FailingIndexWriteFs fs{inner};
+        LocalPreviewByteCache cache(fs, "/cache");
+
+        cache.store("k", "payload");
+        CHECK(cache.load("k").kind == IPreviewByteCache::HitKind::Miss);
+    }
+
+    TEST_CASE("storeNegative rolls back marker when sidecar write fails") {
+        ccm::testing::InMemoryFileSystem inner;
+        FailingIndexWriteFs fs{inner};
+        LocalPreviewByteCache cache(fs, "/cache");
+
+        cache.storeNegative("k");
+        CHECK(cache.load("k").kind == IPreviewByteCache::HitKind::Miss);
     }
 }
