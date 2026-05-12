@@ -170,3 +170,162 @@ TEST_SUITE("PokemonCardPreviewSource::fetchImageUrl") {
         CHECK(http.lastUrl.find("number%3A25") != std::string::npos);
     }
 }
+
+namespace {
+
+const char* kCharizardSwsh4 = R"({
+    "data": [
+        {
+            "name": "Charizard",
+            "number": "25",
+            "rarity": "Rare",
+            "set": {
+                "id": "swsh4",
+                "name": "Vivid Voltage",
+                "printedTotal": 185
+            }
+        }
+    ]
+})";
+
+const char* kMultiVariantPayload = R"({
+    "data": [
+        {
+            "name": "Pikachu",
+            "number": "25",
+            "rarity": "Common",
+            "set": {"id": "base1", "printedTotal": 102}
+        },
+        {
+            "name": "Pikachu",
+            "number": "58",
+            "rarity": "Rare",
+            "set": {"id": "base1", "printedTotal": 102}
+        },
+        {
+            "name": "Pikachu",
+            "number": "25",
+            "rarity": "Common",
+            "set": {"id": "base2", "printedTotal": 64}
+        }
+    ]
+})";
+
+}  // namespace
+
+TEST_SUITE("PokemonCardPreviewSource::parsePrintVariants") {
+    TEST_CASE("maps API number into setNo without printedTotal suffix") {
+        const auto out =
+            PokemonCardPreviewSource::parsePrintVariants(kCharizardSwsh4, "swsh4", "Charizard");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value().front().setNo == "25");
+        CHECK(out.value().front().rarity == "Rare");
+    }
+
+    TEST_CASE("filters by set id and keeps multiple numbers in the same set") {
+        const auto out =
+            PokemonCardPreviewSource::parsePrintVariants(kMultiVariantPayload, "base1", "Pikachu");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 2);
+        CHECK(out.value()[0].setNo == "25");
+        CHECK(out.value()[1].setNo == "58");
+    }
+
+    TEST_CASE("wrong set id yields explicit error when name and set are supplied") {
+        const auto out =
+            PokemonCardPreviewSource::parsePrintVariants(kCharizardSwsh4, "base1", "Charizard");
+        REQUIRE(out.isErr());
+        CHECK(out.error() == "Could not auto-detect set print metadata.");
+    }
+
+    TEST_CASE("wrong card name is filtered out") {
+        const auto out =
+            PokemonCardPreviewSource::parsePrintVariants(kCharizardSwsh4, "swsh4", "Blastoise");
+        REQUIRE(out.isErr());
+        CHECK(out.error() == "Could not auto-detect set print metadata.");
+    }
+
+    TEST_CASE("empty data array yields error") {
+        const auto out =
+            PokemonCardPreviewSource::parsePrintVariants(R"({"data":[]})", "base1", "Pikachu");
+        REQUIRE(out.isErr());
+        CHECK(out.error() == "Pokemon TCG returned no matching cards.");
+    }
+
+    TEST_CASE("name-only payload still filters to requested set id") {
+        const auto out =
+            PokemonCardPreviewSource::parsePrintVariants(kMultiVariantPayload, "base2", "Pikachu");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value().front().setNo == "25");
+    }
+
+    TEST_CASE("keeps bare number when printedTotal is zero") {
+        const auto out = PokemonCardPreviewSource::parsePrintVariants(R"({
+            "data": [
+                {
+                    "name": "Promo",
+                    "number": "7",
+                    "rarity": "Promo",
+                    "set": {"id": "promo1", "printedTotal": 0}
+                }
+            ]
+        })",
+            "promo1", "Promo");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value().front().setNo == "7");
+    }
+}
+
+TEST_SUITE("PokemonCardPreviewSource::detectPrintVariants") {
+    TEST_CASE("supports auto-detect and returns first print") {
+        FixedHttpClient http;
+        http.body = kCharizardSwsh4;
+        PokemonCardPreviewSource src{http};
+        CHECK(src.supportsAutoDetectPrint());
+        const auto first = src.detectFirstPrint("Charizard", "swsh4");
+        REQUIRE(first.isOk());
+        CHECK(first.value().setNo == "25");
+    }
+
+    TEST_CASE("uses slim set-scoped search URL without number clause") {
+        FixedHttpClient http;
+        http.body = kCharizardSwsh4;
+        PokemonCardPreviewSource src{http};
+        const auto out = src.detectPrintVariants("Charizard", "swsh4");
+        REQUIRE(out.isOk());
+        CHECK(http.lastUrl.find("number%3A") == std::string::npos);
+        CHECK(http.lastUrl.find("set.id%3Aswsh4") != std::string::npos);
+        CHECK(http.lastUrl.find("select=name,number,rarity,set") != std::string::npos);
+        CHECK(http.lastUrl.find("pageSize=50") != std::string::npos);
+    }
+
+    TEST_CASE("buildDetectSearchUrl requests only parser fields") {
+        const auto url = PokemonCardPreviewSource::buildDetectSearchUrl("Charizard", "swsh4");
+        CHECK(url.find("select=name,number,rarity,set") != std::string::npos);
+        CHECK(url.find("pageSize=50") != std::string::npos);
+    }
+
+    TEST_CASE("retries name-only query when the set-scoped request fails") {
+        class FallbackHttpClient final : public IHttpClient {
+        public:
+            int calls = 0;
+            Result<std::string> get(std::string_view url) override {
+                ++calls;
+                if (calls == 1) return Result<std::string>::err("offline");
+                if (url.find("set.id") != std::string::npos) {
+                    return Result<std::string>::err("unexpected set-scoped retry");
+                }
+                return Result<std::string>::ok(kMultiVariantPayload);
+            }
+        } http;
+
+        PokemonCardPreviewSource src{http};
+        const auto out = src.detectPrintVariants("Pikachu", "base1");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 2);
+        CHECK(http.calls == 2);
+    }
+}
