@@ -440,6 +440,63 @@ TEST_SUITE("Domain JSON required fields") {
         }
     }
 
+    TEST_CASE("MagicCard missing each required key throws") {
+        const nlohmann::json full = {
+            {"id", 10},
+            {"amount", 1},
+            {"name", "Lightning Bolt"},
+            {"set", nlohmann::json{
+                {"id", "lea"},
+                {"name", "Limited Edition Alpha"},
+                {"releaseDate", "1993/08/05"},
+            }},
+            {"note", ""},
+            {"images", nlohmann::json::array()},
+            {"language", "English"},
+            {"condition", "NearMint"},
+            {"foil", false},
+            {"signed", false},
+            {"altered", false},
+        };
+
+        for (const char* key : {"id", "amount", "name", "set", "note", "images", "language",
+                               "condition", "foil", "signed", "altered"}) {
+            nlohmann::json partial = full;
+            partial.erase(key);
+            CHECK_THROWS(partial.get<MagicCard>());
+        }
+    }
+
+    TEST_CASE("PokemonCard missing each required key throws") {
+        const nlohmann::json full = {
+            {"id", 7},
+            {"amount", 1},
+            {"name", "Charizard"},
+            {"set", nlohmann::json{
+                {"id", "base1"},
+                {"name", "Base Set"},
+                {"releaseDate", "1999/01/09"},
+            }},
+            {"setNo", "4/102"},
+            {"note", ""},
+            {"images", nlohmann::json::array()},
+            {"language", "English"},
+            {"condition", "Excellent"},
+            {"firstEdition", true},
+            {"holo", true},
+            {"signed", false},
+            {"altered", false},
+        };
+
+        for (const char* key :
+             {"id", "amount", "name", "set", "setNo", "note", "images", "language", "condition",
+              "firstEdition", "holo", "signed", "altered"}) {
+            nlohmann::json partial = full;
+            partial.erase(key);
+            CHECK_THROWS(partial.get<PokemonCard>());
+        }
+    }
+
     TEST_CASE("Configuration missing required key throws") {
         const nlohmann::json j = {
             {"defaultGame", "Magic"},

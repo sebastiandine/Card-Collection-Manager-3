@@ -202,4 +202,15 @@ TEST_SUITE("StdFileSystem") {
         REQUIRE(filled.isOk());
         CHECK(filled.value().size() == 2u);
     }
+
+    TEST_CASE("writeText fails when the path names an existing directory") {
+        TempDir td;
+        StdFileSystem fs;
+        const auto dir = td.path / "is_dir";
+        REQUIRE(fs.ensureDirectory(dir).isOk());
+
+        const auto r = fs.writeText(dir, "cannot-write-here");
+        REQUIRE(r.isErr());
+        CHECK(r.error().find("Unable to create file") != std::string::npos);
+    }
 }

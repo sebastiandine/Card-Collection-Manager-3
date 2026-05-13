@@ -277,6 +277,70 @@ TEST_SUITE("PokemonCardPreviewSource::parsePrintVariants") {
         REQUIRE(out.value().size() == 1);
         CHECK(out.value().front().setNo == "7");
     }
+
+    TEST_CASE("parsePrintVariants ignores cards whose set field is not an object") {
+        const auto out = PokemonCardPreviewSource::parsePrintVariants(R"({
+            "data":[
+                {"name":"Pikachu","number":"25","rarity":"Common","set":"not-an-object"},
+                {"name":"Pikachu","number":"26","rarity":"Rare","set":{"id":"base1"}}
+            ]
+        })",
+            "base1", "Pikachu");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value().front().setNo == "26");
+    }
+
+    TEST_CASE("empty setId skips set filter and collects prints across sets") {
+        const char* crossSet = R"({
+            "data": [
+                {"name":"Pikachu","number":"1","rarity":"Common","set":{"id":"base1"}},
+                {"name":"Pikachu","number":"2","rarity":"Rare","set":{"id":"base2"}}
+            ]
+        })";
+        const auto out = PokemonCardPreviewSource::parsePrintVariants(crossSet, "", "Pikachu");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 2u);
+    }
+
+    TEST_CASE("empty wanted card name skips name filter within the set") {
+        const char* twoInSet = R"({
+            "data": [
+                {"name":"Electabuzz","number":"1","rarity":"Common","set":{"id":"base1"}},
+                {"name":"Pikachu","number":"2","rarity":"Rare","set":{"id":"base1"}}
+            ]
+        })";
+        const auto out = PokemonCardPreviewSource::parsePrintVariants(twoInSet, "base1", "");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 2u);
+    }
+
+    TEST_CASE("cards with empty number and rarity are skipped for auto-detect metadata") {
+        const auto out = PokemonCardPreviewSource::parsePrintVariants(R"({
+            "data": [
+                {"name":"Pikachu","number":"","rarity":"","set":{"id":"base1"}}
+            ]
+        })",
+            "base1", "Pikachu");
+        REQUIRE(out.isErr());
+        CHECK(out.error() == "Could not auto-detect set print metadata.");
+    }
+
+    TEST_CASE("no matches with empty setId yields generic no matching cards message") {
+        const auto out = PokemonCardPreviewSource::parsePrintVariants(
+            R"({"data":[{"name":"Pikachu","number":"1","rarity":"C","set":{"id":"base1"}}]})",
+            "",
+            "Nobody");
+        REQUIRE(out.isErr());
+        CHECK(out.error() == "Pokemon TCG returned no matching cards.");
+    }
+
+    TEST_CASE("invalid JSON in parsePrintVariants yields parse error") {
+        const auto out =
+            PokemonCardPreviewSource::parsePrintVariants("{not json", "base1", "Pikachu");
+        REQUIRE(out.isErr());
+        CHECK(out.error().find("Pokemon TCG JSON parse error:") == 0);
+    }
 }
 
 TEST_SUITE("PokemonCardPreviewSource::detectPrintVariants") {
@@ -329,6 +393,23 @@ TEST_SUITE("PokemonCardPreviewSource::detectPrintVariants") {
         CHECK(http.calls == 2);
     }
 
+    TEST_CASE("detectPrintVariants surfaces fallback HTTP error when both requests fail") {
+        class AlwaysFailHttp final : public IHttpClient {
+        public:
+            int calls = 0;
+            Result<std::string> get(std::string_view) override {
+                ++calls;
+                return Result<std::string>::err("offline");
+            }
+        } http;
+
+        PokemonCardPreviewSource src{http};
+        const auto out = src.detectPrintVariants("Pikachu", "base1");
+        REQUIRE(out.isErr());
+        CHECK(out.error() == "offline");
+        CHECK(http.calls == 2);
+    }
+
     TEST_CASE("detectFirstPrint errors when variant listing succeeds but is empty") {
         FixedHttpClient http;
         http.body = R"({"data":[{"name":"Promo","number":"","rarity":"","set":{"id":"promo1"}}]})";
@@ -336,18 +417,5 @@ TEST_SUITE("PokemonCardPreviewSource::detectPrintVariants") {
         const auto out = src.detectFirstPrint("Promo", "promo1");
         REQUIRE(out.isErr());
         CHECK(out.error() == "Could not auto-detect set print metadata.");
-    }
-
-    TEST_CASE("parsePrintVariants ignores cards whose set field is not an object") {
-        const auto out = PokemonCardPreviewSource::parsePrintVariants(R"({
-            "data":[
-                {"name":"Pikachu","number":"25","rarity":"Common","set":"not-an-object"},
-                {"name":"Pikachu","number":"26","rarity":"Rare","set":{"id":"base1"}}
-            ]
-        })",
-            "base1", "Pikachu");
-        REQUIRE(out.isOk());
-        REQUIRE(out.value().size() == 1);
-        CHECK(out.value().front().setNo == "26");
     }
 }

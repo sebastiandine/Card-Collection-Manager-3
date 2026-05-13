@@ -78,7 +78,6 @@ std::uint8_t parseIndexFromFilename(std::string_view filename) noexcept {
     for (std::size_t i = begin; i < end; ++i) {
         value = value * 10 + static_cast<unsigned int>(filename[i] - '0');
     }
-    if (value > 255) value = 255;
     return static_cast<std::uint8_t>(value);
 }
 

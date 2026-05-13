@@ -163,4 +163,28 @@ TEST_SUITE("JsonCollectionRepository<MagicCard>") {
         REQUIRE(loadCreateFail.isErr());
         CHECK(loadCreateFail.error() == "write failed");
     }
+
+    TEST_CASE("load returns read error when collection exists but read fails") {
+        InMemoryFileSystem configFs;
+        auto cfg = makeConfig(configFs, "/data");
+        FailingCollectionFs fs;
+        JsonCollectionRepository<MagicCard> repo{fs, cfg, magicDir};
+        fs.existsValue = true;
+        fs.readOk = false;
+
+        const auto loaded = repo.load(Game::Magic);
+        REQUIRE(loaded.isErr());
+        CHECK(loaded.error() == "read failed");
+    }
+
+    TEST_CASE("load returns parse error when card object does not deserialize") {
+        InMemoryFileSystem fs;
+        auto cfg = makeConfig(fs, "/data");
+        JsonCollectionRepository<MagicCard> repo{fs, cfg, magicDir};
+        fs.writeText("/data/magic/collection.json", R"({"0":{"id":"not-a-number"}})");
+
+        const auto loaded = repo.load(Game::Magic);
+        REQUIRE(loaded.isErr());
+        CHECK(loaded.error().find("JSON parse error:") != std::string::npos);
+    }
 }
