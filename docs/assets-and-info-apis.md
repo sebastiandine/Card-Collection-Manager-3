@@ -45,6 +45,8 @@ Used by `YuGiOhSetSource`. The response is a top-level JSON array. Each object m
 
 CCM3 also applies a deterministic local patch step in `YuGiOhSetSource::appendMissingSetAliases(...)` after parsing: if upstream omits known 25th Anniversary TCG reprints, the app injects missing aliases for `LOB-25TH`, `MRD-25TH`, `SRL-25TH`, `PSV-25TH`, `DCR-25TH`, and `IOC-25TH` (with fixed release dates) so users can still select those products in the set picker.
 
+**UI note (set code entry, no extra HTTP):** The Yu-Gi-Oh! Add/Edit dialog can resolve a typed **product code** against the **already cached** set vector (same data as the set dropdown). Matching is implemented in `core/include/ccm/util/YuGiOhSetLookup.hpp` as `lookupYuGiOhSetByShorthand(...)`: trim ASCII whitespace, ASCII case-fold, then require an **exact** match on `Set.id` (the YGOPRODeck `set_code`). Zero matches → user error; more than one row with the same normalized id → ambiguous error (defensive). On a unique hit the dialog returns to the dropdown and selects that set.
+
 ### Asset API: Yugipedia `api.php` (primary)
 
 `https://yugipedia.com/api.php?action=query&prop=imageinfo&iiprop=url&titles=...`  

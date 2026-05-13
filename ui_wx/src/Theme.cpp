@@ -2,6 +2,7 @@
 
 #include <wx/button.h>
 #include <wx/bmpbuttn.h>
+#include <wx/tglbtn.h>
 #include <wx/choice.h>
 #include <wx/dcbuffer.h>
 #include <wx/frame.h>
@@ -444,8 +445,11 @@ void applyThemeToWindowTree(wxWindow* root, const ThemePalette& palette, Theme t
 #endif
     }
 
+    // `wxToggleButton` is not a `wxButton` on MSW; without this branch it keeps
+    // native visual styles (e.g. light hover flashes) under dark palette dialogs.
     if (dynamic_cast<wxButton*>(root) != nullptr ||
-        dynamic_cast<wxBitmapButton*>(root) != nullptr) {
+        dynamic_cast<wxBitmapButton*>(root) != nullptr ||
+        dynamic_cast<wxToggleButton*>(root) != nullptr) {
         const bool darkLike = isDarkLikeTheme(theme);
         root->SetThemeEnabled(!darkLike);
         root->SetBackgroundColour(palette.buttonBg);
@@ -485,7 +489,11 @@ void applyThemeToWindowTree(wxWindow* root, const ThemePalette& palette, Theme t
                     return;
                 }
                 it->second.hovered = false;
-                const wxColour bg = it->second.focused ? it->second.hoverBg : it->second.normalBg;
+                const bool toggleOn =
+                    dynamic_cast<wxToggleButton*>(root) != nullptr &&
+                    static_cast<wxToggleButton*>(root)->GetValue();
+                const wxColour bg =
+                    (it->second.focused || toggleOn) ? it->second.hoverBg : it->second.normalBg;
                 root->SetBackgroundColour(bg);
                 root->SetForegroundColour(it->second.text);
                 root->Refresh();
@@ -513,7 +521,11 @@ void applyThemeToWindowTree(wxWindow* root, const ThemePalette& palette, Theme t
                 const wxPoint localPos = root->ScreenToClient(mousePos);
                 const bool inside = root->GetClientRect().Contains(localPos);
                 it->second.hovered = inside;
-                const wxColour bg = (inside || it->second.focused) ? it->second.hoverBg : it->second.normalBg;
+                const bool toggleOn =
+                    dynamic_cast<wxToggleButton*>(root) != nullptr &&
+                    static_cast<wxToggleButton*>(root)->GetValue();
+                const wxColour bg =
+                    (inside || it->second.focused || toggleOn) ? it->second.hoverBg : it->second.normalBg;
                 root->SetBackgroundColour(bg);
                 root->SetForegroundColour(it->second.text);
                 root->Refresh();
@@ -539,12 +551,25 @@ void applyThemeToWindowTree(wxWindow* root, const ThemePalette& palette, Theme t
                 }
                 it->second.focused = false;
                 it->second.pressed = false;
-                const wxColour bg = it->second.hovered ? it->second.hoverBg : it->second.normalBg;
+                const bool toggleOn =
+                    dynamic_cast<wxToggleButton*>(root) != nullptr &&
+                    static_cast<wxToggleButton*>(root)->GetValue();
+                const wxColour bg =
+                    (it->second.hovered || toggleOn) ? it->second.hoverBg : it->second.normalBg;
                 root->SetBackgroundColour(bg);
                 root->SetForegroundColour(it->second.text);
                 root->Refresh();
                 event.Skip();
             });
+            if (auto* toggle = dynamic_cast<wxToggleButton*>(root)) {
+                toggle->Bind(wxEVT_TOGGLEBUTTON, [root](wxCommandEvent& event) {
+                    auto it = gButtonVisualStates.find(root);
+                    if (it != gButtonVisualStates.end() && it->second.darkLike) {
+                        root->Refresh();
+                    }
+                    event.Skip();
+                });
+            }
             root->SetBackgroundStyle(wxBG_STYLE_PAINT);
             root->Bind(wxEVT_ERASE_BACKGROUND, [](wxEraseEvent&) {});
             root->Bind(wxEVT_PAINT, [root](wxPaintEvent& event) {
@@ -555,10 +580,13 @@ void applyThemeToWindowTree(wxWindow* root, const ThemePalette& palette, Theme t
                     }
                     wxAutoBufferedPaintDC dc(root);
                     const wxRect rect = root->GetClientRect();
+                    const bool toggleOn =
+                        dynamic_cast<wxToggleButton*>(root) != nullptr &&
+                        static_cast<wxToggleButton*>(root)->GetValue();
                     wxColour bg = it->second.normalBg;
                     if (it->second.pressed) {
                         bg = it->second.pressedBg;
-                    } else if (it->second.hovered || it->second.focused) {
+                    } else if (it->second.hovered || it->second.focused || toggleOn) {
                         bg = it->second.hoverBg;
                     }
                     const wxColour fg = it->second.text;

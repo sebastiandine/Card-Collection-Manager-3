@@ -17,4 +17,9 @@ TEST_SUITE("asciiLower") {
         const std::string input = "caf\u00e9";
         CHECK(asciiLower(input) == input);
     }
+
+    TEST_CASE("bytes above ASCII range are passed through tolower unchanged") {
+        const std::string input(1, static_cast<char>('\x80'));
+        CHECK(asciiLower(input) == input);
+    }
 }

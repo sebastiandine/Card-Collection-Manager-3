@@ -9,7 +9,7 @@
 - `include/ccm/services/` — high-level operations: `ConfigService`, `CollectionService<TCard>` (header-only template), `SetService`, `ImageService`, `CardPreviewService`, `CardSorter` (free functions; per-column sort comparators that mirror established table sorting behavior — UI-agnostic so they can be unit-tested directly), `CardFilter` (free functions; case-insensitive substring row matcher restricted to each game's `tableFields` valueKey list). They depend only on ports.
 - `include/ccm/infra/` — concrete adapters: `CprHttpClient`, `StdFileSystem`, `JsonCollectionRepository<T>` (header-only template), `JsonSetRepository`, `LocalImageStore`, `LocalPreviewByteCache`.
 - `include/ccm/games/` — `IGameModule` + per-game modules. `IGameModule` consolidates the per-game seams: every module owns an `ISetSource` (required) and may own an `ICardPreviewSource` (optional, default `nullptr`). `magic/`, `pokemon/`, and `yugioh/` are the reference implementations — all three expose a fully working set source + card preview source.
-- `include/ccm/util/` — `Result.hpp` (the sum type), `FsNames.hpp` (filename munging ported from `util/fs.rs`).
+- `include/ccm/util/` — `Result.hpp` (the sum type), `FsNames.hpp` (filename munging ported from `util/fs.rs`), `YuGiOhPrintingSlot.hpp` / `YuGiOhSetLookup.hpp` (Yu-Gi-Oh! print-slot helpers and cached-set **set code** lookup for the edit dialog; both header-only, unit-tested).
 - `src/` mirrors `include/ccm/` for non-template implementations.
 
 ## Conventions

@@ -1,6 +1,5 @@
 # Card Collection Manager 3
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=sebastiandine_Card-Collection-Manager-3&metric=alert_status&token=a7e5822db3829af68223a1d3710f3105ff9543bc)](https://sonarcloud.io/summary/new_code?id=sebastiandine_Card-Collection-Manager-3)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=sebastiandine_Card-Collection-Manager-3&metric=bugs&token=a7e5822db3829af68223a1d3710f3105ff9543bc)](https://sonarcloud.io/summary/new_code?id=sebastiandine_Card-Collection-Manager-3)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=sebastiandine_Card-Collection-Manager-3&metric=security_rating&token=a7e5822db3829af68223a1d3710f3105ff9543bc)](https://sonarcloud.io/summary/new_code?id=sebastiandine_Card-Collection-Manager-3)
 

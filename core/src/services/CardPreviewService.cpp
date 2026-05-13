@@ -218,18 +218,12 @@ Result<std::string> CardPreviewService::fetchImageBytesByUrl(std::string_view ur
     // and, if needed, fetch+store.
     const std::string key = makeUrlKey(url);
     std::string cached;
-    switch (cacheLookup(key, cached)) {
-        case CacheLookupKind::Hit:
-            return Result<std::string>::ok(std::move(cached));
-        case CacheLookupKind::NegativeHit:
-            // Defensive: nothing in this code path ever stores a negative
-            // entry under a URL key, but if one ever ends up here (cache
-            // file tampering, future code paths) treat it as a miss so the
-            // fallback fetch can still run.
-            break;
-        case CacheLookupKind::Miss:
-            break;
+    const auto mem = cacheLookup(key, cached);
+    if (mem == CacheLookupKind::Hit) {
+        return Result<std::string>::ok(std::move(cached));
     }
+    // Miss, or a spurious negative under a URL key (never written by normal
+    // code) — both continue to disk / network.
     if (persistentCache_ != nullptr) {
         const auto disk = persistentCache_->load(key);
         if (disk.kind == IPreviewByteCache::HitKind::Hit) {

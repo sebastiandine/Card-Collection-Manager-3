@@ -3,6 +3,12 @@
 #include <stdexcept>
 #include <string>
 
+#if defined(__GNUC__) || defined(__clang__)
+#define CCM_UNREACHABLE() __builtin_unreachable()
+#else
+#define CCM_UNREACHABLE() ((void)0)
+#endif
+
 namespace ccm {
 
 std::string_view to_string(Game g) noexcept {
@@ -11,7 +17,7 @@ std::string_view to_string(Game g) noexcept {
         case Game::Pokemon: return "Pokemon";
         case Game::YuGiOh:  return "YuGiOh";
     }
-    return "Magic";
+    CCM_UNREACHABLE();
 }
 
 std::string_view to_string(Language l) noexcept {
@@ -25,7 +31,7 @@ std::string_view to_string(Language l) noexcept {
         case Language::Japanese: return "Japanese";
         case Language::Russian:  return "Russian";
     }
-    return "English";
+    CCM_UNREACHABLE();
 }
 
 std::string_view to_string(Condition c) noexcept {
@@ -38,7 +44,7 @@ std::string_view to_string(Condition c) noexcept {
         case Condition::Played:      return "Played";
         case Condition::Poor:        return "Poor";
     }
-    return "Mint";
+    CCM_UNREACHABLE();
 }
 
 std::string_view to_string(Theme t) noexcept {
@@ -46,7 +52,7 @@ std::string_view to_string(Theme t) noexcept {
         case Theme::Light: return "Light";
         case Theme::Dark:  return "Dark";
     }
-    return "Light";
+    CCM_UNREACHABLE();
 }
 
 std::optional<Game> gameFromString(std::string_view s) noexcept {

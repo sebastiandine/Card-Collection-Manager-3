@@ -32,6 +32,7 @@
 #include <wx/filedlg.h>
 #include <wx/listbox.h>
 #include <wx/msgdlg.h>
+#include <wx/panel.h>
 #include <wx/sizer.h>
 #include <wx/spinctrl.h>
 #include <wx/stattext.h>
@@ -146,6 +147,28 @@ protected:
         return &available[static_cast<std::size_t>(sel)];
     }
 
+    [[nodiscard]] const std::vector<Set>& availableSets() const noexcept {
+        return preloadedSets_ != nullptr ? *preloadedSets_ : sets_;
+    }
+
+    // Default: combo only. Yu-Gi-Oh! overrides to add set-code entry + toggle.
+    virtual void customizeSetPickerRow(wxBoxSizer& row, wxComboBox* combo) {
+        row.Add(combo, 1, wxEXPAND);
+    }
+
+    // After programmatically changing the set combo + `card_.set` (see
+    // `applySetSelectionByIndex`). Default no-op; Yu-Gi-Oh! clears print-variant cache.
+    virtual void onSetSelectionApplied() {}
+
+    void applySetSelectionByIndex(std::size_t index) {
+        const auto& available = availableSets();
+        if (!setCombo_ || !setCombo_->IsEnabled()) return;
+        if (index >= available.size()) return;
+        setCombo_->SetSelection(static_cast<int>(index));
+        card_.set = available[index];
+        onSetSelectionApplied();
+    }
+
 private:
     void readSets() {
         auto loaded = setService_.getSets(game_);
@@ -156,10 +179,6 @@ private:
                           return a.releaseDate < b.releaseDate;
                       });
         }
-    }
-
-    [[nodiscard]] const std::vector<Set>& availableSets() const noexcept {
-        return preloadedSets_ != nullptr ? *preloadedSets_ : sets_;
     }
 
     void buildLayout() {
@@ -174,9 +193,16 @@ private:
         });
         appendRow(grid, "Name", nameCtrl_);
 
-        setCombo_ = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0,
+        // `setCombo_` must be parented to `setHost` so every control in the Set row
+        // shares the same `wxPanel`; otherwise the combo stays a direct child of the
+        // dialog while the sizer lives on `setHost`, which corrupts layout on MSW.
+        auto* setHost = new wxPanel(this, wxID_ANY);
+        auto* setRow = new wxBoxSizer(wxHORIZONTAL);
+        setHost->SetSizer(setRow);
+        setCombo_ = new wxComboBox(setHost, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0,
                                    nullptr, wxCB_READONLY);
-        appendRow(grid, "Set", setCombo_);
+        customizeSetPickerRow(*setRow, setCombo_);
+        appendRow(grid, "Set", setHost);
 
         // Subclass extra rows go between Set and Amount (Pokemon adds Set #).
         appendExtraRows(grid);
@@ -237,8 +263,13 @@ private:
 
         CallAfter([this]() {
             if (nameCtrl_) {
-                nameCtrl_->SetInsertionPoint(0);
-                nameCtrl_->ShowPosition(0);
+                nameCtrl_->SetFocus();
+                if (mode_ == EditMode::Edit && !nameCtrl_->IsEmpty()) {
+                    nameCtrl_->SetInsertionPointEnd();
+                } else {
+                    nameCtrl_->SetInsertionPoint(0);
+                    nameCtrl_->ShowPosition(0);
+                }
             }
             if (noteCtrl_) {
                 noteCtrl_->SetInsertionPoint(0);

@@ -1,11 +1,13 @@
 #include "ccm/ui/PokemonGameView.hpp"
 
+#include "ccm/ui/CardEditModalGuard.hpp"
 #include "ccm/ui/PokemonCardEditDialog.hpp"
 #include "ccm/ui/PokemonCardListPanel.hpp"
 #include "ccm/ui/PokemonSelectedCardPanel.hpp"
 #include "ccm/ui/Theme.hpp"
 
 #include <wx/msgdlg.h>
+#include <wx/window.h>
 
 #include <optional>
 #include <string>
@@ -51,6 +53,10 @@ wxPanel* PokemonGameView::listPanel(wxWindow* parent) {
                 selectedPanel_->setCard(listPanel_->selected());
             }
         });
+        listPanel_->Bind(EVT_CARD_ACTIVATED, [this](wxCommandEvent&) {
+            wxWindow* owner = wxGetTopLevelParent(listPanel_);
+            onEditCard(owner != nullptr ? owner : static_cast<wxWindow*>(listPanel_));
+        });
     }
     return listPanel_;
 }
@@ -85,6 +91,11 @@ const std::vector<Set>& PokemonGameView::setsForDialog() {
 }
 
 void PokemonGameView::onAddCard(wxWindow* parentWindow) {
+    if (cardEditModalIsActive()) {
+        showThemedMessageDialog(parentWindow, wxString::FromUTF8(kCardEditModalBlockedUtf8),
+                                wxString::FromUTF8("Add card"), wxOK | wxICON_INFORMATION);
+        return;
+    }
     PokemonCard fresh;
     fresh.amount = 1;
     fresh.language = Language::English;
@@ -93,6 +104,7 @@ void PokemonGameView::onAddCard(wxWindow* parentWindow) {
     PokemonCardEditDialog dlg(parentWindow, images_, sets_, cardPreview_, EditMode::Create, fresh,
                               &setsForDialog());
     themeModalDialog(&dlg, config_.current().theme);
+    CardEditModalGuard modalGuard;
     if (dlg.ShowModal() != wxID_OK) return;
 
     auto added = collection_.add(Game::Pokemon, dlg.card());
@@ -129,9 +141,15 @@ void PokemonGameView::onEditCard(wxWindow* parentWindow) {
         showThemedMessageDialog(parentWindow, "Select a card first.", "Edit", wxOK | wxICON_INFORMATION);
         return;
     }
+    if (cardEditModalIsActive()) {
+        showThemedMessageDialog(parentWindow, wxString::FromUTF8(kCardEditModalBlockedUtf8),
+                                wxString::FromUTF8("Edit"), wxOK | wxICON_INFORMATION);
+        return;
+    }
     PokemonCardEditDialog dlg(parentWindow, images_, sets_, cardPreview_, EditMode::Edit, *sel,
                               &setsForDialog());
     themeModalDialog(&dlg, config_.current().theme);
+    CardEditModalGuard modalGuard;
     if (dlg.ShowModal() != wxID_OK) return;
     auto updated = collection_.update(Game::Pokemon, dlg.card());
     if (!updated) {

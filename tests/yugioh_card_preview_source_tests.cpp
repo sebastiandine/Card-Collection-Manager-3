@@ -93,6 +93,7 @@ TEST_SUITE("ygoPrintingSlotsMatch") {
         CHECK_FALSE(ygoLikelyEuropeanRegionalSetCode("LOB-DE005"));
         CHECK_FALSE(ygoLikelyEuropeanRegionalSetCode("SOD-EN015"));
         CHECK_FALSE(ygoLikelyEuropeanRegionalSetCode("LOB-E"));
+        CHECK_FALSE(ygoLikelyEuropeanRegionalSetCode("LOB-EX005"));
     }
 }
 
@@ -170,6 +171,12 @@ TEST_SUITE("YuGiOhCardPreviewSource::rarityCodeFor") {
         // pattern, not throw and not return a misleading code.
         CHECK(YuGiOhCardPreviewSource::rarityCodeFor("").empty());
         CHECK(YuGiOhCardPreviewSource::rarityCodeFor("Mythic Cosmic Rare").empty());
+    }
+
+    TEST_CASE("uses dialog synonym table when ygoRarityShortCode does not match") {
+        CHECK(YuGiOhCardPreviewSource::rarityCodeFor("Mosaic Rare") == "MSR");
+        CHECK(YuGiOhCardPreviewSource::rarityCodeFor("Parallel Rare") == "PR");
+        CHECK(YuGiOhCardPreviewSource::rarityCodeFor("Gold Rare") == "GUR");
     }
 }
 
