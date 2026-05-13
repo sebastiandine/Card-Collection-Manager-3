@@ -21,6 +21,7 @@ add_library(ccm_ui_wx STATIC
     src/YuGiOhGameView.cpp
 
     src/SettingsDialog.cpp
+    src/SwitchCtrl.cpp
     src/ImageViewerDialog.cpp
     src/IconListCtrl.cpp
     src/SvgIcons.cpp

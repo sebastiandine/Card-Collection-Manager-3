@@ -70,6 +70,10 @@ namespace ccm::ui {
 // not duplicated per template instantiation.
 wxDECLARE_EVENT(EVT_CARD_SELECTED, wxCommandEvent);
 
+// Raised on `wxEVT_LIST_ITEM_ACTIVATED` (double-click / Enter on a row).
+// `IGameView` implementations bind this to open Edit for `selected()`.
+wxDECLARE_EVENT(EVT_CARD_ACTIVATED, wxCommandEvent);
+
 template <typename TCard, typename TSortColumn>
 class BaseCardListPanel : public wxPanel {
 public:
@@ -238,6 +242,7 @@ protected:
 
         list_->Bind(wxEVT_LIST_ITEM_SELECTED,   &BaseCardListPanel::onSelectionChanged, this);
         list_->Bind(wxEVT_LIST_ITEM_DESELECTED, &BaseCardListPanel::onSelectionChanged, this);
+        list_->Bind(wxEVT_LIST_ITEM_ACTIVATED, &BaseCardListPanel::onListItemActivated, this);
     }
 
     // Forwarded helpers ------------------------------------------------------
@@ -640,6 +645,14 @@ private:
         (void)event;
         if (inRebuild_) return;
         notifySelectionChanged();
+    }
+
+    void onListItemActivated(wxListEvent& event) {
+        (void)event;
+        if (inRebuild_) return;
+        wxCommandEvent ev(EVT_CARD_ACTIVATED, GetId());
+        ev.SetEventObject(this);
+        ProcessWindowEvent(ev);
     }
 
     // ----- members ----------------------------------------------------------

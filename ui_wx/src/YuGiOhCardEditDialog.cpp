@@ -1,6 +1,8 @@
 #include "ccm/ui/YuGiOhCardEditDialog.hpp"
+#include "ccm/ui/SwitchCtrl.hpp"
 #include "ccm/domain/Enums.hpp"
 #include "ccm/util/YuGiOhPrintingSlot.hpp"
+#include "ccm/util/YuGiOhSetLookup.hpp"
 #include <wx/app.h>
 #include <wx/panel.h>
 #include <algorithm>
@@ -55,6 +57,33 @@ void YuGiOhCardEditDialog::buildFlagsRow(wxBoxSizer* flagsBox) {
     flagsBox->Add(firstEditionCheck_, 0, wxRIGHT, 12);
     flagsBox->Add(signedCheck_,       0, wxRIGHT, 12);
     flagsBox->Add(alteredCheck_,      0, wxRIGHT, 12);
+}
+
+void YuGiOhCardEditDialog::customizeSetPickerRow(wxBoxSizer& row, wxComboBox* combo) {
+    wxWindow* const host = combo->GetParent();
+    setCodeRowPanel_ = new wxPanel(host, wxID_ANY);
+    auto* inner = new wxBoxSizer(wxHORIZONTAL);
+    setCodeText_ = new wxTextCtrl(setCodeRowPanel_, wxID_ANY);
+    setCodeAutoBtn_ = new wxButton(setCodeRowPanel_, wxID_ANY, "Auto detect");
+    inner->Add(setCodeText_, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
+    inner->Add(setCodeAutoBtn_, 0, wxALIGN_CENTER_VERTICAL);
+    setCodeRowPanel_->SetSizer(inner);
+    setCodeRowPanel_->Show(false);
+
+    setModeHint_ = new wxStaticText(host, wxID_ANY, wxString());
+    setPickerSwitch_ = new SwitchCtrl(host, wxID_ANY, false);
+    setPickerSwitch_->Bind(EVT_CCM_SWITCH, &YuGiOhCardEditDialog::onSetRowSwitch, this);
+    setCodeAutoBtn_->Bind(wxEVT_BUTTON, &YuGiOhCardEditDialog::onSetCodeAutoDetect, this);
+
+    row.Add(combo, 1, wxEXPAND);
+    row.Add(setCodeRowPanel_, 1, wxEXPAND);
+    row.Add(setModeHint_, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 5);
+    row.Add(setPickerSwitch_, 0, wxALIGN_CENTER_VERTICAL);
+
+    if (availableSets().empty()) {
+        setPickerSwitch_->Enable(false);
+    }
+    syncSetModeHint();
 }
 
 void YuGiOhCardEditDialog::appendExtraRows(wxFlexGridSizer* grid) {
@@ -340,10 +369,78 @@ void YuGiOhCardEditDialog::onSetNoTextChanged(wxCommandEvent&) {
 }
 
 void YuGiOhCardEditDialog::onSetSelectionChanged(wxCommandEvent& ev) {
+    handleSetSelectionChanged();
+    ev.Skip();
+}
+
+void YuGiOhCardEditDialog::onSetSelectionApplied() {
+    handleSetSelectionChanged();
+}
+
+void YuGiOhCardEditDialog::handleSetSelectionChanged() {
     clearCachedPrintVariants();
     refreshSetNoFullPreview();
     scheduleDeferredVariantPrefetch();
-    ev.Skip();
+}
+
+void YuGiOhCardEditDialog::syncSetModeHint() {
+    if (!setModeHint_ || !setPickerSwitch_) return;
+    // Switch on = set-code entry; hint tells user how to return to the name list.
+    setModeHint_->SetLabel(setPickerSwitch_->GetValue() ? wxString::FromUTF8("Set name")
+                                                       : wxString::FromUTF8("Set code"));
+}
+
+void YuGiOhCardEditDialog::onSetRowSwitch(wxCommandEvent&) {
+    if (!setPickerSwitch_ || !setComboControl() || !setCodeRowPanel_) return;
+    syncSetModeHint();
+    const bool codeMode = setPickerSwitch_->GetValue();
+    setComboControl()->Show(!codeMode);
+    setCodeRowPanel_->Show(codeMode);
+    wxWindow* host = setComboControl()->GetParent();
+    if (host) {
+        host->Layout();
+    }
+    Layout();
+}
+
+void YuGiOhCardEditDialog::onSetCodeAutoDetect(wxCommandEvent&) {
+    if (!setCodeText_ || !setPickerSwitch_) return;
+    const auto& sets = availableSets();
+    if (sets.empty()) {
+        showThemedMessageDialog(this,
+                                "No sets are cached. Use Sets > Update Yu-Gi-Oh! first.",
+                                "Set code", wxOK | wxICON_INFORMATION);
+        return;
+    }
+
+    const std::string raw = setCodeText_->GetValue().ToStdString(wxConvUTF8);
+    const auto r = lookupYuGiOhSetByShorthand(raw, sets);
+    using Kind = YuGiOhSetShorthandLookup::Kind;
+    if (r.kind == Kind::NotFound) {
+        showThemedMessageDialog(
+            this,
+            "No set matches that code. Check the code spelling or use Sets > Update Yu-Gi-Oh! to refresh the list.",
+            "Set code", wxOK | wxICON_INFORMATION);
+        return;
+    }
+    if (r.kind == Kind::Ambiguous) {
+        showThemedMessageDialog(this,
+                                "Multiple cached sets match that code. Refresh the set list or pick the set from the list.",
+                                "Set code", wxOK | wxICON_INFORMATION);
+        return;
+    }
+
+    applySetSelectionByIndex(r.index);
+
+    setPickerSwitch_->SetValue(false, false);
+    syncSetModeHint();
+    setComboControl()->Show(true);
+    setCodeRowPanel_->Show(false);
+    wxWindow* host = setComboControl()->GetParent();
+    if (host) {
+        host->Layout();
+    }
+    Layout();
 }
 
 std::string YuGiOhCardEditDialog::extractSetNoNumeric(std::string_view fullSetNo) const {

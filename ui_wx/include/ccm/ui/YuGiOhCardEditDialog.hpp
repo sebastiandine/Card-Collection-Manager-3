@@ -4,6 +4,7 @@
 #include "ccm/ports/ICardPreviewSource.hpp"
 #include "ccm/services/CardPreviewService.hpp"
 #include "ccm/ui/BaseCardEditDialog.hpp"
+#include "ccm/ui/SwitchCtrl.hpp"
 #include <wx/button.h>
 #include <wx/stattext.h>
 
@@ -21,11 +22,13 @@ public:
 
 protected:
     void buildFlagsRow(wxBoxSizer* flagsBox) override;
+    void customizeSetPickerRow(wxBoxSizer& row, wxComboBox* combo) override;
     void appendExtraRows(wxFlexGridSizer* grid) override;
     void readExtraFromCard() override;
     void writeExtraToCard() override;
     [[nodiscard]] std::string updateMenuName() const override { return "Update Yu-Gi-Oh!"; }
     void onCardLookupContextChanged() override;
+    void onSetSelectionApplied() override;
 
 private:
     void onAutoDetectSetNo(wxCommandEvent&);
@@ -34,6 +37,10 @@ private:
     void onNextRarity(wxCommandEvent&);
     void onSetNoTextChanged(wxCommandEvent&);
     void onSetSelectionChanged(wxCommandEvent&);
+    void handleSetSelectionChanged();
+    void onSetRowSwitch(wxCommandEvent&);
+    void onSetCodeAutoDetect(wxCommandEvent&);
+    void syncSetModeHint();
     void autoDetectFromApi(bool fillSetNo, bool fillRarity);
     void refreshSetNoFullPreview();
     void clearCachedPrintVariants();
@@ -62,6 +69,12 @@ private:
     wxCheckBox* firstEditionCheck_{nullptr};
     wxCheckBox* signedCheck_{nullptr};
     wxCheckBox* alteredCheck_{nullptr};
+
+    wxPanel*        setCodeRowPanel_{nullptr};
+    wxTextCtrl*     setCodeText_{nullptr};
+    wxButton*       setCodeAutoBtn_{nullptr};
+    wxStaticText*   setModeHint_{nullptr};
+    SwitchCtrl*     setPickerSwitch_{nullptr};
 
     std::vector<AutoDetectedPrint> cachedVariants_;
     std::vector<std::string>       uniqueSetCodes_;

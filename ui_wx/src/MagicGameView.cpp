@@ -1,11 +1,13 @@
 #include "ccm/ui/MagicGameView.hpp"
 
+#include "ccm/ui/CardEditModalGuard.hpp"
 #include "ccm/ui/MagicCardEditDialog.hpp"
 #include "ccm/ui/MagicCardListPanel.hpp"
 #include "ccm/ui/MagicSelectedCardPanel.hpp"
 #include "ccm/ui/Theme.hpp"
 
 #include <wx/msgdlg.h>
+#include <wx/window.h>
 
 #include <optional>
 #include <string>
@@ -54,6 +56,10 @@ wxPanel* MagicGameView::listPanel(wxWindow* parent) {
                 selectedPanel_->setCard(listPanel_->selected());
             }
         });
+        listPanel_->Bind(EVT_CARD_ACTIVATED, [this](wxCommandEvent&) {
+            wxWindow* owner = wxGetTopLevelParent(listPanel_);
+            onEditCard(owner != nullptr ? owner : static_cast<wxWindow*>(listPanel_));
+        });
     }
     return listPanel_;
 }
@@ -88,6 +94,11 @@ const std::vector<Set>& MagicGameView::setsForDialog() {
 }
 
 void MagicGameView::onAddCard(wxWindow* parentWindow) {
+    if (cardEditModalIsActive()) {
+        showThemedMessageDialog(parentWindow, wxString::FromUTF8(kCardEditModalBlockedUtf8),
+                                wxString::FromUTF8("Add card"), wxOK | wxICON_INFORMATION);
+        return;
+    }
     MagicCard fresh;
     fresh.amount = 1;
     fresh.language = Language::English;
@@ -96,6 +107,7 @@ void MagicGameView::onAddCard(wxWindow* parentWindow) {
     MagicCardEditDialog dlg(parentWindow, images_, sets_, EditMode::Create, fresh,
                             &setsForDialog());
     themeModalDialog(&dlg, config_.current().theme);
+    CardEditModalGuard modalGuard;
     if (dlg.ShowModal() != wxID_OK) return;
 
     auto added = collection_.add(Game::Magic, dlg.card());
@@ -132,9 +144,15 @@ void MagicGameView::onEditCard(wxWindow* parentWindow) {
         showThemedMessageDialog(parentWindow, "Select a card first.", "Edit", wxOK | wxICON_INFORMATION);
         return;
     }
+    if (cardEditModalIsActive()) {
+        showThemedMessageDialog(parentWindow, wxString::FromUTF8(kCardEditModalBlockedUtf8),
+                                wxString::FromUTF8("Edit"), wxOK | wxICON_INFORMATION);
+        return;
+    }
     MagicCardEditDialog dlg(parentWindow, images_, sets_, EditMode::Edit, *sel,
                             &setsForDialog());
     themeModalDialog(&dlg, config_.current().theme);
+    CardEditModalGuard modalGuard;
     if (dlg.ShowModal() != wxID_OK) return;
     auto updated = collection_.update(Game::Magic, dlg.card());
     if (!updated) {

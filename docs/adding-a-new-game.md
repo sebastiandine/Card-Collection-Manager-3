@@ -326,6 +326,12 @@ Derive from `BaseCardEditDialog<<Name>Card>`. Override:
 - `writeExtraToCard()` — copy values from your widgets back into `mutableCard()`.
 - `updateMenuName()` — return `"Update <Display>"`. This is what the dialog's "no sets cached" hint shows the user.
 
+Optional `BaseCardEditDialog` extension points (defaults keep a single read-only set combo in the **Set** row):
+
+- `customizeSetPickerRow(wxBoxSizer& row, wxComboBox* combo)` — the base wraps the combo in a host panel and calls this so a game can add adjacent controls (Yu-Gi-Oh! adds a **Set code** toggle, a text field, and **Auto detect** beside the combo). The default implementation only does `row.Add(combo, 1, wxEXPAND)`.
+- `applySetSelectionByIndex(std::size_t index)` (non-virtual helper on the base) — selects a row in the combo and assigns `card_.set` from `availableSets()[index]` when the combo is enabled.
+- `onSetSelectionApplied()` — called after `applySetSelectionByIndex` completes; default no-op. Yu-Gi-Oh! overrides it to clear cached print-variant metadata and reschedule the same follow-up as a manual `wxEVT_COMBOBOX` set change.
+
 In the constructor:
 
 1. Pass through to the `BaseCardEditDialog` constructor with the dialog title (e.g. `"Add <Display> Card"` or `"Edit <Display> Card"` based on `EditMode`), `imageService`, `setService`, `mode`, `std::move(initial)`, `Game::<Name>`, and the optional `preloadedSets` pointer.
@@ -354,10 +360,10 @@ Implement the virtuals:
 
 - `gameId()` returns `Game::<Name>`.
 - `displayName()` returns `"<Display>"`.
-- `listPanel(parent)` — lazily allocates the list panel as a child of `parent`; on first allocation, also `Bind(EVT_CARD_SELECTED, ...)` to push `listPanel_->selected()` into `selectedPanel_`. **The binding must live here**, in the typed `IGameView`, not in `MainFrame` — `MainFrame` only sees `IGameView` and never `<Name>Card`.
+- `listPanel(parent)` — lazily allocates the list panel as a child of `parent`; on first allocation, also `Bind(EVT_CARD_SELECTED, ...)` to push `listPanel_->selected()` into `selectedPanel_`, and `Bind(EVT_CARD_ACTIVATED, ...)` so a double-click (or Enter on the focused row) calls `onEditCard` with `wxGetTopLevelParent(listPanel_)` as the modal owner when available. **The binding must live here**, in the typed `IGameView`, not in `MainFrame` — `MainFrame` only sees `IGameView` and never `<Name>Card`.
 - `selectedPanel(parent)` — lazily allocates the selected panel.
 - `refreshCollection()` — calls `collection_.list(Game::<Name>)`, handles errors with `wxMessageBox`, and pushes the new vector into `listPanel_->setCards(...)`. Also re-syncs the selected panel.
-- `onAddCard(parent)`, `onEditCard(parent)`, `onDeleteCard(parent)` — open the typed `<Name>CardEditDialog` (or pop a confirm dialog for delete), call the typed `CollectionService` to commit, and refresh on success.
+- `onAddCard(parent)`, `onEditCard(parent)`, `onDeleteCard(parent)` — open the typed `<Name>CardEditDialog` (or pop a confirm dialog for delete), call the typed `CollectionService` to commit, and refresh on success. For Add/Edit, follow the built-in game views: if `cardEditModalIsActive()` from `ccm/ui/CardEditModalGuard.hpp`, show a themed info dialog and return; otherwise wrap `ShowModal()` with `CardEditModalGuard` so a second Add/Edit cannot stack while one card dialog is already open.
 - `onUpdateSets(parent)` — calls `sets_.updateSets(Game::<Name>)`, refreshes `setsCache_`, returns a status string.
 - `setFilter(filter)` — forwards to `listPanel_->setFilter(filter)`.
 - `applyTheme(palette)` — forwards to both panels' `applyTheme`.
