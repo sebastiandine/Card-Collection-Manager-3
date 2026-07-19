@@ -223,4 +223,74 @@ void sortYuGiOhCards(std::vector<YuGiOhCard>& cards, YuGiOhSortColumn column,
     }
 }
 
+void sortDigiBattle99Cards(std::vector<DigiBattle99Card>& cards,
+                           DigiBattle99SortColumn column,
+                           bool ascending) {
+    switch (column) {
+    case DigiBattle99SortColumn::Name:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const DigiBattle99Card& a, const DigiBattle99Card& b) {
+                return asciiLower(a.name) < asciiLower(b.name);
+            }, ascending));
+        break;
+    case DigiBattle99SortColumn::SetReleaseDate:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const DigiBattle99Card& a, const DigiBattle99Card& b) {
+                return asciiLower(a.set.releaseDate) <
+                       asciiLower(b.set.releaseDate);
+            }, ascending));
+        break;
+    case DigiBattle99SortColumn::Language:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const DigiBattle99Card& a, const DigiBattle99Card& b) {
+                return asciiLower(to_string(a.language)) <
+                       asciiLower(to_string(b.language));
+            }, ascending));
+        break;
+    case DigiBattle99SortColumn::Condition:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const DigiBattle99Card& a, const DigiBattle99Card& b) {
+                return asciiLower(to_string(a.condition)) <
+                       asciiLower(to_string(b.condition));
+            }, ascending));
+        break;
+    case DigiBattle99SortColumn::Amount:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const DigiBattle99Card& a, const DigiBattle99Card& b) {
+                return a.amount < b.amount;
+            }, ascending));
+        break;
+    case DigiBattle99SortColumn::Holo:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const DigiBattle99Card& a, const DigiBattle99Card& b) {
+                return a.holo < b.holo;
+            }, ascending));
+        break;
+    case DigiBattle99SortColumn::FirstEdition:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const DigiBattle99Card& a, const DigiBattle99Card& b) {
+                return a.firstEdition < b.firstEdition;
+            }, ascending));
+        break;
+    case DigiBattle99SortColumn::Signed:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const DigiBattle99Card& a, const DigiBattle99Card& b) {
+                return a.signed_ < b.signed_;
+            }, ascending));
+        break;
+    case DigiBattle99SortColumn::Altered:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const DigiBattle99Card& a, const DigiBattle99Card& b) {
+                return a.altered < b.altered;
+            }, ascending));
+        break;
+    case DigiBattle99SortColumn::Note:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const DigiBattle99Card& a, const DigiBattle99Card& b) {
+                return asciiLower(a.note) < asciiLower(b.note);
+            }, ascending));
+        break;
+    }
+}
+
 }  // namespace ccm

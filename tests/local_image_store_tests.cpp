@@ -17,6 +17,7 @@ std::string dirNameForGame(Game g) {
         case Game::Magic: return "magic";
         case Game::Pokemon: return "pokemon";
         case Game::YuGiOh: return "yugioh";
+        case Game::DigiBattle99: return "digibattle99";
     }
     return "magic";
 }

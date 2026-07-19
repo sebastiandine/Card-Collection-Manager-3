@@ -148,6 +148,37 @@ TEST_SUITE("SetService") {
         CHECK(yugioh.source.calls == 1);
     }
 
+    TEST_CASE("DigiBattle99 module routes independently when all games are registered") {
+        InMemSetRepo repo;
+        SetService svc{repo};
+
+        FakeGameModule magic{Game::Magic};
+        magic.source.result = Result<std::vector<Set>>::ok({{"lea", "Alpha", "1993/08/05"}});
+        FakeGameModule pokemon{Game::Pokemon};
+        pokemon.source.result = Result<std::vector<Set>>::ok({{"base1", "Base", "1999/01/09"}});
+        FakeGameModule yugioh{Game::YuGiOh};
+        yugioh.source.result = Result<std::vector<Set>>::ok({{"LOB", "Legend of Blue Eyes", "2002/03/08"}});
+        FakeGameModule digi{Game::DigiBattle99};
+        digi.source.result = Result<std::vector<Set>>::ok(
+            {{"series-1-starter-set", "Series 1 Starter Set", "1999/06/01"}});
+
+        svc.registerModule(&magic);
+        svc.registerModule(&pokemon);
+        svc.registerModule(&yugioh);
+        svc.registerModule(&digi);
+
+        REQUIRE(svc.updateSets(Game::Magic).isOk());
+        REQUIRE(svc.updateSets(Game::Pokemon).isOk());
+        REQUIRE(svc.updateSets(Game::YuGiOh).isOk());
+        const auto out = svc.updateSets(Game::DigiBattle99);
+        REQUIRE(out.isOk());
+        CHECK(out.value().front().id == "series-1-starter-set");
+        CHECK(magic.source.calls == 1);
+        CHECK(pokemon.source.calls == 1);
+        CHECK(yugioh.source.calls == 1);
+        CHECK(digi.source.calls == 1);
+    }
+
     TEST_CASE("updateSets propagates repository save failures") {
         InMemSetRepo repo;
         repo.failSave = true;

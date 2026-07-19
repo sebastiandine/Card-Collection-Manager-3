@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 
+#include "ccm/games/digibattle99/DigiBattle99GameModule.hpp"
 #include "ccm/games/magic/MagicGameModule.hpp"
 #include "ccm/games/pokemon/PokemonGameModule.hpp"
 #include "ccm/games/yugioh/YuGiOhGameModule.hpp"
@@ -48,6 +49,17 @@ TEST_SUITE("game modules expose stable identity and wiring") {
         CHECK(module.id() == Game::YuGiOh);
         CHECK(module.dirName() == "yugioh");
         CHECK(module.displayName() == "Yu-Gi-Oh!");
+        CHECK(module.cardPreviewSource() != nullptr);
+        CHECK(static_cast<void*>(&module.setSource()) != static_cast<void*>(module.cardPreviewSource()));
+    }
+
+    TEST_CASE("DigiBattle99 module reports canonical metadata") {
+        NoopHttpClient http;
+        DigiBattle99GameModule module(http);
+
+        CHECK(module.id() == Game::DigiBattle99);
+        CHECK(module.dirName() == "digibattle99");
+        CHECK(module.displayName() == "Digimon (Digi-Battle)");
         CHECK(module.cardPreviewSource() != nullptr);
         CHECK(static_cast<void*>(&module.setSource()) != static_cast<void*>(module.cardPreviewSource()));
     }

@@ -19,9 +19,13 @@ target_link_libraries(ccm
         ccm_warnings
 )
 
-# Yu-Gi-Oh! preview fallback image (used when network card-back URLs fail).
+# Yu-Gi-Oh! / Digi-Battle preview fallback images (used when network card-back
+# URLs fail or no public URL exists).
 add_custom_command(TARGET ccm POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:ccm>/assets"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/ui_wx/assets/ygo_card_back.png"
-            "$<TARGET_FILE_DIR:ccm>/assets/ygo_card_back.png")
+            "$<TARGET_FILE_DIR:ccm>/assets/ygo_card_back.png"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/ui_wx/assets/digibattle99_card_back.png"
+            "$<TARGET_FILE_DIR:ccm>/assets/digibattle99_card_back.png")

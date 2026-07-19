@@ -1,5 +1,6 @@
 #include "ccm/ui/SettingsDialog.hpp"
 #include "ccm/ui/Theme.hpp"
+#include "ccm/domain/Enums.hpp"
 
 #include <wx/button.h>
 #include <wx/dirdlg.h>
@@ -8,6 +9,20 @@
 #include <wx/stattext.h>
 
 namespace ccm::ui {
+
+namespace {
+
+wxString displayLabelForGame(Game g) {
+    switch (g) {
+        case Game::Magic:        return "Magic";
+        case Game::Pokemon:      return "Pokemon";
+        case Game::YuGiOh:       return "Yu-Gi-Oh!";
+        case Game::DigiBattle99: return "Digimon (Digi-Battle)";
+    }
+    return wxString::FromUTF8(to_string(g).data());
+}
+
+}  // namespace
 
 SettingsDialog::SettingsDialog(wxWindow* parent, ConfigService& config)
     : wxDialog(parent, wxID_ANY, "Settings",
@@ -30,9 +45,14 @@ SettingsDialog::SettingsDialog(wxWindow* parent, ConfigService& config)
     gameRow->Add(new wxStaticText(this, wxID_ANY, "Default game:"),
                  0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
     defaultGameChoice_ = new wxChoice(this, wxID_ANY);
-    defaultGameChoice_->Append("Magic");
-    defaultGameChoice_->Append("Pokemon");
-    defaultGameChoice_->SetSelection(config_.current().defaultGame == Game::Magic ? 0 : 1);
+    int selected = 0;
+    int idx = 0;
+    for (const Game g : allGames()) {
+        defaultGameChoice_->Append(displayLabelForGame(g));
+        if (g == config_.current().defaultGame) selected = idx;
+        ++idx;
+    }
+    defaultGameChoice_->SetSelection(selected);
     gameRow->Add(defaultGameChoice_, 0);
     root->Add(gameRow, 0, wxEXPAND | wxLEFT | wxRIGHT, 10);
 
@@ -77,7 +97,11 @@ void SettingsDialog::onBrowse(wxCommandEvent&) {
 void SettingsDialog::onOk(wxCommandEvent& ev) {
     Configuration next = config_.current();
     next.dataStorage = dataDirCtrl_->GetValue().ToStdString();
-    next.defaultGame = defaultGameChoice_->GetSelection() == 0 ? Game::Magic : Game::Pokemon;
+    const int gameSel = defaultGameChoice_->GetSelection();
+    const auto& games = allGames();
+    if (gameSel >= 0 && static_cast<std::size_t>(gameSel) < games.size()) {
+        next.defaultGame = games[static_cast<std::size_t>(gameSel)];
+    }
     switch (themeChoice_->GetSelection()) {
         case 1: next.theme = Theme::Dark; break;
         case 0:

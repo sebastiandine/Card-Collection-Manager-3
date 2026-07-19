@@ -67,4 +67,19 @@ bool matchesYuGiOhFilter(const YuGiOhCard& card, std::string_view filter) {
     return false;
 }
 
+bool matchesDigiBattle99Filter(const DigiBattle99Card& card, std::string_view filter) {
+    if (filter.empty()) return true;
+
+    const std::string needle = asciiLower(filter);
+
+    if (containsLower(card.name, needle))                     return true;
+    if (containsLower(card.set.name, needle))                 return true;
+    if (containsLower(card.setNo, needle))                    return true;
+    if (containsLower(to_string(card.language), needle))      return true;
+    if (containsLower(to_string(card.condition), needle))     return true;
+    if (containsLower(std::to_string(card.amount), needle))   return true;
+    if (containsLower(card.note, needle))                     return true;
+    return false;
+}
+
 }  // namespace ccm

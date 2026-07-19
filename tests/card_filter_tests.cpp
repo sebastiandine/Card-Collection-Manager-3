@@ -6,6 +6,7 @@
 #include <doctest/doctest.h>
 
 #include "ccm/domain/Enums.hpp"
+#include "ccm/domain/DigiBattle99Card.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
 #include "ccm/domain/YuGiOhCard.hpp"
@@ -236,5 +237,42 @@ TEST_SUITE("CardFilter::matchesYuGiOhFilter") {
     TEST_CASE("no column hit returns false") {
         const YuGiOhCard c = yc("Dark Magician", "Legend of Blue Eyes", "LOB-005", "Ultra Rare");
         CHECK_FALSE(matchesYuGiOhFilter(c, "zzznomatch"));
+    }
+}
+
+TEST_SUITE("CardFilter::matchesDigiBattle99Filter") {
+    TEST_CASE("matches by name and set.name") {
+        DigiBattle99Card c;
+        c.name = "Agumon";
+        c.set.name = "Series 1 Starter Set";
+        CHECK(matchesDigiBattle99Filter(c, "agu"));
+        CHECK(matchesDigiBattle99Filter(c, "STARTER"));
+        CHECK_FALSE(matchesDigiBattle99Filter(c, "greymon"));
+    }
+
+    TEST_CASE("includes setNo in searchable columns") {
+        DigiBattle99Card c;
+        c.name = "Agumon";
+        c.set.name = "Series 1 Starter Set";
+        c.setNo = "ST-01";
+        CHECK(matchesDigiBattle99Filter(c, "st-01"));
+        CHECK(matchesDigiBattle99Filter(c, "ST-"));
+    }
+
+    TEST_CASE("empty filter matches everything") {
+        DigiBattle99Card c;
+        c.name = "Agumon";
+        CHECK(matchesDigiBattle99Filter(c, ""));
+    }
+
+    TEST_CASE("boolean flag columns are not matched") {
+        DigiBattle99Card c;
+        c.name = "Agumon";
+        c.holo = true;
+        c.firstEdition = true;
+        c.signed_ = true;
+        c.altered = true;
+        CHECK_FALSE(matchesDigiBattle99Filter(c, "true"));
+        CHECK(matchesDigiBattle99Filter(c, "agu"));
     }
 }

@@ -19,6 +19,7 @@
 //   * An empty filter matches every row, exactly as in JS where every string
 //     `.includes("")` returns true.
 
+#include "ccm/domain/DigiBattle99Card.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
 #include "ccm/domain/YuGiOhCard.hpp"
@@ -40,5 +41,9 @@ namespace ccm {
                                         std::string_view filter);
 [[nodiscard]] bool matchesYuGiOhFilter(const YuGiOhCard& card,
                                        std::string_view filter);
+
+// Digi-Battle mirrors Pokemon searchable columns (includes setNo).
+[[nodiscard]] bool matchesDigiBattle99Filter(const DigiBattle99Card& card,
+                                             std::string_view filter);
 
 }  // namespace ccm

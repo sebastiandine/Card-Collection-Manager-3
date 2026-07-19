@@ -78,6 +78,43 @@ Used in two situations:
 
 YGOPRODeck publishes rate limits and asks clients to cache responses and avoid abusive hotlinking; treat failures after burst traffic as an upstream policy signal, not an app bug. Yugipedia’s MediaWiki API is similarly polite — one batched call per preview lookup keeps us well under any normal threshold.
 
+## Digimon Digi-Battle (1999) APIs (digimoncard.io)
+
+English Digi-Battle is wired as `Game::DigiBattle99` (`dirName` `digibattle99`, UI label **Digimon (Digi-Battle)**). Upstream docs: [digimoncard.io Public API](https://digimoncard.io/api-documentation). Always scope requests with `series=Digimon Digi-Battle Card Game` so modern Digimon Card Game rows are never mixed in. Rate limit: **15 requests / 10 seconds / IP** (429 then temporary block on abuse).
+
+### Info API: derived set list from `search.php`
+
+There is **no** dedicated sets endpoint. `DigiBattle99SetSource` calls:
+
+`https://digimoncard.io/api-public/search.php?series=Digimon%20Digi-Battle%20Card%20Game&limit=1000&sort=name&sortdirection=asc`
+
+and collects unique `set_name[]` pack strings. Each pack becomes a `Set` with:
+
+- `Set.name` — exact pack display name (used as `pack=` on search / auto-detect)
+- `Set.id` — stable slug (`Series 1 Starter Set` → `series-1-starter-set`); never rename after ship
+- `Set.releaseDate` — curated table in the set source (Series 1 Starter = `1999/06/01` verified; other packs use documented year/month anchors)
+
+Unknown future packs get an empty release date and sort last.
+
+### Asset API: CDN images + `search.php` lookup
+
+Card scans live at:
+
+`https://images.digimoncard.io/images/cards/{id}.jpg`
+
+where `{id}` is the API card number (`ST-01`, `BO-115`, `MO-06`). The CDN also serves `.webp`, but CCM3 uses `.jpg` because `OnInit` only registers `wxPNGHandler` / `wxJPEGHandler` (WebP bytes would surface as “image decode failed”).
+
+`DigiBattle99CardPreviewSource::fetchImageUrl`:
+
+1. If `setNo` is non-empty → normalize alphabetic prefix to uppercase (**no** invented zero-padding) and return the CDN URL with **no** search round-trip.
+2. Otherwise search with `n=` + optional `pack=` (display set name) + `series=`, take the first exact name match’s `id`, then build the CDN URL.
+
+**Preview key:** `(name, set.name, setNo)` — middle slot is the pack **display name** (same idea as Yu-Gi-Oh! passing `set.name` for YGOPRODeck `cardset=`), not the slug id.
+
+**Auto-detect** (`detectPrintVariants`): same search; distinct `id` values become `AutoDetectedPrint::setNo`. Digi-Battle UI is Pokémon-like (no persisted rarity).
+
+Empty search array / `{"error":"..."}` → `NotFound`; bad JSON / HTTP → `Transient`.
+
 ## Runtime Flow In CCM3
 
 The app uses the same flow for every game that registers a module:
@@ -91,15 +128,15 @@ The app uses the same flow for every game that registers a module:
 
 See [caching.md](caching.md) for a dedicated reference on preview cache tiers, internal keys, eviction, clearing, and HTTP session reuse.
 
-Three mechanisms reduce preview latency for **all** games (Magic, Pokemon, Yu-Gi-Oh!). In addition, the shared HTTP session speeds **every** `IHttpClient::get` call (including set-list fetches), not only previews:
+Three mechanisms reduce preview latency for **all** games (Magic, Pokemon, Yu-Gi-Oh!, DigiBattle99). In addition, the shared HTTP session speeds **every** `IHttpClient::get` call (including set-list fetches), not only previews:
 
 - **In-memory preview LRU** (`CardPreviewService`). Successful `fetchPreviewBytes` results are cached keyed by `(game, name, setId, setNo)`; successful `fetchImageBytesByUrl` results are cached keyed by URL (used for the per-game card-back fallback). Re-selecting a previously viewed row is decode-only — no HTTP at all. The cache is bounded by `CardPreviewService::kCacheCapacity` (currently 128 entries) and uses a list+map LRU under a mutex (the preview pipeline is invoked from a worker thread in `BaseSelectedCardPanel`). **Source errors are split** by `PreviewLookupError::Kind`: `NotFound` (the upstream answered cleanly that the record has no image) is *negative-cached* in this tier so subsequent selections short-circuit without HTTP, while `Transient` (HTTP/network/parse failures) is **never** cached so a brief outage cannot permanently disable a card's preview.
 - **Persistent disk byte cache** (`LocalPreviewByteCache`, port `IPreviewByteCache`). Wraps the in-memory tier with an on-disk store under `<exeDir>/.cache/preview-cache/` — pinned **next to the executable**, in the same scope as `config.json`, **not** under the user-configurable `Configuration.dataStorage` path. The cache stays put when the user reconfigures or relocates their collection data, and it is not part of the user's data directory backups; it is install-scoped, not collection-scoped. Both positive previews and `NotFound` verdicts survive an app restart. Each entry is a mutually-exclusive `<hash>.bin` (positive payload) or `<hash>.neg` (negative marker) plus a `<hash>.idx` sidecar containing the original key — load-time mismatch on the sidecar treats the entry as a miss, so a hash collision degrades to a one-time HTTP refetch instead of serving the wrong card's bytes (or the wrong card's "no image" verdict). Hashing is FNV-1a 64-bit (no crypto dependency). The cache is bounded by total `.bin` payload bytes (default `kDefaultMaxBytes = 64 MiB`) and evicts oldest entries by mtime when a new write would exceed the cap; reading an entry touches its mtime so frequently-viewed cards survive eviction. Negative `.neg` markers are tiny and not counted against the cap — their count is naturally bounded by the user's actively-viewed records. Filesystem mutations route through `IFileSystem`; size and mtime queries (which the port does not expose) use `std::filesystem` directly inside the adapter. The persistent tier is **fire-and-forget on the way down** — every adapter operation swallows I/O errors so a flaky or full disk never breaks the preview path.
-- **Persistent HTTP session** (`CprHttpClient`). The adapter owns one long-lived `cpr::Session` (libcurl easy handle) for the lifetime of the app. Per-request configuration is limited to `SetUrl(...)`; headers, timeout, and redirect policy are configured once in the constructor. Default **`Accept: */*`** keeps JSON responses and raw image bodies working on the same session (avoid tying every GET to `application/json`). libcurl's connection pool keeps the TLS connection to each host warm, so repeat calls to `api.scryfall.com`, `api.pokemontcg.io`, `db.ygoprodeck.com`, `yugipedia.com`, and `ms.yugipedia.com` skip the TLS handshake. A `std::mutex` serializes callers — libcurl easy handles are not thread-safe, and the preview pipeline is single-flight per panel anyway.
+- **Persistent HTTP session** (`CprHttpClient`). The adapter owns one long-lived `cpr::Session` (libcurl easy handle) for the lifetime of the app. Per-request configuration is limited to `SetUrl(...)`; headers, timeout, and redirect policy are configured once in the constructor. Default **`Accept: */*`** keeps JSON responses and raw image bodies working on the same session (avoid tying every GET to `application/json`). libcurl's connection pool keeps the TLS connection to each host warm, so repeat calls to `api.scryfall.com`, `api.pokemontcg.io`, `db.ygoprodeck.com`, `yugipedia.com`, `ms.yugipedia.com`, `digimoncard.io`, and `images.digimoncard.io` skip the TLS handshake. A `std::mutex` serializes callers — libcurl easy handles are not thread-safe, and the preview pipeline is single-flight per panel anyway.
 
 `CardPreviewService` consults the tiers in order **memory → disk → source/HTTP**. On a disk hit (positive *or* negative) the entry is promoted into the in-memory LRU so the next click on the same row never re-touches the disk cache. On HTTP success the bytes are written through to both tiers in one shot. On a `NotFound` source error the **negative** marker is written through to both tiers; on `Transient` source errors nothing is written, so the next selection retries cleanly.
 
-The combined effect on the preview path: first selection of a previously-unseen card pays one TLS handshake per *new* host this session (typically two hops for Yu-Gi-Oh!: `yugipedia.com` for the API, `ms.yugipedia.com` for the image), each subsequent fresh card on the same host skips the handshake, any re-selection of an already-viewed card is instant, after the first run with the disk cache populated **even a fresh app launch is decode-only for previously-seen cards** until eviction or a manual cache clear, and **records the upstream cleanly has no image for** stay "instant card-back" across restarts instead of re-paying the lookup every launch. Editing a lookup-relevant field of a record (name, set, setNo, or for Yu-Gi-Oh! the rarity / edition packed into setNo) changes the cache key automatically, so a fresh resolution attempt happens on the next click.
+The combined effect on the preview path: first selection of a previously-unseen card pays one TLS handshake per *new* host this session (typically two hops for Yu-Gi-Oh!: `yugipedia.com` for the API, `ms.yugipedia.com` for the image; Digi-Battle often hits `images.digimoncard.io` only when `setNo` is already known), each subsequent fresh card on the same host skips the handshake, any re-selection of an already-viewed card is instant, after the first run with the disk cache populated **even a fresh app launch is decode-only for previously-seen cards** until eviction or a manual cache clear, and **records the upstream cleanly has no image for** stay "instant card-back" across restarts instead of re-paying the lookup every launch. Editing a lookup-relevant field of a record (name, set, setNo, or for Yu-Gi-Oh! the rarity / edition packed into setNo) changes the cache key automatically, so a fresh resolution attempt happens on the next click.
 
 To clear the persistent cache (for example to recover from a bad upstream image), delete the `<exeDir>/.cache/preview-cache/` subdirectory or the umbrella `<exeDir>/.cache/` folder. Note: the in-app "Reset" / data-storage-relocation flow does **not** touch this directory — the cache is install-scoped, not collection-scoped, so it is preserved across data-dir moves and only cleared by deleting the directory above explicitly (or by reinstalling / relocating the executable).
 
@@ -110,6 +147,7 @@ Fallback card-back sources (`BaseSelectedCardPanel`; Magic/Pokémon URLs match C
 - Magic: `https://gamepedia.cursecdn.com/mtgsalvation_gamepedia/f/f8/Magic_card_back.jpg`
 - Pokémon: `https://archives.bulbagarden.net/media/upload/1/17/Cardback.jpg`
 - Yu-Gi-Oh!: Yugipedia English TCG back — try `https://ms.yugipedia.com/thumb/e/e5/Back-EN.png/250px-Back-EN.png`, then `https://ms.yugipedia.com/e/e5/Back-EN.png`; if both fail, load `<exeDir>/assets/ygo_card_back.png` (shipped from `ui_wx/assets/ygo_card_back.png` at link time). `fallbackImageUrlForGame(Game::YuGiOh)` returns the thumbnail URL for helpers that only consult a single string.
+- Digimon (Digi-Battle): no stable public back URL; load `<exeDir>/assets/digibattle99_card_back.png` (shipped from `ui_wx/assets/digibattle99_card_back.png` at link time).
 
 If a game module does not provide a preview source (`cardPreviewSource() == nullptr`), preview registration is skipped and the UI behaves as "no remote preview API available."
 
@@ -120,6 +158,6 @@ All source types return `Result<T, std::string>` errors so failures cross bounda
 - info API failures (bad set payload, schema mismatch, endpoint/network failure), and
 - asset API failures (query mismatch, no matching card, missing image fields, image download failure).
 
-When previews fail, verify request construction first (name sanitization, number normalization, percent encoding), then verify response shape assumptions: Scryfall (`data`, `image_uris`), Pokemon (`data`, `images.large`/`images.small`; auto-detect also needs `name`, `number`, `rarity`, and `set.id` on each matching row), Yu-Gi-Oh! Yugipedia (`query.pages.<id>.imageinfo[0].url` per filename, missing files tagged `"missing": ""`), Yu-Gi-Oh! YGOPRODeck fallback (`data`, `name`, `card_images`). If the UI fallback path succeeds (network card-back and/or bundled PNG), the panel shows the card-back image and the inline label `(image preview unavailable)`; only if every fallback fails does the preview stay empty with status text.
+When previews fail, verify request construction first (name sanitization, number normalization, percent encoding), then verify response shape assumptions: Scryfall (`data`, `image_uris`), Pokemon (`data`, `images.large`/`images.small`; auto-detect also needs `name`, `number`, `rarity`, and `set.id` on each matching row), Yu-Gi-Oh! Yugipedia (`query.pages.<id>.imageinfo[0].url` per filename, missing files tagged `"missing": ""`), Yu-Gi-Oh! YGOPRODeck fallback (`data`, `name`, `card_images`), Digi-Battle digimoncard.io (top-level array with `name`/`id`/`set_name`; CDN `images.digimoncard.io/images/cards/{id}.jpg`). If the UI fallback path succeeds (network card-back and/or bundled PNG), the panel shows the card-back image and the inline label `(image preview unavailable)`; only if every fallback fails does the preview stay empty with status text.
 
 For Yu-Gi-Oh! specifically, when a printing shows the wrong art compared with Yugipedia’s gallery, debug in this order: (1) verify the candidate list via `YuGiOhCardPreviewSource::buildCandidateFilenames(...)` against the actual file names on Yugipedia’s `Card_Gallery:<Card>` page; (2) confirm the dialog rarity name maps to the expected short code in `ygoRarityShortCode(...)` / `rarityCodeFor(...)` (extend the mapping when a new rarity surfaces); (3) confirm the `firstEdition` flag matches the printed edition stamp — the candidate ordering puts the printed edition first.

@@ -21,6 +21,8 @@ add_executable(ccm_core_tests
     std_file_system_tests.cpp
     pokemon_set_source_tests.cpp
     pokemon_card_preview_source_tests.cpp
+    digibattle99_set_source_tests.cpp
+    digibattle99_card_preview_source_tests.cpp
     icard_preview_source_tests.cpp
     yugioh_set_source_tests.cpp
     yugioh_set_lookup_tests.cpp
