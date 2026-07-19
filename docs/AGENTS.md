@@ -17,7 +17,7 @@ Long-form contributor documentation that lives outside the source tree.
 
 ## Subdirectories
 
-- `assets/images/` — static screenshots and other binary assets referenced from the documentation (currently `demo-mtg.png`, `demo-pkm.png`). Keep filenames stable so cross-doc links don't break, and prefer compressed PNG/JPEG over uncompressed formats.
+- `assets/images/` — static screenshots and other binary assets referenced from the documentation (currently `demo-mtg.png`, `demo-pkm.png`, `demo-ygo.png`, `demo-digibattle99.png`). Keep filenames stable so cross-doc links don't break, and prefer compressed PNG/JPEG over uncompressed formats.
 
 ## Conventions
 
