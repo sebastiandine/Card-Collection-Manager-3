@@ -1,6 +1,7 @@
 #include <doctest/doctest.h>
 
 #include "ccm/domain/Configuration.hpp"
+#include "ccm/domain/DigiBattle99Card.hpp"
 #include "ccm/domain/Enums.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
@@ -22,6 +23,9 @@ TEST_SUITE("domain enums round-trip JSON as strings") {
 
         nlohmann::json jYgo = "YuGiOh";
         CHECK(jYgo.get<Game>() == Game::YuGiOh);
+
+        nlohmann::json jDigi = "DigiBattle99";
+        CHECK(jDigi.get<Game>() == Game::DigiBattle99);
 
         nlohmann::json j3 = Theme::Dark;
         CHECK(j3.get<std::string>() == "Dark");
@@ -149,6 +153,34 @@ TEST_SUITE("PokemonCard JSON") {
         CHECK(j.at("signed") == false);
 
         const PokemonCard back = j.get<PokemonCard>();
+        CHECK(back == c);
+    }
+}
+
+TEST_SUITE("DigiBattle99Card JSON") {
+    TEST_CASE("uses 'setNo' and 'firstEdition' aliases") {
+        DigiBattle99Card c;
+        c.id = 3;
+        c.amount = 2;
+        c.name = "Agumon";
+        c.set = Set{"series-1-starter-set", "Series 1 Starter Set", "1999/06/01"};
+        c.setNo = "ST-01";
+        c.note = "starter";
+        c.images = {"a.png"};
+        c.language = Language::English;
+        c.condition = Condition::NearMint;
+        c.firstEdition = false;
+        c.holo = true;
+        c.signed_ = true;
+        c.altered = false;
+
+        nlohmann::json j = c;
+        CHECK(j.at("setNo") == "ST-01");
+        CHECK(j.at("firstEdition") == false);
+        CHECK(j.at("holo") == true);
+        CHECK(j.at("signed") == true);
+
+        const DigiBattle99Card back = j.get<DigiBattle99Card>();
         CHECK(back == c);
     }
 }
@@ -494,6 +526,36 @@ TEST_SUITE("Domain JSON required fields") {
             nlohmann::json partial = full;
             partial.erase(key);
             CHECK_THROWS(partial.get<PokemonCard>());
+        }
+    }
+
+    TEST_CASE("DigiBattle99Card missing each required key throws") {
+        const nlohmann::json full = {
+            {"id", 3},
+            {"amount", 1},
+            {"name", "Agumon"},
+            {"set", nlohmann::json{
+                {"id", "series-1-starter-set"},
+                {"name", "Series 1 Starter Set"},
+                {"releaseDate", "1999/06/01"},
+            }},
+            {"setNo", "ST-01"},
+            {"note", ""},
+            {"images", nlohmann::json::array()},
+            {"language", "English"},
+            {"condition", "NearMint"},
+            {"firstEdition", false},
+            {"holo", true},
+            {"signed", false},
+            {"altered", false},
+        };
+
+        for (const char* key :
+             {"id", "amount", "name", "set", "setNo", "note", "images", "language", "condition",
+              "firstEdition", "holo", "signed", "altered"}) {
+            nlohmann::json partial = full;
+            partial.erase(key);
+            CHECK_THROWS(partial.get<DigiBattle99Card>());
         }
     }
 

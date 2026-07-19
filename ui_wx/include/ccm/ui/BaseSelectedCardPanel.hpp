@@ -295,9 +295,11 @@ private:
             case Game::YuGiOh:
                 // Yugipedia English TCG backing (thumbnail — smaller than full scan).
                 return "https://ms.yugipedia.com/thumb/e/e5/Back-EN.png/250px-Back-EN.png";
-            default:
+            case Game::DigiBattle99:
+                // No stable public Digi-Battle back URL; UI uses bundled PNG.
                 return {};
         }
+        return {};
     }
 
     void buildInfoGrid(wxBoxSizer* root) {
@@ -423,6 +425,16 @@ private:
                             ss << in.rdbuf();
                             applyFallbackPayload(ss.str());
                         }
+                    }
+                } else if (game == Game::DigiBattle99) {
+                    namespace fs = std::filesystem;
+                    const fs::path asset =
+                        fs::path(exeDirCopy) / "assets" / "digibattle99_card_back.png";
+                    std::ifstream in(asset, std::ios::binary);
+                    if (in) {
+                        std::ostringstream ss;
+                        ss << in.rdbuf();
+                        applyFallbackPayload(ss.str());
                     }
                 } else {
                     const std::string fallbackUrl = fallbackImageUrlForGame(game);

@@ -9,20 +9,37 @@ Currently, the application supports the following TCGs:
 - Magic the Gathering
 - Pokemon TCG
 - Yu-Gi-Oh!
+- Digimon (Digi-Battle)
 
 ## Screenshots
 
-### Magic The Gathering
+<details open>
+<summary>Magic The Gathering</summary>
 
 ![CCM3 Demo - Magic: The Gathering](docs/assets/images/demo-mtg.png)
 
-### Pokemon TCG
+</details>
+
+<details>
+<summary>Pokemon TCG</summary>
 
 ![CCM3 Demo - Pokemon](docs/assets/images/demo-pkm.png)
 
-### Yu-Gi-Oh!
+</details>
+
+<details>
+<summary>Yu-Gi-Oh!</summary>
 
 ![CCM3 Demo - YuGiOh](docs/assets/images/demo-ygo.png)
+
+</details>
+
+<details>
+<summary>Digimon (Digi-Battle)</summary>
+
+![CCM3 Demo - Digimon Digi-Battle](docs/assets/images/demo-digibattle99.png)
+
+</details>
 
 
 ## Migrating From CCM1 And CCM2

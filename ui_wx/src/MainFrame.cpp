@@ -41,8 +41,10 @@ constexpr const char kFilterInputHint[] = "Filter";
 
 std::string dirNameForGame(Game g) {
     switch (g) {
-        case Game::Magic:   return "magic";
-        case Game::Pokemon: return "pokemon";
+        case Game::Magic:        return "magic";
+        case Game::Pokemon:      return "pokemon";
+        case Game::YuGiOh:       return "yugioh";
+        case Game::DigiBattle99: return "digibattle99";
     }
     return "magic";
 }
@@ -67,7 +69,7 @@ void ensureDataStorageScaffold(const Configuration& cfg) {
         }
     }
 
-    for (Game game : {Game::Magic, Game::Pokemon}) {
+    for (Game game : allGames()) {
         const fs::path gameRoot = root / dirNameForGame(game);
         fs::create_directories(gameRoot / "images", ec);
         if (ec) continue;

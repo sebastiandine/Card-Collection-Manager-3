@@ -13,9 +13,10 @@ namespace ccm {
 
 std::string_view to_string(Game g) noexcept {
     switch (g) {
-        case Game::Magic:   return "Magic";
-        case Game::Pokemon: return "Pokemon";
-        case Game::YuGiOh:  return "YuGiOh";
+        case Game::Magic:        return "Magic";
+        case Game::Pokemon:      return "Pokemon";
+        case Game::YuGiOh:       return "YuGiOh";
+        case Game::DigiBattle99: return "DigiBattle99";
     }
     CCM_UNREACHABLE();
 }
@@ -56,9 +57,10 @@ std::string_view to_string(Theme t) noexcept {
 }
 
 std::optional<Game> gameFromString(std::string_view s) noexcept {
-    if (s == "Magic")   return Game::Magic;
-    if (s == "Pokemon") return Game::Pokemon;
-    if (s == "YuGiOh")  return Game::YuGiOh;
+    if (s == "Magic")        return Game::Magic;
+    if (s == "Pokemon")      return Game::Pokemon;
+    if (s == "YuGiOh")       return Game::YuGiOh;
+    if (s == "DigiBattle99") return Game::DigiBattle99;
     return std::nullopt;
 }
 
@@ -91,8 +93,9 @@ std::optional<Theme> themeFromString(std::string_view s) noexcept {
     return std::nullopt;
 }
 
-const std::array<Game, 3>& allGames() noexcept {
-    static constexpr std::array<Game, 3> v{Game::Magic, Game::Pokemon, Game::YuGiOh};
+const std::array<Game, 4>& allGames() noexcept {
+    static constexpr std::array<Game, 4> v{
+        Game::Magic, Game::Pokemon, Game::YuGiOh, Game::DigiBattle99};
     return v;
 }
 

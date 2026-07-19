@@ -68,7 +68,7 @@ There is no explicit "refresh" or "invalidate" API on `CardPreviewService` — b
 
 ### 1. Edit-driven invalidation (record changed → fresh lookup, automatic)
 
-The cache key for the preview path is `(game, name, setId, setNo)`. For Yu-Gi-Oh! the third slot also encodes rarity and edition, packed by `YuGiOhSelectedCardPanel::previewKey()` as `<setNo>||<rarity>||<1E|UE>`. The user editing **any** lookup-relevant field of a card record produces a **different cache key** for the resulting selection, which means:
+The cache key for the preview path is `(game, name, setId, setNo)`. For Yu-Gi-Oh! the third slot also encodes rarity and edition, packed by `YuGiOhSelectedCardPanel::previewKey()` as `<setNo>||<rarity>||<1E|UE>`. For Digimon Digi-Battle the middle slot is the pack **display name** (`Set.name`), not the slug id, so `pack=` search and the CDN path stay aligned. The user editing **any** lookup-relevant field of a card record produces a **different cache key** for the resulting selection, which means:
 
 - Memory and disk lookups for the new key **miss** the old entry (positive or negative).
 - A fresh `ICardPreviewSource::fetchImageUrl` call runs.
