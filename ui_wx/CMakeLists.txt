@@ -23,14 +23,11 @@ add_library(ccm_ui_wx STATIC
     src/DigiBattle99SelectedCardPanel.cpp
     src/DigiBattle99CardEditDialog.cpp
     src/DigiBattle99GameView.cpp
-    src/JapanesePokemonCardListPanel.cpp
-    src/JapanesePokemonSelectedCardPanel.cpp
-    src/JapanesePokemonCardEditDialog.cpp
-    src/JapanesePokemonGameView.cpp
 
     src/SettingsDialog.cpp
     src/SwitchCtrl.cpp
     src/ImageViewerDialog.cpp
+    src/VariantImagePreviewDialog.cpp
     src/IconListCtrl.cpp
     src/SvgIcons.cpp
     src/Theme.cpp

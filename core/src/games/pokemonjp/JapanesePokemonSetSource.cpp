@@ -22,7 +22,9 @@ struct ClassicMissingProduct {
 // Keep in sync with tools/pokemon_jp/classic_missing_sets.json and
 // docs/assets-and-info-apis.md (Japanese Pokémon Info API).
 constexpr std::array<ClassicMissingProduct, 11> kMissingClassicProducts{{
-    {"UnnumberedPromo", "Unnumbered Promotional cards", "1996/10/15"},
+    // Day after Pokémon Jungle (PMCG2, 1997/03/05) so the set list places
+    // Unnumbered Promo immediately after Jungle when sorted by releaseDate.
+    {"UnnumberedPromo", "Unnumbered Promotional cards", "1997/03/06"},
     {"ExpSheet1", "Expansion Sheet Series 1", "1998/03/23"},
     {"NiviCG", "Nivi City Gym", "1998/04/26"},
     {"HanadaCG", "Hanada City Gym", "1998/04/26"},
@@ -113,10 +115,16 @@ JapanesePokemonSetSource::parseListResponse(const std::string& body) {
 
 void JapanesePokemonSetSource::appendMissingClassicProducts(std::vector<Set>& sets) {
     for (const auto& product : kMissingClassicProducts) {
-        const bool exists = std::any_of(sets.begin(), sets.end(), [&](const Set& s) {
+        auto it = std::find_if(sets.begin(), sets.end(), [&](const Set& s) {
             return s.id == product.id;
         });
-        if (exists) continue;
+        if (it != sets.end()) {
+            // Keep curated display name / sort date in sync (e.g. UnnumberedPromo
+            // placement after Pokémon Jungle) even when the id was already cached.
+            it->name = product.nameEn;
+            it->releaseDate = product.releaseDate;
+            continue;
+        }
         Set s;
         s.id = product.id;
         s.name = product.nameEn;

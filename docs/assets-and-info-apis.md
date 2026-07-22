@@ -18,6 +18,10 @@ Used by `MagicCardPreviewSource` to find a card printing from `name` + `setId`, 
 
 ## Pokemon APIs
 
+Unified **Pokemon** Game menu entry. Per-card `region` (`West` / `Asia`) selects the backend below. Collection: `pokemon/collection.json`. West sets: `pokemon/sets-west.json`. Asia sets: `pokemon/sets-asia.json`. Language choices: West → English/German/French/Spanish/Italian/Russian; Asia → Japanese/S-Chinese/T-Chinese/Korean.
+
+### West (`Game::Pokemon`, pokemontcg.io)
+
 **Info API:** `https://api.pokemontcg.io/v2/sets`  
 Used by `PokemonSetSource` to fetch all sets. The parser maps `id`, `name`, and `releaseDate` directly into `Set`, then sorts ascending by release date.
 
@@ -115,9 +119,9 @@ where `{id}` is the API card number (`ST-01`, `BO-115`, `MO-06`). The CDN also s
 
 Empty search array / `{"error":"..."}` → `NotFound`; bad JSON / HTTP → `Transient`.
 
-## Japanese Pokémon TCG APIs (TCGdex `ja`)
+## Japanese Pokémon TCG APIs (TCGdex `ja`) — Asia region backend
 
-Japanese Pokémon is wired as `Game::JapanesePokemon` (`dirName` `pokemonjp`, UI label **Pokemon (Japan)**). Upstream: [TCGdex REST API](https://tcgdex.dev/). No API key. Japanese set IDs (e.g. `PMCG1`, `SV1a`) are never merged into Western `Game::Pokemon` / pokemontcg.io ids.
+Asia Pokémon is routed internally as `Game::JapanesePokemon` (`dirName` `pokemon`, same data directory as West). It is **not** a separate Game menu entry: the unified **Pokemon** UI stores both West and Asia cards in `pokemon/collection.json` with a per-card `region` (`West` / `Asia`). Set caches are split by filename under that directory (`pokemon/sets-west.json` vs `pokemon/sets-asia.json`). `JsonSetRepository` migrate-on-load promotes legacy `pokemon/sets.json` → `sets-west.json` and `pokemonjp/sets.json` → `sets-asia.json` when the new files are missing. **Sets > Update Pokemon** refreshes both lists. Upstream: [TCGdex REST API](https://tcgdex.dev/). No API key. Japanese set IDs (e.g. `PMCG1`, `SV1a`) are never merged into Western pokemontcg.io ids.
 
 ### Info API: TCGdex `GET /v2/ja/sets` (+ per-set detail)
 
@@ -126,7 +130,7 @@ Japanese Pokémon is wired as `Game::JapanesePokemon` (`dirName` `pokemonjp`, UI
 - Excludes Chinese-region `CS*` junk rows mislabeled on the JA endpoint.
 - Applies field overrides (e.g. `SV4a` Japanese name → `シャイニートレジャーex`).
 - Prefers English display names and release dates from the bundled EN catalog when present; otherwise keeps the TCGdex Japanese name and fetches detail for the date.
-- After parsing the TCGdex list, **injects Original-era / catalog-only products TCGdex omits** (idempotent by set id — skipped if upstream later adds them). The same injection runs when loading a cached `sets.json` via `ISetSource::augmentCachedSets`, so these products appear without requiring **Update Sets** first. Stable ids and English names:
+- After parsing the TCGdex list, **injects Original-era / catalog-only products TCGdex omits** (idempotent by set id — skipped if upstream later adds them). The same injection runs when loading a cached Asia set list (`sets-asia.json`) via `ISetSource::augmentCachedSets`, so these products appear without requiring **Update Sets** first. Stable ids and English names:
 
 | Id | English name |
 |---|---|
@@ -141,6 +145,20 @@ Japanese Pokémon is wired as `Game::JapanesePokemon` (`dirName` `pokemonjp`, UI
 | `SouthernIslands` | Southern Islands |
 
 Seed data lives in `tools/pokemon_jp/classic_missing_sets.json` + `classic_missing_prints.json` (merged into the EN catalog via `merge_classic_missing.py`). LocalIds for these products are sequential `001`… within each product (cards were unnumbered in print). Refresh `UnnumberedPromo` prints from Bulbapedia with `python tools/pokemon_jp/harvest_unnumbered_promos.py`, then fill preview images with `python tools/pokemon_jp/enrich_unnumbered_promo_images.py` (prefers Unnumbered / Japanese reprint-gallery scans over English Wizards `|image=` primaries; EN-only Bulbapedia pages leave `image_url` empty), then re-run `merge_classic_missing.py`. Numbered Japanese promo eras (`SV-P`, `S-P`, …) remain out of scope — TCGdex does not expose them, and they are not part of this curated set.
+
+### Sets without printed collector numbers (`UnnumberedPromo`)
+
+Physically unnumbered Japanese promos (and the other classic catalog-only products above) have **no printed set number**. The app still stores a synthetic `setNo` / catalog `local_id` (`001`, `002`, …) so preview and collection JSON stay keyed by `(setId, localId)` — but that value must not be treated as something the user can read off the card.
+
+**Edit dialog (`PokemonCardEditDialog`, Asia region) for set id `UnnumberedPromo`:**
+
+- The **Set #** text field is hidden (row label becomes **Print**). **Auto detect** and **Next** remain.
+- Auto-detect / silent Edit prefetch lists catalog prints matching the typed name (exact EN/JA, plus qualified titles such as `Mewtwo` → `Mewtwo (CoroCoro promo)`). Distinct synthetic localIds form the Next ring.
+- **Next** on the edit form shows a position counter (`Next (2/5)`), not the synthetic id. For ordinary numbered JP sets, Next still shows the current collector number (`Next (42)`).
+- A modeless **Print preview** popup (`VariantImagePreviewDialog`) opens ~20px to the right of the Add/Edit dialog. It loads the current print via `CardPreviewService::fetchPreviewBytes` and refreshes on each ring step. The popup has its own **`<< Prev` / `Next >>`** controls that drive the same ring as the edit dialog (buttons disabled when fewer than two variants).
+- On save, the dialog writes the ring’s synthetic `setNo` into `PokemonCard::setNo` even though the text field was hidden.
+
+Other classic unnumbered products (City Gyms, Expansion Sheets, Southern Islands) currently keep the normal Set # field; only `UnnumberedPromo` uses the print-preview UX above.
 
 ### Asset API: TCGdex card / set-detail images
 
@@ -224,7 +242,7 @@ The app uses the same flow for every game that registers a module:
 
 See [caching.md](caching.md) for a dedicated reference on preview cache tiers, internal keys, eviction, clearing, and HTTP session reuse.
 
-Three mechanisms reduce preview latency for **all** games (Magic, Pokemon, Yu-Gi-Oh!, DigiBattle99, JapanesePokemon). In addition, the shared HTTP session speeds **every** `IHttpClient::get` call (including set-list fetches), not only previews:
+Three mechanisms reduce preview latency for **all** games (Magic, Pokemon West/Asia backends, Yu-Gi-Oh!, DigiBattle99). In addition, the shared HTTP session speeds **every** `IHttpClient::get` call (including set-list fetches), not only previews:
 
 - **In-memory preview LRU** (`CardPreviewService`). Successful `fetchPreviewBytes` results are cached keyed by `(game, name, setId, setNo)`; successful `fetchImageBytesByUrl` results are cached keyed by URL (used for the per-game card-back fallback). Re-selecting a previously viewed row is decode-only — no HTTP at all. The cache is bounded by `CardPreviewService::kCacheCapacity` (currently 128 entries) and uses a list+map LRU under a mutex (the preview pipeline is invoked from a worker thread in `BaseSelectedCardPanel`). **Source errors are split** by `PreviewLookupError::Kind`: `NotFound` (the upstream answered cleanly that the record has no image) is *negative-cached* in this tier so subsequent selections short-circuit without HTTP, while `Transient` (HTTP/network/parse failures) is **never** cached so a brief outage cannot permanently disable a card's preview.
 - **Persistent disk byte cache** (`LocalPreviewByteCache`, port `IPreviewByteCache`). Wraps the in-memory tier with an on-disk store under `<exeDir>/.cache/preview-cache/` — pinned **next to the executable**, in the same scope as `config.json`, **not** under the user-configurable `Configuration.dataStorage` path. The cache stays put when the user reconfigures or relocates their collection data, and it is not part of the user's data directory backups; it is install-scoped, not collection-scoped. Both positive previews and `NotFound` verdicts survive an app restart. Each entry is a mutually-exclusive `<hash>.bin` (positive payload) or `<hash>.neg` (negative marker) plus a `<hash>.idx` sidecar containing the original key — load-time mismatch on the sidecar treats the entry as a miss, so a hash collision degrades to a one-time HTTP refetch instead of serving the wrong card's bytes (or the wrong card's "no image" verdict). Hashing is FNV-1a 64-bit (no crypto dependency). The cache is bounded by total `.bin` payload bytes (default `kDefaultMaxBytes = 64 MiB`) and evicts oldest entries by mtime when a new write would exceed the cap; reading an entry touches its mtime so frequently-viewed cards survive eviction. Negative `.neg` markers are tiny and not counted against the cap — their count is naturally bounded by the user's actively-viewed records. Filesystem mutations route through `IFileSystem`; size and mtime queries (which the port does not expose) use `std::filesystem` directly inside the adapter. The persistent tier is **fire-and-forget on the way down** — every adapter operation swallows I/O errors so a flaky or full disk never breaks the preview path.

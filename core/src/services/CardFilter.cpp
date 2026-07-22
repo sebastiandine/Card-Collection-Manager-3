@@ -47,6 +47,7 @@ bool matchesPokemonFilter(const PokemonCard& card, std::string_view filter) {
     if (containsLower(to_string(card.condition), needle))     return true;
     if (containsLower(std::to_string(card.amount), needle))   return true;
     if (containsLower(card.note, needle))                     return true;
+    if (containsLower(to_string(card.region), needle))        return true;
     return false;
 }
 

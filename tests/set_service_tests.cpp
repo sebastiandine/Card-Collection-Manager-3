@@ -31,7 +31,7 @@ public:
         if (gameId == Game::Pokemon) return "pokemon";
         if (gameId == Game::YuGiOh) return "yugioh";
         if (gameId == Game::DigiBattle99) return "digibattle99";
-        if (gameId == Game::JapanesePokemon) return "pokemonjp";
+        if (gameId == Game::JapanesePokemon) return "pokemon";
         return "yugioh";
     }
     std::string displayName() const override { return dirName(); }

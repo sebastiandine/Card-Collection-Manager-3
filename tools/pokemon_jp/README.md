@@ -74,6 +74,9 @@ Optional gap-fill fields (classic JA when TCGdex has no CDN scan):
    may still be filed under `UnnumberedPromo` here (e.g. `Mewtwo (Vending S1)` /
    `Mewtwo (Vending S3)`). Auto-detect matches bare species names as whole
    tokens (`Mewtwo` → `Team GR's Mewtwo`, `Mewtwo Strikes Back (…)`, not `Mew`).
+   Runtime UX for this set (no Set # field; Next cycles synthetic localIds;
+   modeless print-preview popup) is documented under
+   `docs/assets-and-info-apis.md` → **Sets without printed collector numbers**.
    For printing-accurate City Gym deck scans, run
    `fetch_classic_gym_images.py` and store deck-specific `image_url` values as
    `asset:pokemon_jp_classic/<setId>/<localId>.jpg`. Do **not** reuse PMCG

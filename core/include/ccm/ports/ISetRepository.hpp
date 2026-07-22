@@ -1,6 +1,8 @@
 #pragma once
 
-// ISetRepository - persistence port for the cached `sets.json` of a game.
+// ISetRepository - persistence port for the cached set list of a game.
+// Typical layout: `<dataStorage>/<dirName>/sets.json`. Pokemon West/Asia use
+// `sets-west.json` / `sets-asia.json` under the shared `pokemon/` directory.
 // Stored as a flat list to mirror the original Rust file layout.
 
 #include "ccm/domain/Enums.hpp"

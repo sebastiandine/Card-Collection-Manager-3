@@ -49,6 +49,7 @@
 #include <chrono>
 #include <cstdint>
 #include <filesystem>
+#include <span>
 #include <string>
 #include <utility>
 #include <vector>
@@ -103,6 +104,9 @@ protected:
     // wants; the base only owns the surrounding label.
     virtual void buildFlagsRow(wxBoxSizer* flagsBox) = 0;
 
+    // Subclass adds any labelled rows between Name and Set. Default does nothing.
+    virtual void appendPreSetRows(wxFlexGridSizer* /*grid*/) {}
+
     // Subclass adds any extra game-specific labelled rows just below the
     // standard rows but above the Note row, by calling `appendRow(label, ctrl)`
     // (provided as a parameter). Default does nothing.
@@ -114,6 +118,11 @@ protected:
 
     // Subclass copies the extra fields it owns from its widgets back into `card_`.
     virtual void writeExtraToCard() {}
+
+    // Languages offered in the Language choice. Default: allLanguages().
+    [[nodiscard]] virtual std::span<const Language> languagesForChoice() const {
+        return allLanguages();
+    }
 
     [[nodiscard]] virtual std::string updateMenuName() const { return "Update Sets"; }
 
@@ -151,6 +160,12 @@ protected:
     [[nodiscard]] const std::vector<Set>& availableSets() const noexcept {
         return preloadedSets_ != nullptr ? *preloadedSets_ : sets_;
     }
+
+    void setPreloadedSetsPointer(const std::vector<Set>* sets) noexcept {
+        preloadedSets_ = sets;
+    }
+
+    void refreshSetAndLanguageChoices() { populateChoices(); }
 
     // Default: combo only. Yu-Gi-Oh! overrides to add set-code entry + toggle.
     virtual void customizeSetPickerRow(wxBoxSizer& row, wxComboBox* combo) {
@@ -193,6 +208,9 @@ private:
             ev.Skip();
         });
         appendRow(grid, "Name", nameCtrl_);
+
+        // Optional rows between Name and Set (e.g. Pokemon West/Asia region).
+        appendPreSetRows(grid);
 
         // `setCombo_` must be parented to `setHost` so every control in the Set row
         // shares the same `wxPanel`; otherwise the combo stays a direct child of the
@@ -312,9 +330,10 @@ private:
         languageChoice_->Clear();
         int langIdx = 0;
         int i = 0;
+        const auto langsForChoice = languagesForChoice();
         wxArrayString langs;
-        langs.Alloc(allLanguages().size());
-        for (auto l : allLanguages()) {
+        langs.Alloc(langsForChoice.size());
+        for (auto l : langsForChoice) {
             const std::string lang = std::string(to_string(l));
             langs.Add(wxString::FromUTF8(lang.c_str()));
             if (l == card_.language) langIdx = i;

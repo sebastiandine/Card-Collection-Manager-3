@@ -327,9 +327,9 @@ JapanesePokemonCardPreviewSource::fetchImageUrl(std::string_view name,
             if (catalog_.findPrint(setId, localId)) {
                 return R::err({K::NotFound, "TCGdex JA card has no image."});
             }
-            // Specific setNo was requested but is unknown in catalog: do not
-            // steal another printing's image by English name.
-            return R::err({K::NotFound, "No matching Japanese Pokemon card for preview."});
+            // Network failure and no catalog entry: Transient so a brief outage
+            // is not negative-cached as a permanent miss.
+            return R::err({K::Transient, setResp.error()});
         }
         if (catalog_.hasPrintsForSet(setId)) {
             const std::string wantedLower = asciiLower(trim(std::string(name)));

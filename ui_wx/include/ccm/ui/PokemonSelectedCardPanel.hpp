@@ -25,6 +25,9 @@ protected:
     [[nodiscard]] std::tuple<std::string, std::string, std::string>
         previewKey(const PokemonCard& card) const override;
     [[nodiscard]] Game gameId() const noexcept override { return Game::Pokemon; }
+    [[nodiscard]] Game previewGameFor(const PokemonCard& card) const noexcept override {
+        return pokemonBackendGame(card.region);
+    }
 };
 
 }  // namespace ccm::ui

@@ -1,9 +1,7 @@
 #pragma once
 
-// PokemonGameView: IGameView for the Pokemon TCG. Mirrors `MagicGameView` —
-// owns the Pokemon-typed list, selected, and edit-dialog widgets and
-// delegates persistence to a `CollectionService<PokemonCard>` reference
-// supplied by the composition root.
+// PokemonGameView: unified West + Asia Pokemon UI. One collection file;
+// separate West/Asia set caches; Sets > Update Pokemon refreshes both.
 
 #include "ccm/domain/PokemonCard.hpp"
 #include "ccm/games/IGameModule.hpp"
@@ -49,7 +47,7 @@ public:
 
 private:
     void ensureSetsLoaded();
-    const std::vector<Set>& setsForDialog();
+    const std::vector<Set>& setsForDialog(PokemonRegion region);
 
     ConfigService&                  config_;
     CollectionService<PokemonCard>& collection_;
@@ -60,7 +58,8 @@ private:
 
     PokemonCardListPanel*     listPanel_{nullptr};
     PokemonSelectedCardPanel* selectedPanel_{nullptr};
-    std::vector<Set>          setsCache_;
+    std::vector<Set>          setsCacheWest_;
+    std::vector<Set>          setsCacheAsia_;
     bool                      attemptedInitialSetLoad_{false};
 };
 

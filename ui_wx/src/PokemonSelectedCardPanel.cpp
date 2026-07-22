@@ -11,6 +11,7 @@ enum PokemonDetailKey : int {
     kName = 0,
     kSet,
     kSetNo,
+    kRegion,
     kLanguage,
     kCondition,
     kAmount,
@@ -34,6 +35,7 @@ PokemonSelectedCardPanel::declareDetailRows() const {
         {"Name",      kName,      "(no card selected)"},
         {"Set",       kSet,       ""},
         {"Set #",     kSetNo,     ""},
+        {"Region",    kRegion,    ""},
         {"Language",  kLanguage,  ""},
         {"Condition", kCondition, ""},
         {"Amount",    kAmount,    ""},
@@ -56,6 +58,7 @@ std::string PokemonSelectedCardPanel::detailValueFor(const PokemonCard& card,
     case kName:         return card.name;
     case kSet:          return card.set.name;
     case kSetNo:        return card.setNo;
+    case kRegion:       return std::string(to_string(card.region));
     case kLanguage:     return std::string(to_string(card.language));
     case kCondition:    return std::string(to_string(card.condition));
     case kAmount:       return std::to_string(card.amount);

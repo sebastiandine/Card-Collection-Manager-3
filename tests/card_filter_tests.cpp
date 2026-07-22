@@ -187,6 +187,15 @@ TEST_SUITE("CardFilter::matchesPokemonFilter") {
     TEST_CASE("empty filter matches everything") {
         CHECK(matchesPokemonFilter(pc("Charizard", "Base Set"), ""));
     }
+
+    TEST_CASE("region is searchable") {
+        PokemonCard c = pc("Charizard", "Base Set");
+        c.region = PokemonRegion::Asia;
+        CHECK(matchesPokemonFilter(c, "asia"));
+        CHECK_FALSE(matchesPokemonFilter(c, "west"));
+        c.region = PokemonRegion::West;
+        CHECK(matchesPokemonFilter(c, "west"));
+    }
 }
 
 TEST_SUITE("CardFilter::matchesYuGiOhFilter") {

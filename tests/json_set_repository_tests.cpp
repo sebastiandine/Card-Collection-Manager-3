@@ -143,13 +143,57 @@ TEST_SUITE("JsonSetRepository") {
         CHECK(writeFail.error() == "write failed");
     }
 
-    TEST_CASE("paths are composed from dataStorage and game dir") {
+    TEST_CASE("paths use region-specific filenames for Pokemon West and Asia") {
         InMemoryFileSystem fs;
         auto cfg = makeConfig(fs, "/data");
         JsonSetRepository repo{fs, cfg, dirNameFn};
-        const std::vector<Set> sets = {{"base1", "Base Set", "1999/01/09"}};
+        const std::vector<Set> west = {{"base1", "Base Set", "1999/01/09"}};
+        const std::vector<Set> asia = {{"SV1a", "Triplet Beat", "2023/01/20"}};
 
-        REQUIRE(repo.save(Game::Pokemon, sets).isOk());
-        CHECK(fs.files().count("/data/pokemon/sets.json") == 1);
+        REQUIRE(repo.save(Game::Pokemon, west).isOk());
+        REQUIRE(repo.save(Game::JapanesePokemon, asia).isOk());
+        CHECK(fs.files().count("/data/pokemon/sets-west.json") == 1);
+        CHECK(fs.files().count("/data/pokemon/sets-asia.json") == 1);
+        CHECK(fs.files().count("/data/pokemon/sets.json") == 0);
+    }
+
+    TEST_CASE("load migrates legacy pokemon/sets.json to sets-west.json") {
+        InMemoryFileSystem fs;
+        auto cfg = makeConfig(fs, "/data");
+        const std::vector<Set> sets = {{"base1", "Base Set", "1999/01/09"}};
+        REQUIRE(fs.writeText("/data/pokemon/sets.json", nlohmann::json(sets).dump(2)).isOk());
+
+        JsonSetRepository repo{fs, cfg, dirNameFn};
+        const auto loaded = repo.load(Game::Pokemon);
+        REQUIRE(loaded.isOk());
+        CHECK(loaded.value() == sets);
+        CHECK(fs.files().count("/data/pokemon/sets-west.json") == 1);
+    }
+
+    TEST_CASE("load migrates legacy pokemonjp/sets.json to sets-asia.json") {
+        InMemoryFileSystem fs;
+        auto cfg = makeConfig(fs, "/data");
+        const std::vector<Set> sets = {{"SV1a", "Triplet Beat", "2023/01/20"}};
+        REQUIRE(fs.writeText("/data/pokemonjp/sets.json", nlohmann::json(sets).dump(2)).isOk());
+
+        JsonSetRepository repo{fs, cfg, dirNameFn};
+        const auto loaded = repo.load(Game::JapanesePokemon);
+        REQUIRE(loaded.isOk());
+        CHECK(loaded.value() == sets);
+        CHECK(fs.files().count("/data/pokemon/sets-asia.json") == 1);
+    }
+
+    TEST_CASE("load prefers new path over legacy when both exist") {
+        InMemoryFileSystem fs;
+        auto cfg = makeConfig(fs, "/data");
+        const std::vector<Set> legacy = {{"old", "Old", "1999/01/01"}};
+        const std::vector<Set> neu = {{"new", "New", "2024/01/01"}};
+        REQUIRE(fs.writeText("/data/pokemon/sets.json", nlohmann::json(legacy).dump(2)).isOk());
+        REQUIRE(fs.writeText("/data/pokemon/sets-west.json", nlohmann::json(neu).dump(2)).isOk());
+
+        JsonSetRepository repo{fs, cfg, dirNameFn};
+        const auto loaded = repo.load(Game::Pokemon);
+        REQUIRE(loaded.isOk());
+        CHECK(loaded.value() == neu);
     }
 }

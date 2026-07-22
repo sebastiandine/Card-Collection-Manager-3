@@ -15,7 +15,7 @@ public:
                                        JapanesePokemonEnCatalog catalog = {});
 
     [[nodiscard]] Game        id() const noexcept override { return Game::JapanesePokemon; }
-    [[nodiscard]] std::string dirName()     const override { return "pokemonjp"; }
+    [[nodiscard]] std::string dirName()     const override { return "pokemon"; }
     [[nodiscard]] std::string displayName() const override { return "Pokemon (Japan)"; }
 
     ISetSource&         setSource()          override { return setSource_; }

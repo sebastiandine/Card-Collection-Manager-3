@@ -35,7 +35,7 @@ SET_ID = "UnnumberedPromo"
 SET_META = {
     "name_en": "Unnumbered Promotional cards",
     "name_ja": "番号なしプロモーションカード",
-    "releaseDate": "1996/10/15",
+    "releaseDate": "1997/03/06",
 }
 
 UA = "CCM3-pokemon-jp-etl/1.0 (local; +https://github.com/sebastiandine/Card-Collection-Manager-3)"

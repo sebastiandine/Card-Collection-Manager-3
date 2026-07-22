@@ -22,16 +22,26 @@ std::string_view to_string(Game g) noexcept {
     CCM_UNREACHABLE();
 }
 
+std::string_view to_string(PokemonRegion r) noexcept {
+    switch (r) {
+        case PokemonRegion::West: return "West";
+        case PokemonRegion::Asia: return "Asia";
+    }
+    CCM_UNREACHABLE();
+}
+
 std::string_view to_string(Language l) noexcept {
     switch (l) {
-        case Language::English:  return "English";
-        case Language::German:   return "German";
-        case Language::French:   return "French";
-        case Language::Spanish:  return "Spanish";
-        case Language::Italian:  return "Italian";
-        case Language::Chinese:  return "Chinese";
-        case Language::Japanese: return "Japanese";
-        case Language::Russian:  return "Russian";
+        case Language::English:            return "English";
+        case Language::German:             return "German";
+        case Language::French:             return "French";
+        case Language::Spanish:            return "Spanish";
+        case Language::Italian:            return "Italian";
+        case Language::SimplifiedChinese:  return "S-Chinese";
+        case Language::TraditionalChinese: return "T-Chinese";
+        case Language::Japanese:           return "Japanese";
+        case Language::Korean:             return "Korean";
+        case Language::Russian:            return "Russian";
     }
     CCM_UNREACHABLE();
 }
@@ -66,15 +76,25 @@ std::optional<Game> gameFromString(std::string_view s) noexcept {
     return std::nullopt;
 }
 
+std::optional<PokemonRegion> pokemonRegionFromString(std::string_view s) noexcept {
+    if (s == "West") return PokemonRegion::West;
+    if (s == "Asia") return PokemonRegion::Asia;
+    return std::nullopt;
+}
+
 std::optional<Language> languageFromString(std::string_view s) noexcept {
-    if (s == "English")  return Language::English;
-    if (s == "German")   return Language::German;
-    if (s == "French")   return Language::French;
-    if (s == "Spanish")  return Language::Spanish;
-    if (s == "Italian")  return Language::Italian;
-    if (s == "Chinese")  return Language::Chinese;
-    if (s == "Japanese") return Language::Japanese;
-    if (s == "Russian")  return Language::Russian;
+    if (s == "English")            return Language::English;
+    if (s == "German")             return Language::German;
+    if (s == "French")             return Language::French;
+    if (s == "Spanish")            return Language::Spanish;
+    if (s == "Italian")            return Language::Italian;
+    if (s == "S-Chinese")          return Language::SimplifiedChinese;
+    if (s == "T-Chinese")          return Language::TraditionalChinese;
+    // Legacy single Chinese spelling → Simplified.
+    if (s == "Chinese")            return Language::SimplifiedChinese;
+    if (s == "Japanese")           return Language::Japanese;
+    if (s == "Korean")             return Language::Korean;
+    if (s == "Russian")            return Language::Russian;
     return std::nullopt;
 }
 
@@ -95,17 +115,17 @@ std::optional<Theme> themeFromString(std::string_view s) noexcept {
     return std::nullopt;
 }
 
-const std::array<Game, 5>& allGames() noexcept {
-    static constexpr std::array<Game, 5> v{
-        Game::Magic, Game::Pokemon, Game::YuGiOh, Game::DigiBattle99,
-        Game::JapanesePokemon};
+const std::array<Game, 4>& allGames() noexcept {
+    static constexpr std::array<Game, 4> v{
+        Game::Magic, Game::Pokemon, Game::YuGiOh, Game::DigiBattle99};
     return v;
 }
 
-const std::array<Language, 8>& allLanguages() noexcept {
-    static constexpr std::array<Language, 8> v{
+const std::array<Language, 10>& allLanguages() noexcept {
+    static constexpr std::array<Language, 10> v{
         Language::English, Language::German, Language::French, Language::Spanish,
-        Language::Italian, Language::Chinese, Language::Japanese, Language::Russian
+        Language::Italian, Language::SimplifiedChinese, Language::TraditionalChinese,
+        Language::Japanese, Language::Korean, Language::Russian
     };
     return v;
 }
@@ -123,14 +143,43 @@ const std::array<Theme, 2>& allThemes() noexcept {
     return v;
 }
 
-void to_json(nlohmann::json& j, Game v)      { j = std::string(to_string(v)); }
-void to_json(nlohmann::json& j, Language v)  { j = std::string(to_string(v)); }
-void to_json(nlohmann::json& j, Condition v) { j = std::string(to_string(v)); }
-void to_json(nlohmann::json& j, Theme v)     { j = std::string(to_string(v)); }
+std::span<const Language> languagesForPokemonRegion(PokemonRegion r) noexcept {
+    static constexpr std::array<Language, 6> kWest{
+        Language::English, Language::German, Language::French,
+        Language::Spanish, Language::Italian, Language::Russian};
+    static constexpr std::array<Language, 4> kAsia{
+        Language::Japanese, Language::SimplifiedChinese,
+        Language::TraditionalChinese, Language::Korean};
+    switch (r) {
+        case PokemonRegion::West: return kWest;
+        case PokemonRegion::Asia: return kAsia;
+    }
+    CCM_UNREACHABLE();
+    return kWest;
+}
+
+Game pokemonBackendGame(PokemonRegion r) noexcept {
+    return r == PokemonRegion::Asia ? Game::JapanesePokemon : Game::Pokemon;
+}
+
+Language defaultLanguageForPokemonRegion(PokemonRegion r) noexcept {
+    return r == PokemonRegion::Asia ? Language::Japanese : Language::English;
+}
+
+void to_json(nlohmann::json& j, Game v)           { j = std::string(to_string(v)); }
+void to_json(nlohmann::json& j, PokemonRegion v)  { j = std::string(to_string(v)); }
+void to_json(nlohmann::json& j, Language v)       { j = std::string(to_string(v)); }
+void to_json(nlohmann::json& j, Condition v)      { j = std::string(to_string(v)); }
+void to_json(nlohmann::json& j, Theme v)          { j = std::string(to_string(v)); }
 
 void from_json(const nlohmann::json& j, Game& v) {
     auto parsed = gameFromString(j.get<std::string>());
     if (!parsed) throw std::invalid_argument("Unknown Game value: " + j.get<std::string>());
+    v = *parsed;
+}
+void from_json(const nlohmann::json& j, PokemonRegion& v) {
+    auto parsed = pokemonRegionFromString(j.get<std::string>());
+    if (!parsed) throw std::invalid_argument("Unknown PokemonRegion value: " + j.get<std::string>());
     v = *parsed;
 }
 void from_json(const nlohmann::json& j, Language& v) {

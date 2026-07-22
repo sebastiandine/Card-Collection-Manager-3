@@ -96,7 +96,7 @@ TEST_SUITE("JapanesePokemonSetSource::parseListResponse") {
         }
         REQUIRE(unnumbered != nullptr);
         CHECK(unnumbered->name == "Unnumbered Promotional cards");
-        CHECK(unnumbered->releaseDate == "1996/10/15");
+        CHECK(unnumbered->releaseDate == "1997/03/06");
         REQUIRE(tama != nullptr);
         CHECK(tama->name == "Tamamushi City Gym");
         CHECK(tama->releaseDate == "1998/07/25");
@@ -113,7 +113,9 @@ TEST_SUITE("JapanesePokemonSetSource::parseListResponse") {
             if (s.id == "TamamushiCG") ++tamaCount;
         }
         CHECK(tamaCount == 1);
-        CHECK(out.value().front().name == "already-present");
+        // Curated EN name / release date overwrite a stale upstream label.
+        CHECK(out.value().front().name == "Tamamushi City Gym");
+        CHECK(out.value().front().releaseDate == "1998/07/25");
     }
 
     TEST_CASE("empty array still injects classic products") {
@@ -152,12 +154,14 @@ TEST_SUITE("JapanesePokemonSetSource::fetchAll") {
         http.bodies[JapanesePokemonSetSource::kListEndpoint] = R"([
             {"id":"SV1a","name":"トリプレットビート"},
             {"id":"PMCG1","name":"拡張パック"},
+            {"id":"PMCG2","name":"ポケモンジャングル"},
             {"id":"CS1a","name":"junk"}
         ])";
         // Catalog supplies dates so detail GETs are skipped.
         const auto catalog = JapanesePokemonEnCatalog::parse(R"({
             "sets": {
                 "PMCG1": {"name_en":"Expansion Pack","name_ja":"拡張パック","releaseDate":"1996/10/20"},
+                "PMCG2": {"name_en":"Pokémon Jungle","name_ja":"ポケモンジャングル","releaseDate":"1997/03/05"},
                 "SV1a": {"name_en":"Triplet Beat","name_ja":"トリプレットビート","releaseDate":"2023/03/10"}
             },
             "prints": []
@@ -166,12 +170,15 @@ TEST_SUITE("JapanesePokemonSetSource::fetchAll") {
         JapanesePokemonSetSource src{http, catalog.value()};
         const auto out = src.fetchAll();
         REQUIRE(out.isOk());
-        // CS* dropped; 2 TCGdex + 11 curated injections.
-        REQUIRE(out.value().size() == 13);
-        // UnnumberedPromo (1996/10/15) sorts before Expansion Pack (1996/10/20).
-        CHECK(out.value()[0].id == "UnnumberedPromo");
-        CHECK(out.value()[0].name == "Unnumbered Promotional cards");
-        CHECK(out.value()[0].releaseDate == "1996/10/15");
+        // CS* dropped; 3 TCGdex + 11 curated injections.
+        REQUIRE(out.value().size() == 14);
+        // Expansion Pack → Jungle → UnnumberedPromo (day after Jungle).
+        CHECK(out.value()[0].id == "PMCG1");
+        CHECK(out.value()[1].id == "PMCG2");
+        CHECK(out.value()[1].name == "Pokémon Jungle");
+        CHECK(out.value()[2].id == "UnnumberedPromo");
+        CHECK(out.value()[2].name == "Unnumbered Promotional cards");
+        CHECK(out.value()[2].releaseDate == "1997/03/06");
         const Set* pmcg1 = nullptr;
         bool foundSv = false;
         bool foundTama = false;
@@ -260,6 +267,10 @@ TEST_SUITE("JapanesePokemonSetSource::fetchAll") {
         cached.push_back(std::move(pmcg2));
         src.augmentCachedSets(cached);
         REQUIRE(cached.size() == 12);
+        // Jungle stays first; UnnumberedPromo (1997/03/06) is immediately after.
+        CHECK(cached[0].id == "PMCG2");
+        CHECK(cached[1].id == "UnnumberedPromo");
+        CHECK(cached[1].releaseDate == "1997/03/06");
         bool foundTama = false;
         bool foundUnnumbered = false;
         for (const auto& s : cached) {

@@ -70,7 +70,7 @@ TEST_SUITE("game modules expose stable identity and wiring") {
         JapanesePokemonGameModule module(http);
 
         CHECK(module.id() == Game::JapanesePokemon);
-        CHECK(module.dirName() == "pokemonjp");
+        CHECK(module.dirName() == "pokemon");
         CHECK(module.displayName() == "Pokemon (Japan)");
         CHECK(module.cardPreviewSource() != nullptr);
         CHECK(static_cast<void*>(&module.setSource()) != static_cast<void*>(module.cardPreviewSource()));

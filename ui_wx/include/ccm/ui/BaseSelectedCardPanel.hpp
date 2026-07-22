@@ -217,6 +217,12 @@ protected:
 
     [[nodiscard]] virtual Game gameId() const noexcept = 0;
 
+    // Preview / card-back routing. Defaults to `gameId()`; Pokemon overrides
+    // so Asia cards use the JapanesePokemon preview source + card back.
+    [[nodiscard]] virtual Game previewGameFor(const TCard& /*card*/) const noexcept {
+        return gameId();
+    }
+
     // Construction ------------------------------------------------------------
 
     BaseSelectedCardPanel(wxWindow* parent,
@@ -382,7 +388,7 @@ private:
         auto state = state_;
         CardPreviewService* svcPtr = &cardPreview_;
         auto [name, setId, setNo] = previewKey(card);
-        const Game game = gameId();
+        const Game game = previewGameFor(card);
         const std::string exeDirCopy = exeDirForBundledAssets_;
 
         std::thread([state, gen, svcPtr, name = std::move(name),

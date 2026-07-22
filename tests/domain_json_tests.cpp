@@ -41,9 +41,43 @@ TEST_SUITE("domain enums round-trip JSON as strings") {
         CHECK(l.get<std::string>() == "Japanese");
         CHECK(l.get<Language>() == Language::Japanese);
 
+        nlohmann::json k = Language::Korean;
+        CHECK(k.get<std::string>() == "Korean");
+        CHECK(k.get<Language>() == Language::Korean);
+
+        nlohmann::json sc = Language::SimplifiedChinese;
+        CHECK(sc.get<std::string>() == "S-Chinese");
+        CHECK(sc.get<Language>() == Language::SimplifiedChinese);
+
+        nlohmann::json tc = Language::TraditionalChinese;
+        CHECK(tc.get<std::string>() == "T-Chinese");
+        CHECK(tc.get<Language>() == Language::TraditionalChinese);
+
+        nlohmann::json legacyChinese = "Chinese";
+        CHECK(legacyChinese.get<Language>() == Language::SimplifiedChinese);
+
         nlohmann::json c = Condition::LightPlayed;
         CHECK(c.get<std::string>() == "LightPlayed");
         CHECK(c.get<Condition>() == Condition::LightPlayed);
+    }
+
+    TEST_CASE("PokemonRegion") {
+        nlohmann::json j = PokemonRegion::Asia;
+        CHECK(j.get<std::string>() == "Asia");
+        CHECK(j.get<PokemonRegion>() == PokemonRegion::Asia);
+
+        nlohmann::json w = "West";
+        CHECK(w.get<PokemonRegion>() == PokemonRegion::West);
+    }
+
+    TEST_CASE("allGames excludes JapanesePokemon but string mapping remains") {
+        for (const auto game : allGames()) {
+            CHECK(game != Game::JapanesePokemon);
+        }
+        CHECK(allGames().size() == 4);
+        CHECK(gameFromString("JapanesePokemon") == Game::JapanesePokemon);
+        CHECK(pokemonBackendGame(PokemonRegion::West) == Game::Pokemon);
+        CHECK(pokemonBackendGame(PokemonRegion::Asia) == Game::JapanesePokemon);
     }
 
     TEST_CASE("invalid enum string throws") {
@@ -150,14 +184,36 @@ TEST_SUITE("PokemonCard JSON") {
         c.holo = true;
         c.signed_ = false;
         c.altered = false;
+        c.region = PokemonRegion::West;
 
         nlohmann::json j = c;
         CHECK(j.at("setNo") == "4/102");
         CHECK(j.at("firstEdition") == true);
         CHECK(j.at("signed") == false);
+        CHECK(j.at("region") == "West");
 
         const PokemonCard back = j.get<PokemonCard>();
         CHECK(back == c);
+    }
+
+    TEST_CASE("region Asia round-trips and missing region defaults to West") {
+        PokemonCard c;
+        c.id = 1;
+        c.amount = 1;
+        c.name = "Charmander";
+        c.set = Set{"PMCG1", "Expansion Pack", "1996/10/20"};
+        c.setNo = "001";
+        c.language = Language::Japanese;
+        c.condition = Condition::NearMint;
+        c.region = PokemonRegion::Asia;
+
+        nlohmann::json j = c;
+        CHECK(j.at("region") == "Asia");
+        CHECK(j.get<PokemonCard>().region == PokemonRegion::Asia);
+
+        j.erase("region");
+        const PokemonCard legacy = j.get<PokemonCard>();
+        CHECK(legacy.region == PokemonRegion::West);
     }
 }
 
@@ -231,6 +287,16 @@ TEST_SUITE("Configuration JSON matches Rust serde aliases") {
 
         const auto back = j.get<Configuration>();
         CHECK(back == cfg);
+    }
+
+    TEST_CASE("legacy defaultGame JapanesePokemon coerces to Pokemon") {
+        nlohmann::json j = {
+            {"dataStorage", "/data"},
+            {"defaultGame", "JapanesePokemon"},
+            {"theme", "Light"},
+        };
+        const auto cfg = j.get<Configuration>();
+        CHECK(cfg.defaultGame == Game::Pokemon);
     }
 
     TEST_CASE("missing theme key defaults to Light") {

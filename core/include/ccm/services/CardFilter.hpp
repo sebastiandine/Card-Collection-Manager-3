@@ -36,7 +36,7 @@ namespace ccm {
                                       std::string_view filter);
 
 // Pokemon value-key columns from PokemonTable.tsx tableFields list:
-//   name, set.name, setNo, language, condition, amount, note.
+//   name, set.name, setNo, language, condition, amount, note, region.
 // Holo/FirstEdition/Signed/Altered are bool-typed and excluded.
 [[nodiscard]] bool matchesPokemonFilter(const PokemonCard& card,
                                         std::string_view filter);

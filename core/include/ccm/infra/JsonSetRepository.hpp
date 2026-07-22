@@ -1,6 +1,8 @@
 #pragma once
 
-// JsonSetRepository: persists vector<Set> to `<dataStorage>/<game>/sets.json`.
+// JsonSetRepository: persists vector<Set> under `<dataStorage>/<dirName>/`.
+// Most games use `sets.json`. Pokemon West/Asia share dir `pokemon` with
+// `sets-west.json` / `sets-asia.json` (migrate-on-load from legacy paths).
 
 #include "ccm/games/IGameModule.hpp"
 #include "ccm/ports/IFileSystem.hpp"
@@ -27,6 +29,8 @@ private:
     DirNameFn       dirName_;
 
     [[nodiscard]] std::filesystem::path setsPath(Game game) const;
+    [[nodiscard]] std::filesystem::path legacySetsPath(Game game) const;
+    [[nodiscard]] Result<std::vector<Set>> parseSetsText(const std::string& text) const;
 };
 
 }  // namespace ccm
