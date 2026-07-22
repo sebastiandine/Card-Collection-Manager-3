@@ -133,10 +133,11 @@ void MainFrame::buildLayout() {
     menuStrip_->SetSizer(menuSizer);
     root->Add(menuStrip_, 0, wxEXPAND);
 
+    toolbarPanel_ = new wxPanel(this, wxID_ANY);
     auto* toolbar = new wxBoxSizer(wxHORIZONTAL);
     auto makeToolBtn = [&](int id, const char* svg, const wxString& tip) {
         wxBitmap bmp = svgIconBitmap(svg, kToolbarIconPx, "#000000");
-        auto* b = new wxBitmapButton(this, id, bmp, wxDefaultPosition,
+        auto* b = new wxBitmapButton(toolbarPanel_, id, bmp, wxDefaultPosition,
                                      wxDefaultSize,
                                      wxBU_EXACTFIT);
         b->SetToolTip(tip);
@@ -150,16 +151,21 @@ void MainFrame::buildLayout() {
     toolbar->Add(toolbarButtons_[1], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
     toolbar->Add(toolbarButtons_[2], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
     toolbar->AddStretchSpacer(1);
-    filterInput_ = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition,
+    filterInput_ = new wxTextCtrl(toolbarPanel_, wxID_ANY, "", wxDefaultPosition,
                                   wxSize(260, -1));
     filterInput_->SetHint(kFilterInputHint);
     toolbar->Add(filterInput_, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxTOP | wxBOTTOM, 4);
-    root->Add(toolbar, 0, wxEXPAND);
+    toolbarPanel_->SetSizer(toolbar);
+    root->Add(toolbarPanel_, 0, wxEXPAND);
 
-    splitter_ = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition,
+    contentHost_ = new wxPanel(this, wxID_ANY);
+    auto* hostSizer = new wxBoxSizer(wxVERTICAL);
+    splitter_ = new wxSplitterWindow(contentHost_, wxID_ANY, wxDefaultPosition,
                                      wxDefaultSize, wxSP_LIVE_UPDATE);
     splitter_->SetMinimumPaneSize(280);
-    root->Add(splitter_, 1, wxEXPAND);
+    hostSizer->Add(splitter_, 1, wxEXPAND);
+    contentHost_->SetSizer(hostSizer);
+    root->Add(contentHost_, 1, wxEXPAND);
 
     auto* statusPanel = new wxPanel(this, wxID_ANY);
     auto* statusSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -199,14 +205,52 @@ IGameView* MainFrame::activeView() {
 
 void MainFrame::mountActiveView() {
     auto* view = activeView();
-    if (view == nullptr || splitter_ == nullptr) return;
+    if (view == nullptr || splitter_ == nullptr || contentHost_ == nullptr) return;
+
+    auto* hostSizer = contentHost_->GetSizer();
+    if (hostSizer == nullptr) return;
 
     // Hide every other view's panels so wx doesn't double-paint them.
     for (auto* other : ctx_.gameViews) {
         if (other == nullptr || other == view) continue;
+        if (other->hostsOwnLayout()) {
+            if (auto* cp = other->contentPanelIfCreated()) cp->Hide();
+            continue;
+        }
         if (auto* lp = other->listPanel(splitter_)) lp->Hide();
         if (auto* sp = other->selectedPanel(splitter_)) sp->Hide();
     }
+
+    const ThemePalette palette = paletteForTheme(ctx_.config.current().theme);
+
+    if (toolbarPanel_ != nullptr) {
+        if (view->hostsOwnLayout()) toolbarPanel_->Hide();
+        else                        toolbarPanel_->Show();
+        Layout();
+    }
+
+    if (view->hostsOwnLayout()) {
+        auto* custom = view->contentPanel(contentHost_);
+        if (custom == nullptr) return;
+
+        splitter_->Hide();
+        hostSizer->Clear(false);
+        custom->Show();
+        hostSizer->Add(custom, 1, wxEXPAND);
+        contentHost_->Layout();
+
+        view->applyTheme(palette);
+        applyThemeToWindowTree(custom, palette, ctx_.config.current().theme);
+        return;
+    }
+
+    if (auto* previousCustom = view->contentPanelIfCreated()) {
+        previousCustom->Hide();
+    }
+    // Re-seat the shared splitter if a contentPanel game was showing.
+    hostSizer->Clear(false);
+    splitter_->Show();
+    hostSizer->Add(splitter_, 1, wxEXPAND);
 
     auto* listPanel = view->listPanel(splitter_);
     auto* selectedPanel = view->selectedPanel(splitter_);
@@ -221,7 +265,7 @@ void MainFrame::mountActiveView() {
         splitter_->SplitVertically(selectedPanel, listPanel, 360);
     }
 
-    const ThemePalette palette = paletteForTheme(ctx_.config.current().theme);
+    contentHost_->Layout();
     view->applyTheme(palette);
     applyThemeToWindowTree(selectedPanel, palette, ctx_.config.current().theme);
     applyThemeToWindowTree(listPanel, palette, ctx_.config.current().theme);

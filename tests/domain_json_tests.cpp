@@ -2,6 +2,7 @@
 
 #include "ccm/domain/Configuration.hpp"
 #include "ccm/domain/DigiBattle99Card.hpp"
+#include "ccm/domain/DigiBattle99SetCatalog.hpp"
 #include "ccm/domain/Enums.hpp"
 #include "ccm/domain/JapanesePokemonCard.hpp"
 #include "ccm/domain/MagicCard.hpp"
@@ -242,6 +243,28 @@ TEST_SUITE("DigiBattle99Card JSON") {
 
         const DigiBattle99Card back = j.get<DigiBattle99Card>();
         CHECK(back == c);
+    }
+}
+
+TEST_SUITE("DigiBattle99SetCatalog JSON") {
+    TEST_CASE("round-trips packs and setNo alias") {
+        DigiBattle99SetCatalog catalog;
+        DigiBattle99SetCatalogPack pack;
+        pack.setId = "series-1-starter-set";
+        pack.setName = "Series 1 Starter Set";
+        pack.cards.push_back(DigiBattle99CatalogCard{"ST-01", "Agumon"});
+        pack.cards.push_back(DigiBattle99CatalogCard{"ST-126", "Agumon"});
+        catalog.packs.push_back(std::move(pack));
+
+        nlohmann::json j = catalog;
+        CHECK(j.at("packs").is_array());
+        CHECK(j.at("packs").at(0).at("id") == "series-1-starter-set");
+        CHECK(j.at("packs").at(0).at("cards").at(0).at("setNo") == "ST-01");
+
+        const DigiBattle99SetCatalog back = j.get<DigiBattle99SetCatalog>();
+        CHECK(back == catalog);
+        CHECK(back.findPack("series-1-starter-set") != nullptr);
+        CHECK(back.findPack("missing") == nullptr);
     }
 }
 

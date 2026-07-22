@@ -23,6 +23,7 @@ add_executable(ccm_core_tests
     pokemon_card_preview_source_tests.cpp
     digibattle99_set_source_tests.cpp
     digibattle99_card_preview_source_tests.cpp
+    digibattle99_set_completion_tests.cpp
     japanese_pokemon_en_catalog_tests.cpp
     japanese_pokemon_set_source_tests.cpp
     japanese_pokemon_card_preview_source_tests.cpp

@@ -5,18 +5,27 @@
 #include "ccm/services/CardPreviewService.hpp"
 #include "ccm/services/CollectionService.hpp"
 #include "ccm/services/ConfigService.hpp"
+#include "ccm/services/DigiBattle99SetCatalogService.hpp"
 #include "ccm/services/ImageService.hpp"
 #include "ccm/services/SetService.hpp"
 #include "ccm/ui/IGameView.hpp"
 
+#include <array>
 #include <string>
 #include <string_view>
 #include <vector>
+
+class wxBitmapButton;
+class wxBoxSizer;
+class wxNotebook;
+class wxSplitterWindow;
+class wxTextCtrl;
 
 namespace ccm::ui {
 
 class DigiBattle99CardListPanel;
 class DigiBattle99SelectedCardPanel;
+class DigiBattle99SetCompletionPanel;
 
 class DigiBattle99GameView final : public IGameView {
 public:
@@ -25,13 +34,19 @@ public:
                          SetService&                            sets,
                          ImageService&                          images,
                          CardPreviewService&                    cardPreview,
-                         IGameModule&                           module);
+                         IGameModule&                           module,
+                         DigiBattle99SetCatalogService&         catalogStore);
 
     [[nodiscard]] Game        gameId() const noexcept override { return Game::DigiBattle99; }
     [[nodiscard]] std::string displayName() const override { return "Digimon (Digi-Battle)"; }
 
     wxPanel* listPanel(wxWindow* parent) override;
     wxPanel* selectedPanel(wxWindow* parent) override;
+    wxPanel* contentPanel(wxWindow* parent) override;
+    [[nodiscard]] wxPanel* contentPanelIfCreated() const noexcept override {
+        return contentPanel_;
+    }
+    [[nodiscard]] bool hostsOwnLayout() const noexcept override { return true; }
 
     void refreshCollection() override;
     void onAddCard(wxWindow* parentWindow) override;
@@ -47,6 +62,9 @@ public:
 private:
     void ensureSetsLoaded();
     const std::vector<Set>& setsForDialog();
+    void ensureSingleCardsMounted(wxWindow* splitterParent);
+    void buildSingleCardsToolbar(wxWindow* parent, wxBoxSizer* pageSizer);
+    void refreshToolbarIcons(const ThemePalette& palette);
 
     ConfigService&                        config_;
     CollectionService<DigiBattle99Card>&  collection_;
@@ -54,9 +72,16 @@ private:
     ImageService&                         images_;
     CardPreviewService&                   cardPreview_;
     IGameModule&                          module_;
+    DigiBattle99SetCatalogService&        catalogStore_;
 
+    wxPanel*                       contentPanel_{nullptr};
+    wxNotebook*                    notebook_{nullptr};
+    wxSplitterWindow*              singleSplitter_{nullptr};
     DigiBattle99CardListPanel*     listPanel_{nullptr};
     DigiBattle99SelectedCardPanel* selectedPanel_{nullptr};
+    DigiBattle99SetCompletionPanel* setCompletionPanel_{nullptr};
+    std::array<wxBitmapButton*, 3> toolbarButtons_{{nullptr, nullptr, nullptr}};
+    wxTextCtrl*                    filterInput_{nullptr};
     std::vector<Set>               setsCache_;
     bool                           attemptedInitialSetLoad_{false};
 };

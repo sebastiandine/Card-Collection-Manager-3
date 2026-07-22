@@ -23,6 +23,7 @@ add_library(ccm_ui_wx STATIC
     src/DigiBattle99SelectedCardPanel.cpp
     src/DigiBattle99CardEditDialog.cpp
     src/DigiBattle99GameView.cpp
+    src/DigiBattle99SetCompletionPanel.cpp
 
     src/SettingsDialog.cpp
     src/SwitchCtrl.cpp

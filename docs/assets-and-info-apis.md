@@ -100,6 +100,19 @@ and collects unique `set_name[]` pack strings. Each pack becomes a `Set` with:
 
 Unknown future packs get an empty release date and sort last.
 
+Cached on disk as `<dataStorage>/digibattle99/sets.json` via `SetService` / `JsonSetRepository`.
+
+### Set-completion catalog (same `search.php` payload)
+
+**Sets → Update Digimon (Digi-Battle)** uses `DigiBattle99SetSource::fetchAllWithCatalog()` so one HTTP response writes both:
+
+1. The set list (`sets.json`) as above
+2. A pack checklist at `<dataStorage>/digibattle99/set-catalog.json`
+
+Each catalog pack stores `id` (slug), `name` (display), and `cards[]` of `{ setNo, name }` (API `id` normalized like preview — alphabetic prefix uppercased). A card listed in multiple `set_name[]` packs appears under **each** pack. The Digimon **Set Completion** tab reads this file offline (no live HTTP while browsing); ownership for a pack requires matching `card.set.id` plus normalized `setNo`.
+
+If `set-catalog.json` is missing, the Set Completion tab prompts the user to run Update Digimon (Digi-Battle).
+
 ### Asset API: CDN images + `search.php` lookup
 
 Card scans live at:

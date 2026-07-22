@@ -35,6 +35,24 @@ public:
     virtual wxPanel* listPanel(wxWindow* parent) = 0;
     virtual wxPanel* selectedPanel(wxWindow* parent) = 0;
 
+    // When non-null, MainFrame mounts this as the sole content under the
+    // toolbar instead of the shared selected|list splitter. Digimon uses this
+    // for its Single Cards / Set Completion notebook. Default: no custom host.
+    virtual wxPanel* contentPanel(wxWindow* parent) {
+        (void)parent;
+        return nullptr;
+    }
+
+    // Non-constructing accessor so MainFrame can hide a previously mounted
+    // content panel without forcing lazy creation for inactive games.
+    [[nodiscard]] virtual wxPanel* contentPanelIfCreated() const noexcept {
+        return nullptr;
+    }
+
+    // Games that own their layout via contentPanel must not have their
+    // list/selected panels parented onto MainFrame's shared splitter.
+    [[nodiscard]] virtual bool hostsOwnLayout() const noexcept { return false; }
+
     // Reload the active collection from disk and refresh the panels. The
     // selected card is preserved when possible.
     virtual void refreshCollection() = 0;

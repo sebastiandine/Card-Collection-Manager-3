@@ -109,4 +109,75 @@ TEST_SUITE("DigiBattle99SetSource::fetchAll") {
         CHECK(out.value().front().id == "series-1-starter-set");
         CHECK(http.lastUrl == DigiBattle99SetSource::kEndpoint);
     }
+
+    TEST_CASE("fetchAllWithCatalog returns sets and pack cards in one GET") {
+        FixedHttpClient http;
+        http.ok = true;
+        http.body = R"([
+            {"name":"Agumon","id":"st-01","set_name":["Series 1 Starter Set","Series 1 Booster Pack"]},
+            {"name":"Greymon","id":"ST-02","set_name":["Series 1 Starter Set"]}
+        ])";
+        DigiBattle99SetSource src{http};
+        const auto out = src.fetchAllWithCatalog();
+        REQUIRE(out.isOk());
+        CHECK(out.value().sets.size() == 2);
+        const auto* starter = out.value().catalog.findPack("series-1-starter-set");
+        REQUIRE(starter != nullptr);
+        REQUIRE(starter->cards.size() == 2);
+        CHECK(starter->cards[0].setNo == "ST-01");
+        CHECK(starter->cards[0].name == "Agumon");
+        const auto* booster = out.value().catalog.findPack("series-1-booster-pack");
+        REQUIRE(booster != nullptr);
+        REQUIRE(booster->cards.size() == 1);
+        CHECK(booster->cards[0].setNo == "ST-01");
+        CHECK(http.lastUrl == DigiBattle99SetSource::kEndpoint);
+    }
+}
+
+TEST_SUITE("DigiBattle99SetSource::parseCatalog") {
+    TEST_CASE("lists a card under every pack in set_name") {
+        const std::string json = R"([
+            {"name":"Agumon","id":"ST-01","set_name":["Series 1 Starter Set","Series 1 Booster Pack"]},
+            {"name":"MetalGreymon","id":"BO-01","set_name":["Series 1 Booster Pack"]}
+        ])";
+        const auto out = DigiBattle99SetSource::parseCatalog(json);
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().packs.size() == 2);
+
+        const auto* booster = out.value().findPack("series-1-booster-pack");
+        REQUIRE(booster != nullptr);
+        REQUIRE(booster->cards.size() == 2);
+        CHECK(booster->cards[0].setNo == "BO-01");
+        CHECK(booster->cards[1].setNo == "ST-01");
+
+        const auto* starter = out.value().findPack("series-1-starter-set");
+        REQUIRE(starter != nullptr);
+        REQUIRE(starter->cards.size() == 1);
+        CHECK(starter->cards[0].setNo == "ST-01");
+    }
+
+    TEST_CASE("dedupes the same setNo within one pack") {
+        const std::string json = R"([
+            {"name":"Agumon","id":"ST-01","set_name":["Series 1 Starter Set"]},
+            {"name":"Agumon Alt","id":"ST-01","set_name":["Series 1 Starter Set"]}
+        ])";
+        const auto out = DigiBattle99SetSource::parseCatalog(json);
+        REQUIRE(out.isOk());
+        const auto* starter = out.value().findPack("series-1-starter-set");
+        REQUIRE(starter != nullptr);
+        REQUIRE(starter->cards.size() == 1);
+        CHECK(starter->cards[0].name == "Agumon");
+    }
+
+    TEST_CASE("empty array returns an empty catalog") {
+        const auto out = DigiBattle99SetSource::parseCatalog("[]");
+        REQUIRE(out.isOk());
+        CHECK(out.value().empty());
+    }
+
+    TEST_CASE("error object is an error") {
+        const auto out = DigiBattle99SetSource::parseCatalog(
+            R"({"error":"No cards found for this search."})");
+        CHECK(out.isErr());
+    }
 }
