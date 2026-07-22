@@ -31,18 +31,22 @@ void PokemonGameView::ensureSetsLoaded() {
     if (attemptedInitialSetLoad_) return;
     attemptedInitialSetLoad_ = true;
 
-    auto cached = sets_.getSets(Game::Pokemon);
-    if (cached) {
-        setsCache_ = std::move(cached).value();
-        if (!setsCache_.empty()) return;
-    } else {
-        setsCache_.clear();
-    }
+    auto loadOrRefresh = [this](Game game, std::vector<Set>& cache) {
+        auto cached = sets_.getSets(game);
+        if (cached) {
+            cache = std::move(cached).value();
+            if (!cache.empty()) return;
+        } else {
+            cache.clear();
+        }
+        auto refreshed = sets_.updateSets(game);
+        if (refreshed) {
+            cache = std::move(refreshed).value();
+        }
+    };
 
-    auto refreshed = sets_.updateSets(Game::Pokemon);
-    if (refreshed) {
-        setsCache_ = std::move(refreshed).value();
-    }
+    loadOrRefresh(Game::Pokemon, setsCacheWest_);
+    loadOrRefresh(Game::JapanesePokemon, setsCacheAsia_);
 }
 
 wxPanel* PokemonGameView::listPanel(wxWindow* parent) {
@@ -81,13 +85,20 @@ void PokemonGameView::refreshCollection() {
     if (selectedPanel_) selectedPanel_->setCard(listPanel_->selected());
 }
 
-const std::vector<Set>& PokemonGameView::setsForDialog() {
+const std::vector<Set>& PokemonGameView::setsForDialog(PokemonRegion region) {
     ensureSetsLoaded();
-    if (!setsCache_.empty()) return setsCache_;
+    if (region == PokemonRegion::Asia) {
+        if (!setsCacheAsia_.empty()) return setsCacheAsia_;
+        auto loaded = sets_.getSets(Game::JapanesePokemon);
+        if (loaded) setsCacheAsia_ = std::move(loaded).value();
+        else        setsCacheAsia_.clear();
+        return setsCacheAsia_;
+    }
+    if (!setsCacheWest_.empty()) return setsCacheWest_;
     auto loaded = sets_.getSets(Game::Pokemon);
-    if (loaded) setsCache_ = std::move(loaded).value();
-    else        setsCache_.clear();
-    return setsCache_;
+    if (loaded) setsCacheWest_ = std::move(loaded).value();
+    else        setsCacheWest_.clear();
+    return setsCacheWest_;
 }
 
 void PokemonGameView::onAddCard(wxWindow* parentWindow) {
@@ -98,11 +109,13 @@ void PokemonGameView::onAddCard(wxWindow* parentWindow) {
     }
     PokemonCard fresh;
     fresh.amount = 1;
+    fresh.region = PokemonRegion::West;
     fresh.language = Language::English;
     fresh.condition = Condition::NearMint;
 
     PokemonCardEditDialog dlg(parentWindow, images_, sets_, cardPreview_, EditMode::Create, fresh,
-                              &setsForDialog());
+                              &setsForDialog(PokemonRegion::West),
+                              &setsForDialog(PokemonRegion::Asia));
     themeModalDialog(&dlg, config_.current().theme);
     CardEditModalGuard modalGuard;
     if (dlg.ShowModal() != wxID_OK) return;
@@ -147,7 +160,8 @@ void PokemonGameView::onEditCard(wxWindow* parentWindow) {
         return;
     }
     PokemonCardEditDialog dlg(parentWindow, images_, sets_, cardPreview_, EditMode::Edit, *sel,
-                              &setsForDialog());
+                              &setsForDialog(PokemonRegion::West),
+                              &setsForDialog(PokemonRegion::Asia));
     themeModalDialog(&dlg, config_.current().theme);
     CardEditModalGuard modalGuard;
     if (dlg.ShowModal() != wxID_OK) return;
@@ -181,15 +195,46 @@ void PokemonGameView::onDeleteCard(wxWindow* parentWindow) {
 }
 
 std::string PokemonGameView::onUpdateSets(wxWindow* parentWindow) {
-    auto out = sets_.updateSets(Game::Pokemon);
-    if (!out) {
-        showThemedMessageDialog(parentWindow, "Failed to update sets: " + out.error(),
-                                "Error", wxOK | wxICON_ERROR);
+    auto westOut = sets_.updateSets(Game::Pokemon);
+    auto asiaOut = sets_.updateSets(Game::JapanesePokemon);
+
+    if (westOut) {
+        setsCacheWest_ = westOut.value();
+    }
+    if (asiaOut) {
+        setsCacheAsia_ = asiaOut.value();
+    }
+
+    if (!westOut && !asiaOut) {
+        showThemedMessageDialog(
+            parentWindow,
+            "Failed to update West sets: " + westOut.error() +
+                "\nFailed to update Asia sets: " + asiaOut.error(),
+            "Error", wxOK | wxICON_ERROR);
         return "Update failed";
     }
-    setsCache_ = out.value();
-    showThemedMessageDialog(parentWindow, "Updated " + std::to_string(out.value().size()) + " Pokemon sets.",
-                            "Sets updated", wxOK | wxICON_INFORMATION);
+    if (!westOut) {
+        showThemedMessageDialog(
+            parentWindow,
+            "Updated " + std::to_string(asiaOut.value().size()) +
+                " Asia Pokemon sets, but West failed: " + westOut.error(),
+            "Sets partially updated", wxOK | wxICON_WARNING);
+        return "Pokemon sets partially updated.";
+    }
+    if (!asiaOut) {
+        showThemedMessageDialog(
+            parentWindow,
+            "Updated " + std::to_string(westOut.value().size()) +
+                " West Pokemon sets, but Asia failed: " + asiaOut.error(),
+            "Sets partially updated", wxOK | wxICON_WARNING);
+        return "Pokemon sets partially updated.";
+    }
+
+    showThemedMessageDialog(
+        parentWindow,
+        "Updated " + std::to_string(westOut.value().size()) + " West and " +
+            std::to_string(asiaOut.value().size()) + " Asia Pokemon sets.",
+        "Sets updated", wxOK | wxICON_INFORMATION);
     return "Pokemon sets updated.";
 }
 

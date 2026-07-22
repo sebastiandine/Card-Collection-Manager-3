@@ -2,10 +2,12 @@
 
 #include "ccm/games/IGameModule.hpp"
 #include "ccm/ports/ICardPreviewSource.hpp"
+#include "ccm/ports/IFileSystem.hpp"
 #include "ccm/ports/IHttpClient.hpp"
 #include "ccm/ports/IPreviewByteCache.hpp"
 #include "ccm/services/CardPreviewService.hpp"
 
+#include <filesystem>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -130,6 +132,50 @@ public:
     void storeNegative(std::string_view) override {}
 };
 
+class MemoryFileSystem final : public IFileSystem {
+public:
+    std::unordered_map<std::string, std::string> files;
+
+    [[nodiscard]] bool exists(const std::filesystem::path& p) const override {
+        return files.contains(p.generic_string());
+    }
+    [[nodiscard]] bool isDirectory(const std::filesystem::path&) const override {
+        return false;
+    }
+    Result<void> ensureDirectory(const std::filesystem::path&) override {
+        return Result<void>::ok();
+    }
+    Result<std::string> readText(const std::filesystem::path& p) override {
+        auto it = files.find(p.generic_string());
+        if (it == files.end()) {
+            return Result<std::string>::err("Unable to open " + p.generic_string());
+        }
+        return Result<std::string>::ok(it->second);
+    }
+    Result<void> writeText(const std::filesystem::path& p, std::string_view contents) override {
+        files[p.generic_string()] = std::string(contents);
+        return Result<void>::ok();
+    }
+    Result<void> copyFile(const std::filesystem::path& from,
+                          const std::filesystem::path& to,
+                          bool) override {
+        auto it = files.find(from.generic_string());
+        if (it == files.end()) {
+            return Result<void>::err("missing source");
+        }
+        files[to.generic_string()] = it->second;
+        return Result<void>::ok();
+    }
+    Result<void> remove(const std::filesystem::path& p) override {
+        files.erase(p.generic_string());
+        return Result<void>::ok();
+    }
+    Result<std::vector<std::filesystem::path>> listDirectory(
+        const std::filesystem::path&) override {
+        return Result<std::vector<std::filesystem::path>>::ok({});
+    }
+};
+
 // Minimal IGameModule fake that exposes a configurable preview source.
 class FakeGameModule final : public IGameModule {
 public:
@@ -231,6 +277,26 @@ TEST_SUITE("CardPreviewService::fetchPreviewBytes") {
         const auto out = svc.fetchPreviewBytes(Game::Magic, "X", "abc", "");
         CHECK(out.isErr());
         CHECK(out.error() == "net down");
+    }
+
+    TEST_CASE("asset: preview loads bytes from configured asset root") {
+        FakeSource source;
+        source.url = "asset:pokemon_jp_classic/TamamushiCG/016.jpg";
+        FakeGameModule module;
+        module.gameId = Game::JapanesePokemon;
+        module.preview = &source;
+
+        FixedHttpClient http;
+        MemoryFileSystem fs;
+        fs.files["assets/pokemon_jp_classic/TamamushiCG/016.jpg"] = "JPEG-bytes";
+
+        CardPreviewService svc{http, nullptr, &fs, "assets"};
+        svc.registerModule(module);
+
+        const auto out = svc.fetchPreviewBytes(Game::JapanesePokemon, "Erika", "TamamushiCG", "016");
+        REQUIRE(out.isOk());
+        CHECK(out.value() == "JPEG-bytes");
+        CHECK(http.calls == 0);
     }
 }
 

@@ -21,7 +21,13 @@ Result<std::vector<Set>> SetService::updateSets(Game game) {
 }
 
 Result<std::vector<Set>> SetService::getSets(Game game) {
-    return repo_.load(game);
+    auto loaded = repo_.load(game);
+    if (!loaded) return loaded;
+    auto it = modules_.find(game);
+    if (it != modules_.end() && it->second != nullptr) {
+        it->second->setSource().augmentCachedSets(loaded.value());
+    }
+    return loaded;
 }
 
 }  // namespace ccm

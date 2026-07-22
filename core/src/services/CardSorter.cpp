@@ -293,4 +293,74 @@ void sortDigiBattle99Cards(std::vector<DigiBattle99Card>& cards,
     }
 }
 
+void sortJapanesePokemonCards(std::vector<JapanesePokemonCard>& cards,
+                              JapanesePokemonSortColumn column,
+                              bool ascending) {
+    switch (column) {
+    case JapanesePokemonSortColumn::Name:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const JapanesePokemonCard& a, const JapanesePokemonCard& b) {
+                return asciiLower(a.name) < asciiLower(b.name);
+            }, ascending));
+        break;
+    case JapanesePokemonSortColumn::SetReleaseDate:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const JapanesePokemonCard& a, const JapanesePokemonCard& b) {
+                return asciiLower(a.set.releaseDate) <
+                       asciiLower(b.set.releaseDate);
+            }, ascending));
+        break;
+    case JapanesePokemonSortColumn::Language:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const JapanesePokemonCard& a, const JapanesePokemonCard& b) {
+                return asciiLower(to_string(a.language)) <
+                       asciiLower(to_string(b.language));
+            }, ascending));
+        break;
+    case JapanesePokemonSortColumn::Condition:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const JapanesePokemonCard& a, const JapanesePokemonCard& b) {
+                return asciiLower(to_string(a.condition)) <
+                       asciiLower(to_string(b.condition));
+            }, ascending));
+        break;
+    case JapanesePokemonSortColumn::Amount:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const JapanesePokemonCard& a, const JapanesePokemonCard& b) {
+                return a.amount < b.amount;
+            }, ascending));
+        break;
+    case JapanesePokemonSortColumn::Holo:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const JapanesePokemonCard& a, const JapanesePokemonCard& b) {
+                return a.holo < b.holo;
+            }, ascending));
+        break;
+    case JapanesePokemonSortColumn::FirstEdition:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const JapanesePokemonCard& a, const JapanesePokemonCard& b) {
+                return a.firstEdition < b.firstEdition;
+            }, ascending));
+        break;
+    case JapanesePokemonSortColumn::Signed:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const JapanesePokemonCard& a, const JapanesePokemonCard& b) {
+                return a.signed_ < b.signed_;
+            }, ascending));
+        break;
+    case JapanesePokemonSortColumn::Altered:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const JapanesePokemonCard& a, const JapanesePokemonCard& b) {
+                return a.altered < b.altered;
+            }, ascending));
+        break;
+    case JapanesePokemonSortColumn::Note:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const JapanesePokemonCard& a, const JapanesePokemonCard& b) {
+                return asciiLower(a.note) < asciiLower(b.note);
+            }, ascending));
+        break;
+    }
+}
+
 }  // namespace ccm

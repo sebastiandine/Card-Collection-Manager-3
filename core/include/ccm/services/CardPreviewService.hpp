@@ -15,11 +15,13 @@
 #include "ccm/domain/Enums.hpp"
 #include "ccm/games/IGameModule.hpp"
 #include "ccm/ports/ICardPreviewSource.hpp"
+#include "ccm/ports/IFileSystem.hpp"
 #include "ccm/ports/IHttpClient.hpp"
 #include "ccm/ports/IPreviewByteCache.hpp"
 #include "ccm/util/Result.hpp"
 
 #include <cstddef>
+#include <filesystem>
 #include <list>
 #include <mutex>
 #include <string>
@@ -32,7 +34,9 @@ namespace ccm {
 class CardPreviewService {
 public:
     explicit CardPreviewService(IHttpClient& http,
-                                IPreviewByteCache* persistentCache = nullptr);
+                                IPreviewByteCache* persistentCache = nullptr,
+                                IFileSystem* fs = nullptr,
+                                std::filesystem::path assetRoot = {});
 
     // Register a game module's preview source. Calling this with a module
     // whose `cardPreviewSource()` returns nullptr is a no-op (the game has
@@ -96,6 +100,9 @@ private:
 
     Result<std::string> fetchAndCache(const std::string& cacheKey,
                                       std::string_view url);
+    Result<std::string, PreviewLookupError> fetchAssetAndCache(
+        const std::string& cacheKey,
+        std::string_view assetUrl);
 
     // Returns the kind of in-memory cache entry for `key`. On Hit the
     // payload is copied into `outPayload`; on NegativeHit `outPayload` is
@@ -107,6 +114,8 @@ private:
 
     IHttpClient&        http_;
     IPreviewByteCache*  persistentCache_{nullptr};
+    IFileSystem*        fs_{nullptr};
+    std::filesystem::path assetRoot_;
     std::unordered_map<Game, ICardPreviewSource*> sources_;
 
     // LRU: list holds entries in MRU-first order; map points at list nodes

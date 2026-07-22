@@ -7,6 +7,7 @@
 
 #include "ccm/domain/Enums.hpp"
 #include "ccm/domain/DigiBattle99Card.hpp"
+#include "ccm/domain/JapanesePokemonCard.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
 #include "ccm/domain/YuGiOhCard.hpp"
@@ -119,6 +120,30 @@ DigiBattle99Card db(std::uint32_t id, std::string name,
     return c;
 }
 
+JapanesePokemonCard jp(std::uint32_t id, std::string name,
+                       std::string setName, std::string releaseDate,
+                       std::uint8_t amount = 1,
+                       bool holo = false, bool firstEdition = false,
+                       bool sgnd = false, bool altered = false,
+                       Language lang = Language::Japanese,
+                       Condition cond = Condition::NearMint,
+                       std::string note = "") {
+    JapanesePokemonCard c;
+    c.id = id;
+    c.name = std::move(name);
+    c.set.name = std::move(setName);
+    c.set.releaseDate = std::move(releaseDate);
+    c.amount = amount;
+    c.holo = holo;
+    c.firstEdition = firstEdition;
+    c.signed_ = sgnd;
+    c.altered = altered;
+    c.language = lang;
+    c.condition = cond;
+    c.note = std::move(note);
+    return c;
+}
+
 std::vector<std::uint32_t> ids(const std::vector<MagicCard>& v) {
     std::vector<std::uint32_t> out;
     out.reserve(v.size());
@@ -141,6 +166,13 @@ std::vector<std::uint32_t> ids(const std::vector<YuGiOhCard>& v) {
 }
 
 std::vector<std::uint32_t> ids(const std::vector<DigiBattle99Card>& v) {
+    std::vector<std::uint32_t> out;
+    out.reserve(v.size());
+    for (const auto& c : v) out.push_back(c.id);
+    return out;
+}
+
+std::vector<std::uint32_t> ids(const std::vector<JapanesePokemonCard>& v) {
     std::vector<std::uint32_t> out;
     out.reserve(v.size());
     for (const auto& c : v) out.push_back(c.id);
@@ -512,6 +544,38 @@ TEST_SUITE("CardSorter - DigiBattle99 columns") {
             db(2, "Agumon", "X", "2000/01/01"),
         };
         sortDigiBattle99Cards(v, DigiBattle99SortColumn::Name, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{2, 1});
+    }
+}
+
+TEST_SUITE("CardSorter - JapanesePokemon columns") {
+    TEST_CASE("Holo and FirstEdition sort false before true") {
+        std::vector<JapanesePokemonCard> v = {
+            jp(1, "a", "X", "2000/01/01", 1, /*holo=*/true, /*first=*/false),
+            jp(2, "b", "X", "2000/01/01", 1, /*holo=*/false, /*first=*/true),
+            jp(3, "c", "X", "2000/01/01", 1, /*holo=*/false, /*first=*/false),
+        };
+        sortJapanesePokemonCards(v, JapanesePokemonSortColumn::Holo, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{2, 3, 1});
+        sortJapanesePokemonCards(v, JapanesePokemonSortColumn::FirstEdition, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{3, 1, 2});
+    }
+
+    TEST_CASE("Set column sorts by release date") {
+        std::vector<JapanesePokemonCard> v = {
+            jp(1, "x", "Late", "2023/03/10"),
+            jp(2, "y", "Early", "1996/10/20"),
+        };
+        sortJapanesePokemonCards(v, JapanesePokemonSortColumn::SetReleaseDate, /*ascending=*/true);
+        CHECK(ids(v) == std::vector<std::uint32_t>{2, 1});
+    }
+
+    TEST_CASE("Name sorts case-insensitively") {
+        std::vector<JapanesePokemonCard> v = {
+            jp(1, "charmander", "X", "1996/10/20"),
+            jp(2, "Bulbasaur", "X", "1996/10/20"),
+        };
+        sortJapanesePokemonCards(v, JapanesePokemonSortColumn::Name, /*ascending=*/true);
         CHECK(ids(v) == std::vector<std::uint32_t>{2, 1});
     }
 }

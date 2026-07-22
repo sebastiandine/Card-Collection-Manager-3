@@ -195,7 +195,7 @@ private:
 
 Two subtle requirements:
 
-- `dirName()` returns the **on-disk directory name**. Once you ship, this is forever — changing it later orphans every existing user's data. Pick something lowercase, ASCII, and short.
+- `dirName()` returns the **on-disk directory name**. Once you ship, this is forever — changing it later orphans every existing user's data. Pick something lowercase, ASCII, and short. **Pokemon exception:** a unified Game menu entry may keep one `dirName` (`pokemon`) for collection/images and disambiguate region set caches by filename (`sets-west.json` / `sets-asia.json`) instead of a second data subdirectory.
 - `cardPreviewSource()` defaults to `nullptr` in `IGameModule`. Only override it if you actually have a preview source. Returning `nullptr` makes `CardPreviewService::registerModule(*module)` a silent no-op for that game; the UI gracefully falls back to "no preview available".
 
 The `.cpp` is one line of constructor body — see `core/src/games/pokemon/PokemonGameModule.cpp`.

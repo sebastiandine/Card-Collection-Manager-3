@@ -47,6 +47,7 @@ bool matchesPokemonFilter(const PokemonCard& card, std::string_view filter) {
     if (containsLower(to_string(card.condition), needle))     return true;
     if (containsLower(std::to_string(card.amount), needle))   return true;
     if (containsLower(card.note, needle))                     return true;
+    if (containsLower(to_string(card.region), needle))        return true;
     return false;
 }
 
@@ -68,6 +69,22 @@ bool matchesYuGiOhFilter(const YuGiOhCard& card, std::string_view filter) {
 }
 
 bool matchesDigiBattle99Filter(const DigiBattle99Card& card, std::string_view filter) {
+    if (filter.empty()) return true;
+
+    const std::string needle = asciiLower(filter);
+
+    if (containsLower(card.name, needle))                     return true;
+    if (containsLower(card.set.name, needle))                 return true;
+    if (containsLower(card.setNo, needle))                    return true;
+    if (containsLower(to_string(card.language), needle))      return true;
+    if (containsLower(to_string(card.condition), needle))     return true;
+    if (containsLower(std::to_string(card.amount), needle))   return true;
+    if (containsLower(card.note, needle))                     return true;
+    return false;
+}
+
+bool matchesJapanesePokemonFilter(const JapanesePokemonCard& card,
+                                  std::string_view filter) {
     if (filter.empty()) return true;
 
     const std::string needle = asciiLower(filter);

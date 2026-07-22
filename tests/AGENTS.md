@@ -11,7 +11,7 @@
 - `image_service_tests.cpp` — `ImageService` (uses inline `RecordingImageStore` fake).
 - `collection_service_tests.cpp` — `CollectionService<MagicCard>` (uses inline `InMemoryRepo` + `StubImageStore`).
 - `config_service_tests.cpp` — `ConfigService` against `InMemoryFileSystem`.
-- `json_collection_repository_tests.cpp`, `json_set_repository_tests.cpp` — repository round-trips against `InMemoryFileSystem`.
+- `json_collection_repository_tests.cpp`, `json_set_repository_tests.cpp` — repository round-trips against `InMemoryFileSystem`. Set-repo cases also pin Pokemon `sets-west.json` / `sets-asia.json` paths and migrate-on-load from legacy `pokemon/sets.json` / `pokemonjp/sets.json`.
 - `local_image_store_tests.cpp` — `LocalImageStore` against `InMemoryFileSystem` + `ConfigService`: `copyIn` (extension preserved, missing source errors), `remove` (existing file deleted; absent path is a no-op), `resolvePath` layout under `dataStorage/<game>/images/`.
 - `set_service_tests.cpp` — `SetService` with `FakeSetSource` + `InMemSetRepo`.
 - `magic_set_source_tests.cpp` — `MagicSetSource::parseResponse` (Scryfall mapping). Drives `fetchAll` via `FixedHttpClient` fake.

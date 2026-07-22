@@ -27,6 +27,8 @@ struct AppContext {
     IGameModule&                         pokemonModule;
     IGameModule&                         yuGiOhModule;
     IGameModule&                         digiBattle99Module;
+    // Asia Pokemon sets/preview backend (not a separate Game menu entry).
+    IGameModule&                         japanesePokemonModule;
     // Active per-game UI bundles. The order is the order shown in the
     // Game menu; the composition root constructs them and hands raw
     // pointers in. `MainFrame` does not own these — `app/main.cpp` does.

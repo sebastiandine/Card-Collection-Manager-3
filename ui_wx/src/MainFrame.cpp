@@ -41,10 +41,11 @@ constexpr const char kFilterInputHint[] = "Filter";
 
 std::string dirNameForGame(Game g) {
     switch (g) {
-        case Game::Magic:        return "magic";
-        case Game::Pokemon:      return "pokemon";
-        case Game::YuGiOh:       return "yugioh";
-        case Game::DigiBattle99: return "digibattle99";
+        case Game::Magic:           return "magic";
+        case Game::Pokemon:         return "pokemon";
+        case Game::YuGiOh:          return "yugioh";
+        case Game::DigiBattle99:    return "digibattle99";
+        case Game::JapanesePokemon: return "pokemon";
     }
     return "magic";
 }

@@ -3,7 +3,8 @@
 // BaseCardEditDialog<TCard>
 //
 // Header-only template for the modal create/edit form. Owns the parts every
-// game shares — Name, Set picker (read-only combo with prefix typeahead),
+// game shares — Name, Set picker (read-only combo with typeahead: prefix first,
+// then substring, with ASCII-fold so "Pokemon"/"Jungle" match "Pokémon Jungle"),
 // Amount spin, Language and Condition choices, Note, Image list with
 // Add/Remove/double-click-to-view, OK/Cancel — and exposes hooks the
 // subclass uses to:
@@ -48,6 +49,7 @@
 #include <chrono>
 #include <cstdint>
 #include <filesystem>
+#include <span>
 #include <string>
 #include <utility>
 #include <vector>
@@ -102,6 +104,9 @@ protected:
     // wants; the base only owns the surrounding label.
     virtual void buildFlagsRow(wxBoxSizer* flagsBox) = 0;
 
+    // Subclass adds any labelled rows between Name and Set. Default does nothing.
+    virtual void appendPreSetRows(wxFlexGridSizer* /*grid*/) {}
+
     // Subclass adds any extra game-specific labelled rows just below the
     // standard rows but above the Note row, by calling `appendRow(label, ctrl)`
     // (provided as a parameter). Default does nothing.
@@ -113,6 +118,11 @@ protected:
 
     // Subclass copies the extra fields it owns from its widgets back into `card_`.
     virtual void writeExtraToCard() {}
+
+    // Languages offered in the Language choice. Default: allLanguages().
+    [[nodiscard]] virtual std::span<const Language> languagesForChoice() const {
+        return allLanguages();
+    }
 
     [[nodiscard]] virtual std::string updateMenuName() const { return "Update Sets"; }
 
@@ -150,6 +160,12 @@ protected:
     [[nodiscard]] const std::vector<Set>& availableSets() const noexcept {
         return preloadedSets_ != nullptr ? *preloadedSets_ : sets_;
     }
+
+    void setPreloadedSetsPointer(const std::vector<Set>* sets) noexcept {
+        preloadedSets_ = sets;
+    }
+
+    void refreshSetAndLanguageChoices() { populateChoices(); }
 
     // Default: combo only. Yu-Gi-Oh! overrides to add set-code entry + toggle.
     virtual void customizeSetPickerRow(wxBoxSizer& row, wxComboBox* combo) {
@@ -192,6 +208,9 @@ private:
             ev.Skip();
         });
         appendRow(grid, "Name", nameCtrl_);
+
+        // Optional rows between Name and Set (e.g. Pokemon West/Asia region).
+        appendPreSetRows(grid);
 
         // `setCombo_` must be parented to `setHost` so every control in the Set row
         // shares the same `wxPanel`; otherwise the combo stays a direct child of the
@@ -311,9 +330,10 @@ private:
         languageChoice_->Clear();
         int langIdx = 0;
         int i = 0;
+        const auto langsForChoice = languagesForChoice();
         wxArrayString langs;
-        langs.Alloc(allLanguages().size());
-        for (auto l : allLanguages()) {
+        langs.Alloc(langsForChoice.size());
+        for (auto l : langsForChoice) {
             const std::string lang = std::string(to_string(l));
             langs.Add(wxString::FromUTF8(lang.c_str()));
             if (l == card_.language) langIdx = i;
@@ -486,16 +506,39 @@ private:
 #endif
     }
 
+    // Fold a few Latin-1 diacritics so typing ASCII "Pokemon" matches "Pokémon".
+    [[nodiscard]] static wxString foldAsciiForTypeahead(wxString s) {
+        s.MakeLower();
+        s.Replace(wxString::FromUTF8("\xc3\xa9"), wxT("e"));  // é
+        s.Replace(wxString::FromUTF8("\xc3\x89"), wxT("e"));  // É (after lower: é)
+        s.Replace(wxString::FromUTF8("\xc3\xa8"), wxT("e"));  // è
+        s.Replace(wxString::FromUTF8("\xc3\xaa"), wxT("e"));  // ê
+        s.Replace(wxString::FromUTF8("\xc3\xa0"), wxT("a"));  // à
+        s.Replace(wxString::FromUTF8("\xc3\xa1"), wxT("a"));  // á
+        s.Replace(wxString::FromUTF8("\xc3\xb1"), wxT("n"));  // ñ
+        s.Replace(wxString::FromUTF8("\xc3\xbc"), wxT("u"));  // ü
+        s.Replace(wxString::FromUTF8("\xc3\xb6"), wxT("o"));  // ö
+        return s;
+    }
+
     void applySetTypeaheadSelection() {
         const auto& available = availableSets();
         if (!setCombo_ || available.empty()) return;
-        wxString pref = setTypeaheadPrefix_;
-        pref.MakeLower();
+        const wxString pref = foldAsciiForTypeahead(setTypeaheadPrefix_);
         if (pref.empty()) return;
+        // Prefer prefix matches, then substring (so "Jungle" finds "Pokémon Jungle").
         for (std::size_t i = 0; i < available.size(); ++i) {
-            wxString name(wxString::FromUTF8(available[i].name));
-            name.MakeLower();
+            const wxString name =
+                foldAsciiForTypeahead(wxString::FromUTF8(available[i].name));
             if (name.StartsWith(pref)) {
+                setCombo_->SetSelection(static_cast<int>(i));
+                return;
+            }
+        }
+        for (std::size_t i = 0; i < available.size(); ++i) {
+            const wxString name =
+                foldAsciiForTypeahead(wxString::FromUTF8(available[i].name));
+            if (name.Contains(pref)) {
                 setCombo_->SetSelection(static_cast<int>(i));
                 return;
             }

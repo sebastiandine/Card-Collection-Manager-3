@@ -27,6 +27,7 @@ add_library(ccm_ui_wx STATIC
     src/SettingsDialog.cpp
     src/SwitchCtrl.cpp
     src/ImageViewerDialog.cpp
+    src/VariantImagePreviewDialog.cpp
     src/IconListCtrl.cpp
     src/SvgIcons.cpp
     src/Theme.cpp

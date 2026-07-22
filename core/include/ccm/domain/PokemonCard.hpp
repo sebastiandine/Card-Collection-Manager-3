@@ -1,7 +1,8 @@
 #pragma once
 
 // PokemonCard - faithful port of pokemon/card_services.rs::Card.
-// Same established JSON shape (with `setNo` and `firstEdition` aliases).
+// Same established JSON shape (with `setNo` and `firstEdition` aliases),
+// plus `region` (West/Asia) for unified West+Asia collections.
 
 #include "ccm/domain/Enums.hpp"
 #include "ccm/domain/Set.hpp"
@@ -28,6 +29,7 @@ struct PokemonCard {
     bool          holo{false};
     bool          signed_{false};
     bool          altered{false};
+    PokemonRegion region{PokemonRegion::West};
 
     friend bool operator==(const PokemonCard&, const PokemonCard&) = default;
 };

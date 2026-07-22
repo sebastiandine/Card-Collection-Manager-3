@@ -17,6 +17,7 @@ void to_json(nlohmann::json& j, const PokemonCard& c) {
         {"holo",         c.holo},
         {"signed",       c.signed_},
         {"altered",      c.altered},
+        {"region",       c.region},
     };
 }
 
@@ -34,6 +35,8 @@ void from_json(const nlohmann::json& j, PokemonCard& c) {
     j.at("holo").get_to(c.holo);
     j.at("signed").get_to(c.signed_);
     j.at("altered").get_to(c.altered);
+    // Missing `region` defaults to West so pre-merge West-only files still load.
+    c.region = j.value("region", PokemonRegion::West);
 }
 
 }  // namespace ccm

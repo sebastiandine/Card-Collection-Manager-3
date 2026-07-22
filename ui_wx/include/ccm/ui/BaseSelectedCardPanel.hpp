@@ -217,6 +217,12 @@ protected:
 
     [[nodiscard]] virtual Game gameId() const noexcept = 0;
 
+    // Preview / card-back routing. Defaults to `gameId()`; Pokemon overrides
+    // so Asia cards use the JapanesePokemon preview source + card back.
+    [[nodiscard]] virtual Game previewGameFor(const TCard& /*card*/) const noexcept {
+        return gameId();
+    }
+
     // Construction ------------------------------------------------------------
 
     BaseSelectedCardPanel(wxWindow* parent,
@@ -292,6 +298,9 @@ private:
             case Game::Pokemon:
                 // Mirrors CCM2's unresolved-preview fallback image.
                 return "https://archives.bulbagarden.net/media/upload/1/17/Cardback.jpg";
+            case Game::JapanesePokemon:
+                // Japanese TCG back (distinct from the Western Cardback.jpg).
+                return "https://archives.bulbagarden.net/media/upload/2/2a/TCG_Card_Back_Japanese.jpg";
             case Game::YuGiOh:
                 // Yugipedia English TCG backing (thumbnail — smaller than full scan).
                 return "https://ms.yugipedia.com/thumb/e/e5/Back-EN.png/250px-Back-EN.png";
@@ -379,7 +388,7 @@ private:
         auto state = state_;
         CardPreviewService* svcPtr = &cardPreview_;
         auto [name, setId, setNo] = previewKey(card);
-        const Game game = gameId();
+        const Game game = previewGameFor(card);
         const std::string exeDirCopy = exeDirForBundledAssets_;
 
         std::thread([state, gen, svcPtr, name = std::move(name),

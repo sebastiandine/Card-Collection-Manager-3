@@ -3,6 +3,7 @@
 #include "ccm/games/digibattle99/DigiBattle99GameModule.hpp"
 #include "ccm/games/magic/MagicGameModule.hpp"
 #include "ccm/games/pokemon/PokemonGameModule.hpp"
+#include "ccm/games/pokemonjp/JapanesePokemonGameModule.hpp"
 #include "ccm/games/yugioh/YuGiOhGameModule.hpp"
 #include "ccm/ports/IHttpClient.hpp"
 
@@ -60,6 +61,17 @@ TEST_SUITE("game modules expose stable identity and wiring") {
         CHECK(module.id() == Game::DigiBattle99);
         CHECK(module.dirName() == "digibattle99");
         CHECK(module.displayName() == "Digimon (Digi-Battle)");
+        CHECK(module.cardPreviewSource() != nullptr);
+        CHECK(static_cast<void*>(&module.setSource()) != static_cast<void*>(module.cardPreviewSource()));
+    }
+
+    TEST_CASE("JapanesePokemon module reports canonical metadata") {
+        NoopHttpClient http;
+        JapanesePokemonGameModule module(http);
+
+        CHECK(module.id() == Game::JapanesePokemon);
+        CHECK(module.dirName() == "pokemon");
+        CHECK(module.displayName() == "Pokemon (Japan)");
         CHECK(module.cardPreviewSource() != nullptr);
         CHECK(static_cast<void*>(&module.setSource()) != static_cast<void*>(module.cardPreviewSource()));
     }

@@ -23,6 +23,10 @@ public:
     // Implementations return a vector that has already been filtered
     // (e.g. no digital-only sets) and sorted by release date ascending.
     virtual Result<std::vector<Set>> fetchAll() = 0;
+
+    // Optional post-process for locally cached set lists (e.g. inject products
+    // the upstream API omits). Default is a no-op. Called by SetService::getSets.
+    virtual void augmentCachedSets(std::vector<Set>& /*sets*/) const {}
 };
 
 class IGameModule {
