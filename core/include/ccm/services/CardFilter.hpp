@@ -20,6 +20,7 @@
 //     `.includes("")` returns true.
 
 #include "ccm/domain/DigiBattle99Card.hpp"
+#include "ccm/domain/JapanesePokemonCard.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
 #include "ccm/domain/YuGiOhCard.hpp"
@@ -45,5 +46,9 @@ namespace ccm {
 // Digi-Battle mirrors Pokemon searchable columns (includes setNo).
 [[nodiscard]] bool matchesDigiBattle99Filter(const DigiBattle99Card& card,
                                              std::string_view filter);
+
+// Japanese Pokemon mirrors Pokemon searchable columns (includes setNo).
+[[nodiscard]] bool matchesJapanesePokemonFilter(const JapanesePokemonCard& card,
+                                                std::string_view filter);
 
 }  // namespace ccm

@@ -113,7 +113,7 @@ Automated tests primarily cover `core/` and infrastructure adapters. UI testing 
 
 `cpr` builds as shared, so `build/bin` contains runtime DLLs (for example `libcpr.dll`, `libcurl.dll`, `libzlib.dll`) next to `ccm3.exe`.
 
-For MinGW/MSYS2 builds, UCRT runtime DLLs must be available (typically via MSYS2 UCRT64 `bin` on `PATH`).
+For MinGW/MSYS2 builds, the `ccm` POST_BUILD step also copies `libstdc++-6.dll`, `libgcc_s_seh-1.dll`, and `libwinpthread-1.dll` from the compiler’s `bin/` next to `ccm3.exe`. That keeps Explorer / IDE launches on the same UCRT runtime used to build (avoids “Entry Point Not Found” / `__emutls_v._ZSt11__once_call` against `libcpr.dll` when a different `libstdc++` is on `PATH`).
 
 ## Troubleshooting
 

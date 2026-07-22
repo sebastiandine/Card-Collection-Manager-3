@@ -3,12 +3,15 @@
 // types are mentioned - everything downstream depends on interfaces.
 
 #include "ccm/domain/DigiBattle99Card.hpp"
+#include "ccm/domain/JapanesePokemonCard.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
 #include "ccm/domain/YuGiOhCard.hpp"
 #include "ccm/games/digibattle99/DigiBattle99GameModule.hpp"
 #include "ccm/games/magic/MagicGameModule.hpp"
 #include "ccm/games/pokemon/PokemonGameModule.hpp"
+#include "ccm/games/pokemonjp/JapanesePokemonEnCatalog.hpp"
+#include "ccm/games/pokemonjp/JapanesePokemonGameModule.hpp"
 #include "ccm/games/yugioh/YuGiOhGameModule.hpp"
 #include "ccm/infra/CprHttpClient.hpp"
 #include "ccm/infra/JsonCollectionRepository.hpp"
@@ -23,6 +26,7 @@
 #include "ccm/services/SetService.hpp"
 #include "ccm/ui/AppContext.hpp"
 #include "ccm/ui/DigiBattle99GameView.hpp"
+#include "ccm/ui/JapanesePokemonGameView.hpp"
 #include "ccm/ui/MagicGameView.hpp"
 #include "ccm/ui/MainFrame.hpp"
 #include "ccm/ui/PokemonGameView.hpp"
@@ -45,10 +49,11 @@ namespace {
 // need for the repositories to know about concrete game module classes.
 std::string dirNameForGame(ccm::Game g) {
     switch (g) {
-        case ccm::Game::Magic:        return "magic";
-        case ccm::Game::Pokemon:      return "pokemon";
-        case ccm::Game::YuGiOh:       return "yugioh";
-        case ccm::Game::DigiBattle99: return "digibattle99";
+        case ccm::Game::Magic:           return "magic";
+        case ccm::Game::Pokemon:         return "pokemon";
+        case ccm::Game::YuGiOh:          return "yugioh";
+        case ccm::Game::DigiBattle99:    return "digibattle99";
+        case ccm::Game::JapanesePokemon: return "pokemonjp";
     }
     return "magic";
 }
@@ -86,6 +91,17 @@ public:
         ygoMod_   = std::make_unique<ccm::YuGiOhGameModule>(*http_);
         digiBattle99Mod_ = std::make_unique<ccm::DigiBattle99GameModule>(*http_);
 
+        ccm::JapanesePokemonEnCatalog jpCatalog;
+        {
+            const auto catalogPath = exeDir / "assets" / "pokemon_jp_en_catalog.json";
+            if (auto text = fs_->readText(catalogPath); text) {
+                if (auto parsed = ccm::JapanesePokemonEnCatalog::parse(text.value()); parsed) {
+                    jpCatalog = std::move(parsed).value();
+                }
+            }
+        }
+        jpPokeMod_ = std::make_unique<ccm::JapanesePokemonGameModule>(*http_, std::move(jpCatalog));
+
         magicRepo_ = std::make_unique<ccm::JsonCollectionRepository<ccm::MagicCard>>(
             *fs_, *config_, &dirNameForGame);
         pokeRepo_  = std::make_unique<ccm::JsonCollectionRepository<ccm::PokemonCard>>(
@@ -94,6 +110,9 @@ public:
             *fs_, *config_, &dirNameForGame);
         digiBattle99Repo_ =
             std::make_unique<ccm::JsonCollectionRepository<ccm::DigiBattle99Card>>(
+                *fs_, *config_, &dirNameForGame);
+        jpPokeRepo_ =
+            std::make_unique<ccm::JsonCollectionRepository<ccm::JapanesePokemonCard>>(
                 *fs_, *config_, &dirNameForGame);
         setRepo_   = std::make_unique<ccm::JsonSetRepository>(*fs_, *config_, &dirNameForGame);
         imgStore_  = std::make_unique<ccm::LocalImageStore>(*fs_, *config_, &dirNameForGame);
@@ -108,11 +127,15 @@ public:
         digiBattle99CollSvc_ =
             std::make_unique<ccm::CollectionService<ccm::DigiBattle99Card>>(
                 *digiBattle99Repo_, *imgStore_);
+        jpPokeCollSvc_ =
+            std::make_unique<ccm::CollectionService<ccm::JapanesePokemonCard>>(
+                *jpPokeRepo_, *imgStore_);
         setSvc_       = std::make_unique<ccm::SetService>(*setRepo_);
         setSvc_->registerModule(magicMod_.get());
         setSvc_->registerModule(pokeMod_.get());
         setSvc_->registerModule(ygoMod_.get());
         setSvc_->registerModule(digiBattle99Mod_.get());
+        setSvc_->registerModule(jpPokeMod_.get());
 
         // Disk-backed preview cache lives next to the executable, in the same
         // location scope as config.json - NOT inside the user's data-storage
@@ -128,11 +151,16 @@ public:
         previewCache_ = std::make_unique<ccm::LocalPreviewByteCache>(
             *fs_,
             exeDir / ".cache" / "preview-cache");
-        previewSvc_   = std::make_unique<ccm::CardPreviewService>(*http_, previewCache_.get());
+        previewSvc_   = std::make_unique<ccm::CardPreviewService>(
+            *http_,
+            previewCache_.get(),
+            fs_.get(),
+            exeDir / "assets");
         previewSvc_->registerModule(*magicMod_);
         previewSvc_->registerModule(*pokeMod_);
         previewSvc_->registerModule(*ygoMod_);
         previewSvc_->registerModule(*digiBattle99Mod_);
+        previewSvc_->registerModule(*jpPokeMod_);
 
         // Per-game UI bundles. Order here is the order shown in the Game menu.
         magicView_ = std::make_unique<ccm::ui::MagicGameView>(
@@ -144,6 +172,8 @@ public:
         digiBattle99View_ = std::make_unique<ccm::ui::DigiBattle99GameView>(
             *config_, *digiBattle99CollSvc_, *setSvc_, *imgSvc_, *previewSvc_,
             *digiBattle99Mod_);
+        jpPokeView_ = std::make_unique<ccm::ui::JapanesePokemonGameView>(
+            *config_, *jpPokeCollSvc_, *setSvc_, *imgSvc_, *previewSvc_, *jpPokeMod_);
 
         ctx_ = std::make_unique<ccm::ui::AppContext>(ccm::ui::AppContext{
             *config_,
@@ -154,7 +184,9 @@ public:
             *pokeMod_,
             *ygoMod_,
             *digiBattle99Mod_,
-            { magicView_.get(), pokeView_.get(), ygoView_.get(), digiBattle99View_.get() },
+            *jpPokeMod_,
+            { magicView_.get(), pokeView_.get(), ygoView_.get(), digiBattle99View_.get(),
+              jpPokeView_.get() },
         });
 
         auto* frame = new ccm::ui::MainFrame(*ctx_);
@@ -176,10 +208,12 @@ private:
     std::unique_ptr<ccm::PokemonGameModule>                          pokeMod_;
     std::unique_ptr<ccm::YuGiOhGameModule>                           ygoMod_;
     std::unique_ptr<ccm::DigiBattle99GameModule>                     digiBattle99Mod_;
+    std::unique_ptr<ccm::JapanesePokemonGameModule>                  jpPokeMod_;
     std::unique_ptr<ccm::JsonCollectionRepository<ccm::MagicCard>>   magicRepo_;
     std::unique_ptr<ccm::JsonCollectionRepository<ccm::PokemonCard>> pokeRepo_;
     std::unique_ptr<ccm::JsonCollectionRepository<ccm::YuGiOhCard>>  ygoRepo_;
     std::unique_ptr<ccm::JsonCollectionRepository<ccm::DigiBattle99Card>> digiBattle99Repo_;
+    std::unique_ptr<ccm::JsonCollectionRepository<ccm::JapanesePokemonCard>> jpPokeRepo_;
     std::unique_ptr<ccm::JsonSetRepository>                          setRepo_;
     std::unique_ptr<ccm::LocalImageStore>                            imgStore_;
     std::unique_ptr<ccm::ImageService>                               imgSvc_;
@@ -187,6 +221,7 @@ private:
     std::unique_ptr<ccm::CollectionService<ccm::PokemonCard>>        pokeCollSvc_;
     std::unique_ptr<ccm::CollectionService<ccm::YuGiOhCard>>         ygoCollSvc_;
     std::unique_ptr<ccm::CollectionService<ccm::DigiBattle99Card>>   digiBattle99CollSvc_;
+    std::unique_ptr<ccm::CollectionService<ccm::JapanesePokemonCard>> jpPokeCollSvc_;
     std::unique_ptr<ccm::SetService>                                 setSvc_;
     std::unique_ptr<ccm::LocalPreviewByteCache>                      previewCache_;
     std::unique_ptr<ccm::CardPreviewService>                         previewSvc_;
@@ -194,6 +229,7 @@ private:
     std::unique_ptr<ccm::ui::PokemonGameView>                        pokeView_;
     std::unique_ptr<ccm::ui::YuGiOhGameView>                         ygoView_;
     std::unique_ptr<ccm::ui::DigiBattle99GameView>                   digiBattle99View_;
+    std::unique_ptr<ccm::ui::JapanesePokemonGameView>                jpPokeView_;
     std::unique_ptr<ccm::ui::AppContext>                             ctx_;
 };
 

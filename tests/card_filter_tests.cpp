@@ -7,6 +7,7 @@
 
 #include "ccm/domain/Enums.hpp"
 #include "ccm/domain/DigiBattle99Card.hpp"
+#include "ccm/domain/JapanesePokemonCard.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
 #include "ccm/domain/YuGiOhCard.hpp"
@@ -274,5 +275,42 @@ TEST_SUITE("CardFilter::matchesDigiBattle99Filter") {
         c.altered = true;
         CHECK_FALSE(matchesDigiBattle99Filter(c, "true"));
         CHECK(matchesDigiBattle99Filter(c, "agu"));
+    }
+}
+
+TEST_SUITE("CardFilter::matchesJapanesePokemonFilter") {
+    TEST_CASE("matches by name and set.name") {
+        JapanesePokemonCard c;
+        c.name = "Charmander";
+        c.set.name = "Expansion Pack";
+        CHECK(matchesJapanesePokemonFilter(c, "char"));
+        CHECK(matchesJapanesePokemonFilter(c, "EXPANSION"));
+        CHECK_FALSE(matchesJapanesePokemonFilter(c, "pikachu"));
+    }
+
+    TEST_CASE("includes setNo in searchable columns") {
+        JapanesePokemonCard c;
+        c.name = "Charmander";
+        c.set.name = "Expansion Pack";
+        c.setNo = "001";
+        CHECK(matchesJapanesePokemonFilter(c, "001"));
+        CHECK(matchesJapanesePokemonFilter(c, "00"));
+    }
+
+    TEST_CASE("empty filter matches everything") {
+        JapanesePokemonCard c;
+        c.name = "Charmander";
+        CHECK(matchesJapanesePokemonFilter(c, ""));
+    }
+
+    TEST_CASE("boolean flag columns are not matched") {
+        JapanesePokemonCard c;
+        c.name = "Charmander";
+        c.holo = true;
+        c.firstEdition = true;
+        c.signed_ = true;
+        c.altered = true;
+        CHECK_FALSE(matchesJapanesePokemonFilter(c, "true"));
+        CHECK(matchesJapanesePokemonFilter(c, "char"));
     }
 }

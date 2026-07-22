@@ -17,6 +17,7 @@
 // (e.g. sort by name, then by set => grouped by set, name-sorted within each).
 
 #include "ccm/domain/DigiBattle99Card.hpp"
+#include "ccm/domain/JapanesePokemonCard.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
 #include "ccm/domain/YuGiOhCard.hpp"
@@ -81,6 +82,20 @@ enum class DigiBattle99SortColumn {
     Note,
 };
 
+// Japanese Pokemon mirrors Pokemon columns.
+enum class JapanesePokemonSortColumn {
+    Name,
+    SetReleaseDate,
+    Language,
+    Condition,
+    Amount,
+    Holo,
+    FirstEdition,
+    Signed,
+    Altered,
+    Note,
+};
+
 // Stable in-place sort. `ascending=false` runs the same comparator with
 // inverted sign, matching `byField(field, asc)` semantics.
 void sortMagicCards(std::vector<MagicCard>& cards, MagicSortColumn column,
@@ -92,5 +107,8 @@ void sortYuGiOhCards(std::vector<YuGiOhCard>& cards, YuGiOhSortColumn column,
 void sortDigiBattle99Cards(std::vector<DigiBattle99Card>& cards,
                            DigiBattle99SortColumn column,
                            bool ascending);
+void sortJapanesePokemonCards(std::vector<JapanesePokemonCard>& cards,
+                              JapanesePokemonSortColumn column,
+                              bool ascending);
 
 }  // namespace ccm

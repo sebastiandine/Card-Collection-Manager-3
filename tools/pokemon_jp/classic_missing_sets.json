@@ -1,0 +1,57 @@
+{
+  "ExpSheet1": {
+    "name_en": "Expansion Sheet Series 1",
+    "name_ja": "拡張シート 第1弾",
+    "releaseDate": "1998/03/23"
+  },
+  "NiviCG": {
+    "name_en": "Nivi City Gym",
+    "name_ja": "ニビシティジム タケシ",
+    "releaseDate": "1998/04/26"
+  },
+  "HanadaCG": {
+    "name_en": "Hanada City Gym",
+    "name_ja": "ハナダシティジム カスミ",
+    "releaseDate": "1998/04/26"
+  },
+  "ExpSheet2": {
+    "name_en": "Expansion Sheet Series 2",
+    "name_ja": "拡張シート 第2弾",
+    "releaseDate": "1998/06/17"
+  },
+  "KuchibaCG": {
+    "name_en": "Kuchiba City Gym",
+    "name_ja": "クチバシティジム マチス",
+    "releaseDate": "1998/07/25"
+  },
+  "TamamushiCG": {
+    "name_en": "Tamamushi City Gym",
+    "name_ja": "タマムシシティジム エリカ",
+    "releaseDate": "1998/07/25"
+  },
+  "ExpSheet3": {
+    "name_en": "Expansion Sheet Series 3",
+    "name_ja": "拡張シート 第3弾",
+    "releaseDate": "1998/11/24"
+  },
+  "YamabukiCG": {
+    "name_en": "Yamabuki City Gym",
+    "name_ja": "ヤマブキシティジム ナツメ",
+    "releaseDate": "1999/02/26"
+  },
+  "GurenTG": {
+    "name_en": "Guren Town Gym",
+    "name_ja": "グレンタウンジム カツラ",
+    "releaseDate": "1999/02/26"
+  },
+  "SouthernIslands": {
+    "name_en": "Southern Islands",
+    "name_ja": "サザンアイランド",
+    "releaseDate": "1999/07/17"
+  },
+  "UnnumberedPromo": {
+    "name_en": "Unnumbered Promotional cards",
+    "name_ja": "番号なしプロモーションカード",
+    "releaseDate": "1996/10/15"
+  }
+}

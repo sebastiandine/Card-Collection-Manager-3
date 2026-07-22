@@ -40,3 +40,6 @@ config.json
 configure.log
 build.log
 test.log
+
+# Offline ETL caches (large third-party extracts)
+tools/pokemon_jp/_tcgdex_cards_database/

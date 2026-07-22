@@ -1,0 +1,5502 @@
+[
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "001",
+    "name_en": "Erika's Oddish",
+    "name_ja": "エリカのナゾノクサ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "002",
+    "name_en": "Erika's Oddish",
+    "name_ja": "エリカのナゾノクサ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "003",
+    "name_en": "Erika's Gloom",
+    "name_ja": "エリカのクサイハナ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "004",
+    "name_en": "Erika's Vileplume",
+    "name_ja": "エリカのラフレシア",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "005",
+    "name_en": "Erika's Bellsprout",
+    "name_ja": "エリカのマダツボミ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "006",
+    "name_en": "Erika's Bellsprout",
+    "name_ja": "エリカのマダツボミ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "007",
+    "name_en": "Erika's Weepinbell",
+    "name_ja": "エリカのウツドン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "008",
+    "name_en": "Erika's Victreebel",
+    "name_ja": "エリカのウツボット",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "009",
+    "name_en": "Erika's Exeggcute",
+    "name_ja": "エリカのタマタマ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "010",
+    "name_en": "Erika's Exeggutor",
+    "name_ja": "エリカのナッシー",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "011",
+    "name_en": "Erika's Tangela",
+    "name_ja": "エリカのモンジャラ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "012",
+    "name_en": "Erika's Clefairy",
+    "name_ja": "エリカのピッピ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "013",
+    "name_en": "Erika's Dratini",
+    "name_ja": "エリカのミニリュウ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "014",
+    "name_en": "Energy Retrieval",
+    "name_ja": "エネルギー回収",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "015",
+    "name_en": "Energy Search",
+    "name_ja": "エネルギー検索",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "016",
+    "name_en": "Erika",
+    "name_ja": "エリカ",
+    "name_en_source": "trainer-table",
+    "image_url": "asset:pokemon_jp_classic/TamamushiCG/016.jpg"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "017",
+    "name_en": "Erika's Maids",
+    "name_ja": "エリカのお付き",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "018",
+    "name_en": "Erika's Perfume",
+    "name_ja": "エリカの香水",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "019",
+    "name_en": "Charity",
+    "name_ja": "チャリティ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "020",
+    "name_en": "Potion",
+    "name_ja": "きずぐすり",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "021",
+    "name_en": "Celadon City Gym",
+    "name_ja": "タマムシシティジム",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "022",
+    "name_en": "Defender",
+    "name_ja": "ディフェンダー",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "023",
+    "name_en": "Full Heal",
+    "name_ja": "なんでもなおし",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "024",
+    "name_en": "PlusPower",
+    "name_ja": "プラスパワー",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "025",
+    "name_en": "Switch",
+    "name_ja": "ポケモンいれかえ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "026",
+    "name_en": "Recycle",
+    "name_ja": "リサイクル",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "027",
+    "name_en": "Good Manners",
+    "name_ja": "グッドマナー",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "028",
+    "name_en": "Grass Energy",
+    "name_ja": "基本草エネルギー",
+    "name_en_source": "energy-table"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "029",
+    "name_en": "Psychic Energy",
+    "name_ja": "基本超エネルギー",
+    "name_en_source": "energy-table"
+  },
+  {
+    "set_id": "TamamushiCG",
+    "local_id": "030",
+    "name_en": "Double Colorless Energy",
+    "name_ja": "ダブル無色エネルギー",
+    "name_en_source": "energy-table"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "001",
+    "name_en": "Brock's Zubat",
+    "name_ja": "タケシのズバット",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "002",
+    "name_en": "Brock's Vulpix",
+    "name_ja": "タケシのロコン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "003",
+    "name_en": "Brock's Sandshrew",
+    "name_ja": "タケシのサンド",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "004",
+    "name_en": "Brock's Sandslash",
+    "name_ja": "タケシのサンドパン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "005",
+    "name_en": "Brock's Mankey",
+    "name_ja": "タケシのマンキー",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "006",
+    "name_en": "Brock's Geodude",
+    "name_ja": "タケシのイシツブテ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "007",
+    "name_en": "Brock's Geodude",
+    "name_ja": "タケシのイシツブテ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "008",
+    "name_en": "Brock's Graveler",
+    "name_ja": "タケシのゴローン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "009",
+    "name_en": "Brock's Golem",
+    "name_ja": "タケシのゴローニャ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "010",
+    "name_en": "Brock's Onix",
+    "name_ja": "タケシのイワーク",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "011",
+    "name_en": "Brock's Onix",
+    "name_ja": "タケシのイワーク",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "012",
+    "name_en": "Brock's Rhyhorn",
+    "name_ja": "タケシのサイホーン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "013",
+    "name_en": "Brock's Rhydon",
+    "name_ja": "タケシのサイドン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "014",
+    "name_en": "Energy Retrieval",
+    "name_ja": "エネルギー回収",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "015",
+    "name_en": "Recall",
+    "name_ja": "リコール",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "016",
+    "name_en": "Potion",
+    "name_ja": "きずぐすり",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "017",
+    "name_en": "Revive",
+    "name_ja": "げんきのかけら",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "018",
+    "name_en": "Brock",
+    "name_ja": "タケシ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "019",
+    "name_en": "Brock's Training Method",
+    "name_ja": "タケシの育て方",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "020",
+    "name_en": "Full Heal",
+    "name_ja": "なんでもなおし",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "021",
+    "name_en": "Pewter City Gym",
+    "name_ja": "ニビシティジム",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "022",
+    "name_en": "Switch",
+    "name_ja": "ポケモンいれかえ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "023",
+    "name_en": "Pokédex",
+    "name_ja": "ポケモン図鑑",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "024",
+    "name_en": "Pokémon Center",
+    "name_ja": "ポケモンセンター",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "025",
+    "name_en": "Fire Energy",
+    "name_ja": "基本炎エネルギー",
+    "name_en_source": "energy-table"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "026",
+    "name_en": "Fighting Energy",
+    "name_ja": "基本闘エネルギー",
+    "name_en_source": "energy-table"
+  },
+  {
+    "set_id": "NiviCG",
+    "local_id": "027",
+    "name_en": "Double Colorless Energy",
+    "name_ja": "ダブル無色エネルギー",
+    "name_en_source": "energy-table"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "001",
+    "name_en": "Misty's Seel",
+    "name_ja": "カスミのパウワウ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "002",
+    "name_en": "Misty's Dewgong",
+    "name_ja": "カスミのジュゴン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "003",
+    "name_en": "Misty's Shellder",
+    "name_ja": "カスミのシェルダー",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "004",
+    "name_en": "Misty's Cloyster",
+    "name_ja": "カスミのパルシェン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "005",
+    "name_en": "Misty's Horsea",
+    "name_ja": "カスミのタッツー",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "006",
+    "name_en": "Misty's Seadra",
+    "name_ja": "カスミのシードラ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "007",
+    "name_en": "Misty's Goldeen",
+    "name_ja": "カスミのトサキント",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "008",
+    "name_en": "Misty's Seaking",
+    "name_ja": "カスミのアズマオウ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "009",
+    "name_en": "Misty's Staryu",
+    "name_ja": "カスミのヒトデマン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "010",
+    "name_en": "Misty's Starmie",
+    "name_ja": "カスミのスターミー",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "011",
+    "name_en": "Misty's Psyduck",
+    "name_ja": "カスミのコダック",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "012",
+    "name_en": "Misty's Magikarp",
+    "name_ja": "カスミのコイキング",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "013",
+    "name_en": "Misty's Goldeen",
+    "name_ja": "カスミのトサキント",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "014",
+    "name_en": "Energy Retrieval",
+    "name_ja": "エネルギー回収",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "015",
+    "name_en": "Misty",
+    "name_ja": "カスミ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "016",
+    "name_en": "Misty's Tears",
+    "name_ja": "カスミのなみだ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "017",
+    "name_en": "Misty's Wrath",
+    "name_ja": "カスミのいかり",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "018",
+    "name_en": "Potion",
+    "name_ja": "きずぐすり",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "019",
+    "name_en": "Cerulean City Gym",
+    "name_ja": "ハナダシティジム",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "020",
+    "name_en": "Full Heal",
+    "name_ja": "なんでもなおし",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "021",
+    "name_en": "Switch",
+    "name_ja": "ポケモンいれかえ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "022",
+    "name_en": "Water Energy",
+    "name_ja": "基本水エネルギー",
+    "name_en_source": "energy-table"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "023",
+    "name_en": "Psychic Energy",
+    "name_ja": "基本超エネルギー",
+    "name_en_source": "energy-table"
+  },
+  {
+    "set_id": "HanadaCG",
+    "local_id": "024",
+    "name_en": "Double Colorless Energy",
+    "name_ja": "ダブル無色エネルギー",
+    "name_en_source": "energy-table"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "001",
+    "name_en": "Lt. Surge's Magnemite",
+    "name_ja": "マチスのコイル",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "002",
+    "name_en": "Lt. Surge's Magneton",
+    "name_ja": "マチスのレアコイル",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "003",
+    "name_en": "Lt. Surge's Voltorb",
+    "name_ja": "マチスのビリリダマ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "004",
+    "name_en": "Lt. Surge's Electrode",
+    "name_ja": "マチスのマルマイン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "005",
+    "name_en": "Lt. Surge's Pikachu",
+    "name_ja": "マチスのピカチュウ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "006",
+    "name_en": "Lt. Surge's Raichu",
+    "name_ja": "マチスのライチュウ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "007",
+    "name_en": "Lt. Surge's Electabuzz",
+    "name_ja": "マチスのエレブー",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "008",
+    "name_en": "Lt. Surge's Eevee",
+    "name_ja": "マチスのイーブイ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "009",
+    "name_en": "Lt. Surge's Jolteon",
+    "name_ja": "マチスのサンダース",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "010",
+    "name_en": "Lt. Surge's Spearow",
+    "name_ja": "マチスのオニスズメ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "011",
+    "name_en": "Lt. Surge's Fearow",
+    "name_ja": "マチスのオニドリル",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "012",
+    "name_en": "Energy Retrieval",
+    "name_ja": "エネルギー回収",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "013",
+    "name_en": "Lt. Surge",
+    "name_ja": "マチス",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "014",
+    "name_en": "Lt. Surge's Secret Plan",
+    "name_ja": "マチスの秘策",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "015",
+    "name_en": "Lt. Surge's Treaty",
+    "name_ja": "マチスの交渉",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "016",
+    "name_en": "Potion",
+    "name_ja": "きずぐすり",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "017",
+    "name_en": "Vermilion City Gym",
+    "name_ja": "クチバシティジム",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "018",
+    "name_en": "Full Heal",
+    "name_ja": "なんでもなおし",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "019",
+    "name_en": "Switch",
+    "name_ja": "ポケモンいれかえ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "020",
+    "name_en": "PlusPower",
+    "name_ja": "プラスパワー",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "021",
+    "name_en": "Lightning Energy",
+    "name_ja": "基本雷エネルギー",
+    "name_en_source": "energy-table"
+  },
+  {
+    "set_id": "KuchibaCG",
+    "local_id": "022",
+    "name_en": "Double Colorless Energy",
+    "name_ja": "ダブル無色エネルギー",
+    "name_en_source": "energy-table"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "001",
+    "name_en": "Sabrina's Abra",
+    "name_ja": "ナツメのケーシィ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "002",
+    "name_en": "Sabrina's Kadabra",
+    "name_ja": "ナツメのユンゲラー",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "003",
+    "name_en": "Sabrina's Alakazam",
+    "name_ja": "ナツメのフーディン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "004",
+    "name_en": "Sabrina's Drowzee",
+    "name_ja": "ナツメのスリープ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "005",
+    "name_en": "Sabrina's Hypno",
+    "name_ja": "ナツメのスリーパー",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "006",
+    "name_en": "Sabrina's Mr. Mime",
+    "name_ja": "ナツメのバリヤード",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "007",
+    "name_en": "Sabrina's Jynx",
+    "name_ja": "ナツメのルージュラ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "008",
+    "name_en": "Sabrina's Porygon",
+    "name_ja": "ナツメのポリゴン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "009",
+    "name_en": "Sabrina's Gastly",
+    "name_ja": "ナツメのゴース",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "010",
+    "name_en": "Sabrina's Haunter",
+    "name_ja": "ナツメのゴースト",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "011",
+    "name_en": "Sabrina's Slowpoke",
+    "name_ja": "ナツメのヤドン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "012",
+    "name_en": "Sabrina",
+    "name_ja": "ナツメ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "013",
+    "name_en": "Sabrina's ESP",
+    "name_ja": "ナツメのESP",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "014",
+    "name_en": "Sabrina's Gaze",
+    "name_ja": "ナツメの眼",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "015",
+    "name_en": "Sabrina's Psychic Control",
+    "name_ja": "ナツメのサイキックコントロール",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "016",
+    "name_en": "Saffron City Gym",
+    "name_ja": "ヤマブキシティジム",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "017",
+    "name_en": "Potion",
+    "name_ja": "きずぐすり",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "018",
+    "name_en": "Full Heal",
+    "name_ja": "なんでもなおし",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "019",
+    "name_en": "Switch",
+    "name_ja": "ポケモンいれかえ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "020",
+    "name_en": "Energy Retrieval",
+    "name_ja": "エネルギー回収",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "021",
+    "name_en": "Psychic Energy",
+    "name_ja": "基本超エネルギー",
+    "name_en_source": "energy-table"
+  },
+  {
+    "set_id": "YamabukiCG",
+    "local_id": "022",
+    "name_en": "Double Colorless Energy",
+    "name_ja": "ダブル無色エネルギー",
+    "name_en_source": "energy-table"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "001",
+    "name_en": "Blaine's Charmander",
+    "name_ja": "カツラのヒトカゲ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "002",
+    "name_en": "Blaine's Charmeleon",
+    "name_ja": "カツラのリザード",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "003",
+    "name_en": "Blaine's Growlithe",
+    "name_ja": "カツラのガーディ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "004",
+    "name_en": "Blaine's Arcanine",
+    "name_ja": "カツラのウインディ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "005",
+    "name_en": "Blaine's Vulpix",
+    "name_ja": "カツラのロコン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "006",
+    "name_en": "Blaine's Ninetales",
+    "name_ja": "カツラのキュウコン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "007",
+    "name_en": "Blaine's Ponyta",
+    "name_ja": "カツラのポニータ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "008",
+    "name_en": "Blaine's Rapidash",
+    "name_ja": "カツラのギャロップ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "009",
+    "name_en": "Blaine's Magmar",
+    "name_ja": "カツラのブーバー",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "010",
+    "name_en": "Blaine's Moltres",
+    "name_ja": "カツラのファイヤー",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "011",
+    "name_en": "Blaine's Tauros",
+    "name_ja": "カツラのケンタロス",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "012",
+    "name_en": "Blaine's Kangaskhan",
+    "name_ja": "カツラのガルーラ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "013",
+    "name_en": "Blaine",
+    "name_ja": "カツラ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "014",
+    "name_en": "Blaine's Gamble",
+    "name_ja": "カツラのギャンブル",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "015",
+    "name_en": "Blaine's Last Resort",
+    "name_ja": "カツラの奥の手",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "016",
+    "name_en": "Cinnabar Island Gym",
+    "name_ja": "グレンタウンジム",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "017",
+    "name_en": "Potion",
+    "name_ja": "きずぐすり",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "018",
+    "name_en": "Full Heal",
+    "name_ja": "なんでもなおし",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "019",
+    "name_en": "Switch",
+    "name_ja": "ポケモンいれかえ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "020",
+    "name_en": "Energy Retrieval",
+    "name_ja": "エネルギー回収",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "021",
+    "name_en": "Fire Energy",
+    "name_ja": "基本炎エネルギー",
+    "name_en_source": "energy-table"
+  },
+  {
+    "set_id": "GurenTG",
+    "local_id": "022",
+    "name_en": "Double Colorless Energy",
+    "name_ja": "ダブル無色エネルギー",
+    "name_en_source": "energy-table"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "001",
+    "name_en": "Mew",
+    "name_ja": "ミュウ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "002",
+    "name_en": "Togepi",
+    "name_ja": "トゲピー",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "003",
+    "name_en": "Marill",
+    "name_ja": "マリル",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "004",
+    "name_en": "Ledyba",
+    "name_ja": "レディバ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "005",
+    "name_en": "Spinarak",
+    "name_ja": "イトマル",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "006",
+    "name_en": "Hoothoot",
+    "name_ja": "ホーホー",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "007",
+    "name_en": "Chikorita",
+    "name_ja": "チコリータ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "008",
+    "name_en": "Cubone",
+    "name_ja": "カラカラ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "009",
+    "name_en": "Exeggutor",
+    "name_ja": "ナッシー",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "010",
+    "name_en": "Jigglypuff",
+    "name_ja": "プリン",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "011",
+    "name_en": "Tentacool",
+    "name_ja": "メノクラゲ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "012",
+    "name_en": "Onix",
+    "name_ja": "イワーク",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "013",
+    "name_en": "Butterfree",
+    "name_ja": "バタフリー",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "014",
+    "name_en": "Raticate",
+    "name_ja": "ラッタ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "015",
+    "name_en": "Ivysaur",
+    "name_ja": "フシギソウ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "016",
+    "name_en": "Wartortle",
+    "name_ja": "カメール",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "017",
+    "name_en": "Charmeleon",
+    "name_ja": "リザード",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "SouthernIslands",
+    "local_id": "018",
+    "name_en": "Lickitung",
+    "name_ja": "ベロリンガ",
+    "name_en_source": "manual"
+  },
+  {
+    "set_id": "ExpSheet1",
+    "local_id": "001",
+    "name_en": "Potion",
+    "name_ja": "きずぐすり",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet1",
+    "local_id": "002",
+    "name_en": "Switch",
+    "name_ja": "ポケモンいれかえ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet1",
+    "local_id": "003",
+    "name_en": "Energy Retrieval",
+    "name_ja": "エネルギー回収",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet1",
+    "local_id": "004",
+    "name_en": "Full Heal",
+    "name_ja": "なんでもなおし",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet1",
+    "local_id": "005",
+    "name_en": "Pokémon Center",
+    "name_ja": "ポケモンセンター",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet1",
+    "local_id": "006",
+    "name_en": "Pokédex",
+    "name_ja": "ポケモン図鑑",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet1",
+    "local_id": "007",
+    "name_en": "Bill",
+    "name_ja": "マサキ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet1",
+    "local_id": "008",
+    "name_en": "Professor Oak",
+    "name_ja": "オーキドはかせ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet1",
+    "local_id": "009",
+    "name_en": "Computer Search",
+    "name_ja": "パソコン通信",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet1",
+    "local_id": "010",
+    "name_en": "Item Finder",
+    "name_ja": "ダウジングマシーン",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet2",
+    "local_id": "001",
+    "name_en": "Potion",
+    "name_ja": "きずぐすり",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet2",
+    "local_id": "002",
+    "name_en": "Switch",
+    "name_ja": "ポケモンいれかえ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet2",
+    "local_id": "003",
+    "name_en": "Energy Retrieval",
+    "name_ja": "エネルギー回収",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet2",
+    "local_id": "004",
+    "name_en": "Full Heal",
+    "name_ja": "なんでもなおし",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet2",
+    "local_id": "005",
+    "name_en": "Pokémon Center",
+    "name_ja": "ポケモンセンター",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet2",
+    "local_id": "006",
+    "name_en": "Pokédex",
+    "name_ja": "ポケモン図鑑",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet2",
+    "local_id": "007",
+    "name_en": "Bill",
+    "name_ja": "マサキ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet2",
+    "local_id": "008",
+    "name_en": "Professor Oak",
+    "name_ja": "オーキドはかせ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet2",
+    "local_id": "009",
+    "name_en": "Computer Search",
+    "name_ja": "パソコン通信",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet2",
+    "local_id": "010",
+    "name_en": "Item Finder",
+    "name_ja": "ダウジングマシーン",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet3",
+    "local_id": "001",
+    "name_en": "Potion",
+    "name_ja": "きずぐすり",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet3",
+    "local_id": "002",
+    "name_en": "Switch",
+    "name_ja": "ポケモンいれかえ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet3",
+    "local_id": "003",
+    "name_en": "Energy Retrieval",
+    "name_ja": "エネルギー回収",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet3",
+    "local_id": "004",
+    "name_en": "Full Heal",
+    "name_ja": "なんでもなおし",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet3",
+    "local_id": "005",
+    "name_en": "Pokémon Center",
+    "name_ja": "ポケモンセンター",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet3",
+    "local_id": "006",
+    "name_en": "Pokédex",
+    "name_ja": "ポケモン図鑑",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet3",
+    "local_id": "007",
+    "name_en": "Bill",
+    "name_ja": "マサキ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet3",
+    "local_id": "008",
+    "name_en": "Professor Oak",
+    "name_ja": "オーキドはかせ",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet3",
+    "local_id": "009",
+    "name_en": "Computer Search",
+    "name_ja": "パソコン通信",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "ExpSheet3",
+    "local_id": "010",
+    "name_en": "Item Finder",
+    "name_ja": "ダウジングマシーン",
+    "name_en_source": "trainer-table"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "001",
+    "name_en": "Pikachu (CoroCoro promo)",
+    "name_ja": "ピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pikachu (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Pikachu",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/1/15/PikachuCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "002",
+    "name_en": "Jigglypuff (CoroCoro promo)",
+    "name_ja": "プリン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Jigglypuff (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Jigglypuff",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/f/f3/JigglypuffCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "003",
+    "name_en": "Pikachu (Asobikata promo)",
+    "name_ja": "ピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pikachu (Asobikata promo)",
+    "tcg_set": "Asobikata",
+    "tcg_name": "Pikachu",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "004",
+    "name_en": "Jigglypuff (Asobikata promo)",
+    "name_ja": "プリン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Jigglypuff (Asobikata promo)",
+    "tcg_set": "Asobikata",
+    "tcg_name": "Jigglypuff",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "005",
+    "name_en": "Mew (CoroCoro promo)",
+    "name_ja": "ミュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mew (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Mew",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "006",
+    "name_en": "Slowpoke (Playmat promo)",
+    "name_ja": "ヤドン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Slowpoke (Playmat promo)",
+    "tcg_set": "Playmat",
+    "tcg_name": "Slowpoke",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/23/SlowpokePlaymatPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "007",
+    "name_en": "Mewtwo (CoroCoro promo)",
+    "name_ja": "ミュウツー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mewtwo (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Mewtwo",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "008",
+    "name_en": "Mewtwo (Fan Book promo)",
+    "name_ja": "ミュウツー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mewtwo (Fan Book promo)",
+    "tcg_set": "Fan Book",
+    "tcg_name": "Mewtwo",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "009",
+    "name_en": "Super Energy Retrieval (Fan Book promo)",
+    "name_ja": "超エネルギー回収",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Super Energy Retrieval (Fan Book promo)",
+    "tcg_set": "Fan Book",
+    "tcg_name": "Super Energy Retrieval",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "010",
+    "name_en": "Electabuzz (Card File promo)",
+    "name_ja": "エレブー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Electabuzz (Card File promo)",
+    "tcg_set": "Card File",
+    "tcg_name": "Electabuzz",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "011",
+    "name_en": "No.1 Trainer (Pokémon Card Game Official Tournament promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (Pokémon Card Game Official Tournament promo)",
+    "tcg_set": "Pokémon Card Game Official Tournament",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/f/fb/No1Trainer2014WorldChampionshipsPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "012",
+    "name_en": "No.2 Trainer (Pokémon Card Game Official Tournament promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (Pokémon Card Game Official Tournament promo)",
+    "tcg_set": "Pokémon Card Game Official Tournament",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/b/b9/No2Trainer2014WorldChampionshipsPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "013",
+    "name_en": "No.3 Trainer (Pokémon Card Game Official Tournament promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (Pokémon Card Game Official Tournament promo)",
+    "tcg_set": "Pokémon Card Game Official Tournament",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/5/51/No3Trainer2014WorldChampionshipsPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "014",
+    "name_en": "Pikachu, Jigglypuff, and Clefairy (CoroCoro promo) (Jumbo)",
+    "name_ja": "ピカチュウとプリンとピッピ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pikachu, Jigglypuff, and Clefairy (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Pikachu, Jigglypuff, and Clefairy",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/c/c2/PikachuJigglypuffClefairyCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "015",
+    "name_en": "Surfing Pikachu (JR promo)",
+    "name_ja": "なみのりピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Surfing Pikachu (JR promo)",
+    "tcg_set": "JR",
+    "tcg_name": "Surfing Pikachu",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "016",
+    "name_en": "Mew (CoroCoro promo)",
+    "name_ja": "ミュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mew (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Mew",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "017",
+    "name_en": "Surfing Pikachu (CoroCoro promo)",
+    "name_ja": "なみのりピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Surfing Pikachu (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Surfing Pikachu",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "018",
+    "name_en": "Imakuni? (CoroCoro promo)",
+    "name_ja": "イマクニ？",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Imakuni? (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Imakuni?",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/c/c3/ImakuniCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "019",
+    "name_en": "Articuno (Phone Card promo)",
+    "name_ja": "フリーザー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Articuno (Phone Card promo)",
+    "tcg_set": "Phone Card",
+    "tcg_name": "Articuno",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "020",
+    "name_en": "Articuno, Moltres, and Zapdos (CoroCoro promo) (Jumbo)",
+    "name_ja": "サンダーとフリーザーとファイヤー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Articuno, Moltres, and Zapdos (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Articuno, Moltres, and Zapdos",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "021",
+    "name_en": "Arcanine (Toyota promo)",
+    "name_ja": "ウィンディ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Arcanine (Toyota promo)",
+    "tcg_set": "Toyota",
+    "tcg_name": "Arcanine",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "022",
+    "name_en": "Pikachu (Toyota promo)",
+    "name_ja": "ピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pikachu (Toyota promo)",
+    "tcg_set": "Toyota",
+    "tcg_name": "Pikachu",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/5/5c/PikachuToyotaPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "023",
+    "name_en": "Flying Pikachu (CoroCoro promo)",
+    "name_ja": "そらをとぶピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Flying Pikachu (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Flying Pikachu",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "024",
+    "name_en": "No.1 Trainer (Lizardon Mega Battle promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (Lizardon Mega Battle promo)",
+    "tcg_set": "Lizardon Mega Battle",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "025",
+    "name_en": "No.2 Trainer (Lizardon Mega Battle promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (Lizardon Mega Battle promo)",
+    "tcg_set": "Lizardon Mega Battle",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "026",
+    "name_en": "No.3 Trainer (Lizardon Mega Battle promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (Lizardon Mega Battle promo)",
+    "tcg_set": "Lizardon Mega Battle",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "027",
+    "name_en": "Dark Persian (Pokémon Card Fan Club promo)",
+    "name_ja": "わるいペルシアン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Dark Persian (Pokémon Card Fan Club promo)",
+    "tcg_set": "Pokémon Card Fan Club",
+    "tcg_name": "Dark Persian",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/d/db/DarkPersianPok%C3%A9monCardFanClubPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "028",
+    "name_en": "Pikachu (WHF Special Sheet promo)",
+    "name_ja": "ピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pikachu (WHF Special Sheet promo)",
+    "tcg_set": "WHF Special Sheet",
+    "tcg_name": "Pikachu",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "029",
+    "name_en": "Mew (WHF Special Sheet promo)",
+    "name_ja": "ミュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mew (WHF Special Sheet promo)",
+    "tcg_set": "WHF Special Sheet",
+    "tcg_name": "Mew",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/f/fb/MewWHFSpecialSheetpromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "030",
+    "name_en": "Mewtwo (WHF Special Sheet promo)",
+    "name_ja": "ミュウツー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mewtwo (WHF Special Sheet promo)",
+    "tcg_set": "WHF Special Sheet",
+    "tcg_name": "Mewtwo",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/3/3e/MewtwoWHFSpecialSheetPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "031",
+    "name_en": "Cool Porygon (Nintendo 64 promo)",
+    "name_ja": "かっこいいポリゴン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Cool Porygon (Nintendo 64 promo)",
+    "tcg_set": "Nintendo 64",
+    "tcg_name": "Cool Porygon",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "032",
+    "name_en": "Hungry Snorlax (Nintendo 64 promo)",
+    "name_ja": "くいしんぼカビゴン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Hungry Snorlax (Nintendo 64 promo)",
+    "tcg_set": "Nintendo 64",
+    "tcg_name": "Hungry Snorlax",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/1/1e/HungrySnorlaxNintendo64promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "033",
+    "name_en": "Meowth (CoroCoro promo)",
+    "name_ja": "ニャース",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Meowth (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Meowth",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/e/e4/MeowthCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "034",
+    "name_en": "Computer Error (CoroCoro promo)",
+    "name_ja": "パソコン大暴走！",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Computer Error (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Computer Error",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "035",
+    "name_en": "Pokémon Illustrator (CoroCoro promo)",
+    "name_ja": "ポケモンイラストレーター",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pokémon Illustrator (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Pokémon Illustrator",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/5/5f/Pok%C3%A9monIllustratorCoroCoropromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "036",
+    "name_en": "Venusaur (Trade Please promo)",
+    "name_ja": "フシギバナ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Venusaur (Trade Please promo)",
+    "tcg_set": "Trade Please",
+    "tcg_name": "Venusaur",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "037",
+    "name_en": "Charizard (Trade Please promo)",
+    "name_ja": "リザードン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Charizard (Trade Please promo)",
+    "tcg_set": "Trade Please",
+    "tcg_name": "Charizard",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "038",
+    "name_en": "Blastoise (Trade Please promo)",
+    "name_ja": "カメックス",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Blastoise (Trade Please promo)",
+    "tcg_set": "Trade Please",
+    "tcg_name": "Blastoise",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "039",
+    "name_en": "Trade Please! (Trade Please promo)",
+    "name_ja": "とりかえっこプリーズ！",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Trade Please! (Trade Please promo)",
+    "tcg_set": "Trade Please",
+    "tcg_name": "Trade Please!",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/d/de/TradePleasePromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "040",
+    "name_en": "Brock's Onix (CoroCoro promo)",
+    "name_ja": "タケシのイワーク",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Brock's Onix (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Brock's Onix",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/7/73/BrockOnixCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "041",
+    "name_en": "Misty's Staryu (CoroCoro promo)",
+    "name_ja": "カスミのヒトデマン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Misty's Staryu (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Misty's Staryu",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/b/bf/MistyStaryuCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "042",
+    "name_en": "Jynx (CoroCoro promo)",
+    "name_ja": "ルージュラ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Jynx (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Jynx",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/4/4c/JynxCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "043",
+    "name_en": "Cubone (CoroCoro promo)",
+    "name_ja": "カラカラ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Cubone (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Cubone",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/1/1d/CuboneCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "044",
+    "name_en": "Farfetch'd (CoroCoro promo)",
+    "name_ja": "カモネギ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Farfetch'd (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Farfetch'd",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/9/90/Farfetch%27dCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "045",
+    "name_en": "Mewtwo Strikes Back (CoroCoro promo) (Jumbo)",
+    "name_ja": "ミュウツーの逆襲",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mewtwo Strikes Back (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Mewtwo Strikes Back",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/f/f7/MewtwoStrikesBackCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "046",
+    "name_en": "Touch Change! (Garura Parent/Child promo)",
+    "name_ja": "タッチ交代！",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Touch Change! (Garura Parent/Child promo)",
+    "tcg_set": "Garura Parent/Child",
+    "tcg_name": "Touch Change!",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/1/19/TouchChangeGaruraParentChildPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "047",
+    "name_en": "Kangaskhan (Garura Parent/Child promo)",
+    "name_ja": "ガルーラ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Kangaskhan (Garura Parent/Child promo)",
+    "tcg_set": "Garura Parent/Child",
+    "tcg_name": "Kangaskhan",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/f/f9/KangaskhanParentChildTournamentpromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "048",
+    "name_en": "Pikachu's Summer Vacation (CoroCoro promo) (Jumbo)",
+    "name_ja": "ピカチュウのなつやすみ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pikachu's Summer Vacation (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Pikachu's Summer Vacation",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/1/1e/PikachuSummerVacationCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "049",
+    "name_en": "Touch Change! (Pokémon Card Fan Club promo)",
+    "name_ja": "タッチ交代！",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Touch Change! (Pokémon Card Fan Club promo)",
+    "tcg_set": "Pokémon Card Fan Club",
+    "tcg_name": "Touch Change!",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "050",
+    "name_en": "Computer Error (Kamex Mega Battle promo)",
+    "name_ja": "パソコン大暴走！",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Computer Error (Kamex Mega Battle promo)",
+    "tcg_set": "Kamex Mega Battle",
+    "tcg_name": "Computer Error",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "051",
+    "name_en": "No.1 Trainer (Kamex Mega Battle promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (Kamex Mega Battle promo)",
+    "tcg_set": "Kamex Mega Battle",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "052",
+    "name_en": "No.2 Trainer (Kamex Mega Battle promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (Kamex Mega Battle promo)",
+    "tcg_set": "Kamex Mega Battle",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "053",
+    "name_en": "No.3 Trainer (Kamex Mega Battle promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (Kamex Mega Battle promo)",
+    "tcg_set": "Kamex Mega Battle",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "054",
+    "name_en": "Lt. Surge's Electabuzz (CoroCoro promo)",
+    "name_ja": "マチスのエレブー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Lt. Surge's Electabuzz (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Lt. Surge's Electabuzz",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/c/c6/LtSurgeElectabuzzCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "055",
+    "name_en": "Erika's Dratini (CoroCoro promo)",
+    "name_ja": "エリカのミニリュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Erika's Dratini (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Erika's Dratini",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/88/ErikaDratiniCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "056",
+    "name_en": "Pokémon Plaza (CoroCoro promo) (Jumbo)",
+    "name_ja": "ポケモン広場",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pokémon Plaza (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Pokémon Plaza",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/d/de/Pok%C3%A9monPlazaCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "057",
+    "name_en": "Pikachu (CoroCoro promo)",
+    "name_ja": "ピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pikachu (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Pikachu",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/1/15/PikachuCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "058",
+    "name_en": "Flying Pikachu (ANA promo 98)",
+    "name_ja": "そらをとぶピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Flying Pikachu (ANA promo 98)",
+    "tcg_set": "ANA promo",
+    "tcg_name": "Flying Pikachu",
+    "tcg_num": "98",
+    "image_url": "https://archives.bulbagarden.net/media/upload/6/6f/FlyingPikachuANAPromo98.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "059",
+    "name_en": "Dragonite (ANA promo)",
+    "name_ja": "カイリュー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Dragonite (ANA promo)",
+    "tcg_set": "ANA",
+    "tcg_name": "Dragonite",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "060",
+    "name_en": "_____'s Pikachu (All Card Calendar promo)",
+    "name_ja": "{{tt",
+    "name_en_source": "manual",
+    "bulbapedia_page": "_____'s Pikachu (All Card Calendar promo)",
+    "tcg_set": "All Card Calendar",
+    "tcg_name": "_____'s Pikachu",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "061",
+    "name_en": "Diglett (Asobikata promo)",
+    "name_ja": "ディグダ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Diglett (Asobikata promo)",
+    "tcg_set": "Asobikata",
+    "tcg_name": "Diglett",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/e/ef/DiglettAsobikataPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "062",
+    "name_en": "Dugtrio (Asobikata promo)",
+    "name_ja": "ダグトリオ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Dugtrio (Asobikata promo)",
+    "tcg_set": "Asobikata",
+    "tcg_name": "Dugtrio",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/7/7a/DugtrioAsobikataPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "063",
+    "name_en": "Brock's Mankey (CoroCoro promo)",
+    "name_ja": "タケシのマンキー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Brock's Mankey (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Brock's Mankey",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/0/06/BrockMankeyCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "064",
+    "name_en": "Erika's Bulbasaur (CoroCoro promo)",
+    "name_ja": "エリカのフシギダネ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Erika's Bulbasaur (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Erika's Bulbasaur",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/87/ErikaBulbasaurCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "065",
+    "name_en": "Misty's Tentacool (CoroCoro promo)",
+    "name_ja": "カスミのメノクラゲ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Misty's Tentacool (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Misty's Tentacool",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/b/b2/MistyTentacoolCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "066",
+    "name_en": "Lt. Surge's Jolteon (CoroCoro promo)",
+    "name_ja": "マチスのサンダース",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Lt. Surge's Jolteon (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Lt. Surge's Jolteon",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/2f/LtSurgeJolteonCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "067",
+    "name_en": "Dragonite (Pokémon Card GB promo)",
+    "name_ja": "カイリュー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Dragonite (Pokémon Card GB promo)",
+    "tcg_set": "Pokémon Card GB",
+    "tcg_name": "Dragonite",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/b/b1/DragoniteCardGBPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "068",
+    "name_en": "Venusaur (Pokémon Song Best Collection promo)",
+    "name_ja": "フシギバナ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Venusaur (Pokémon Song Best Collection promo)",
+    "tcg_set": "Pokémon Song Best Collection",
+    "tcg_name": "Venusaur",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "069",
+    "name_en": "Arcanine (Pokémon Song Best Collection promo)",
+    "name_ja": "ウィンディ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Arcanine (Pokémon Song Best Collection promo)",
+    "tcg_set": "Pokémon Song Best Collection",
+    "tcg_name": "Arcanine",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "070",
+    "name_en": "Charizard (Pokémon Song Best Collection promo)",
+    "name_ja": "リザードン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Charizard (Pokémon Song Best Collection promo)",
+    "tcg_set": "Pokémon Song Best Collection",
+    "tcg_name": "Charizard",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/e/ef/CharizardBestCDPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "071",
+    "name_en": "Blastoise (Pokémon Song Best Collection promo)",
+    "name_ja": "カメックス",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Blastoise (Pokémon Song Best Collection promo)",
+    "tcg_set": "Pokémon Song Best Collection",
+    "tcg_name": "Blastoise",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "072",
+    "name_en": "Mew (Pokémon Song Best Collection promo)",
+    "name_ja": "ミュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mew (Pokémon Song Best Collection promo)",
+    "tcg_set": "Pokémon Song Best Collection",
+    "tcg_name": "Mew",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "073",
+    "name_en": "Mewtwo (Pokémon Song Best Collection promo)",
+    "name_ja": "ミュウツー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mewtwo (Pokémon Song Best Collection promo)",
+    "tcg_set": "Pokémon Song Best Collection",
+    "tcg_name": "Mewtwo",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "074",
+    "name_en": "Cool Porygon (Pokémon Song Best Collection promo)",
+    "name_ja": "かっこいいポリゴン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Cool Porygon (Pokémon Song Best Collection promo)",
+    "tcg_set": "Pokémon Song Best Collection",
+    "tcg_name": "Cool Porygon",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "075",
+    "name_en": "Hungry Snorlax (Pokémon Song Best Collection promo)",
+    "name_ja": "くいしんぼカビゴン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Hungry Snorlax (Pokémon Song Best Collection promo)",
+    "tcg_set": "Pokémon Song Best Collection",
+    "tcg_name": "Hungry Snorlax",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "076",
+    "name_en": "Computer Error (Pokémon Song Best Collection promo)",
+    "name_ja": "パソコン大暴走！",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Computer Error (Pokémon Song Best Collection promo)",
+    "tcg_set": "Pokémon Song Best Collection",
+    "tcg_name": "Computer Error",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "077",
+    "name_en": "Super Energy Retrieval (Pokémon Song Best Collection promo)",
+    "name_ja": "超エネルギー回収",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Super Energy Retrieval (Pokémon Song Best Collection promo)",
+    "tcg_set": "Pokémon Song Best Collection",
+    "tcg_name": "Super Energy Retrieval",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "078",
+    "name_en": "Pikachu (Base Set 58)",
+    "name_ja": "ピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pikachu (Base Set 58)",
+    "tcg_set": "Base Set",
+    "tcg_name": "Pikachu",
+    "tcg_num": "58",
+    "image_url": "https://archives.bulbagarden.net/media/upload/f/f7/PikachuSnapBestPhotoContest.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "079",
+    "name_en": "Tropical Present (Fan Club promo)",
+    "name_ja": "トロピカルプレゼント",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Tropical Present (Fan Club promo)",
+    "tcg_set": "Fan Club",
+    "tcg_name": "Tropical Present",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/e/e0/TropicalPresentEarly1999Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "080",
+    "name_en": "Magikarp (University promo)",
+    "name_ja": "コイキング",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Magikarp (University promo)",
+    "tcg_set": "University",
+    "tcg_name": "Magikarp",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/4/4f/MagikarpUniversityPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "081",
+    "name_en": "Meowth (CoroCoro promo 99)",
+    "name_ja": "ニャース",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Meowth (CoroCoro promo 99)",
+    "tcg_set": "CoroCoro promo",
+    "tcg_name": "Meowth",
+    "tcg_num": "99"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "082",
+    "name_en": "Venusaur (Pokémon Card GB promo)",
+    "name_ja": "フシギバナ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Venusaur (Pokémon Card GB promo)",
+    "tcg_set": "Pokémon Card GB",
+    "tcg_name": "Venusaur",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "083",
+    "name_en": "Mewtwo (Wizards Promo 3)",
+    "name_ja": "ミュウツー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mewtwo (Wizards Promo 3)",
+    "tcg_set": "Wizards Promo",
+    "tcg_name": "Mewtwo",
+    "tcg_num": "3"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "084",
+    "name_en": "Blaine's Growlithe (CoroCoro promo)",
+    "name_ja": "カツラのガーディ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Blaine's Growlithe (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Blaine's Growlithe",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/7/7b/BlaineGrowlitheCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "085",
+    "name_en": "Sabrina's Abra (CoroCoro promo)",
+    "name_ja": "ナツメのケーシィ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Sabrina's Abra (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Sabrina's Abra",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "086",
+    "name_en": "Pikachu (Wizards Promo 1)",
+    "name_ja": "ピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pikachu (Wizards Promo 1)",
+    "tcg_set": "Wizards Promo",
+    "tcg_name": "Pikachu",
+    "tcg_num": "1",
+    "image_url": "https://archives.bulbagarden.net/media/upload/5/5c/PikachuToyotaPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "087",
+    "name_en": "Jigglypuff (Wizards Promo 7)",
+    "name_ja": "プリン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Jigglypuff (Wizards Promo 7)",
+    "tcg_set": "Wizards Promo",
+    "tcg_name": "Jigglypuff",
+    "tcg_num": "7"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "088",
+    "name_en": "Omastar (Communication Evolution Campaign promo)",
+    "name_ja": "オムスター",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Omastar (Communication Evolution Campaign promo)",
+    "tcg_set": "Communication Evolution Campaign",
+    "tcg_name": "Omastar",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/7/72/OmastarCommunicationEvolutionPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "089",
+    "name_en": "Alakazam (Communication Evolution Campaign promo)",
+    "name_ja": "フーディン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Alakazam (Communication Evolution Campaign promo)",
+    "tcg_set": "Communication Evolution Campaign",
+    "tcg_name": "Alakazam",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/e/eb/AlakazamCommunicationEvolutionPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "090",
+    "name_en": "Gengar (Communication Evolution Campaign promo)",
+    "name_ja": "ゲンガー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Gengar (Communication Evolution Campaign promo)",
+    "tcg_set": "Communication Evolution Campaign",
+    "tcg_name": "Gengar",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/c/c8/GengarCommunicationEvolutionPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "091",
+    "name_en": "Golem (Communication Evolution Campaign promo)",
+    "name_ja": "ゴローニャ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Golem (Communication Evolution Campaign promo)",
+    "tcg_set": "Communication Evolution Campaign",
+    "tcg_name": "Golem",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/1/18/GolemCommunicationEvolutionPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "092",
+    "name_en": "Machamp (Communication Evolution Campaign promo)",
+    "name_ja": "カイリキー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Machamp (Communication Evolution Campaign promo)",
+    "tcg_set": "Communication Evolution Campaign",
+    "tcg_name": "Machamp",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "093",
+    "name_en": "Togepi (CoroCoro promo)",
+    "name_ja": "トゲピー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Togepi (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Togepi",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "094",
+    "name_en": "Pikachu (Pokémon Card Trainers promo)",
+    "name_ja": "ピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pikachu (Pokémon Card Trainers promo)",
+    "tcg_set": "Pokémon Card Trainers",
+    "tcg_name": "Pikachu",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "095",
+    "name_en": "Mankey (How I Became a Pokémon Card promo)",
+    "name_ja": "マンキー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mankey (How I Became a Pokémon Card promo)",
+    "tcg_set": "How I Became a Pokémon Card",
+    "tcg_name": "Mankey",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "096",
+    "name_en": "Bulbasaur (Base Set 44)",
+    "name_ja": "フシギダネ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Bulbasaur (Base Set 44)",
+    "tcg_set": "Base Set",
+    "tcg_name": "Bulbasaur",
+    "tcg_num": "44"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "097",
+    "name_en": "Gyarados (Base Set 6)",
+    "name_ja": "ギャラドス",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Gyarados (Base Set 6)",
+    "tcg_set": "Base Set",
+    "tcg_name": "Gyarados",
+    "tcg_num": "6"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "098",
+    "name_en": "Magikarp (Base Set 35)",
+    "name_ja": "コイキング",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Magikarp (Base Set 35)",
+    "tcg_set": "Base Set",
+    "tcg_name": "Magikarp",
+    "tcg_num": "35"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "099",
+    "name_en": "Poliwag (Base Set 59)",
+    "name_ja": "ニョロモ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Poliwag (Base Set 59)",
+    "tcg_set": "Base Set",
+    "tcg_name": "Poliwag",
+    "tcg_num": "59"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "100",
+    "name_en": "Pikachu (Base Set 58)",
+    "name_ja": "ピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pikachu (Base Set 58)",
+    "tcg_set": "Base Set",
+    "tcg_name": "Pikachu",
+    "tcg_num": "58",
+    "image_url": "https://archives.bulbagarden.net/media/upload/f/f7/PikachuSnapBestPhotoContest.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "101",
+    "name_en": "Koffing (Base Set 51)",
+    "name_ja": "ドガース",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Koffing (Base Set 51)",
+    "tcg_set": "Base Set",
+    "tcg_name": "Koffing",
+    "tcg_num": "51"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "102",
+    "name_en": "Charmander (Base Set 46)",
+    "name_ja": "ヒトカゲ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Charmander (Base Set 46)",
+    "tcg_set": "Base Set",
+    "tcg_name": "Charmander",
+    "tcg_num": "46"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "103",
+    "name_en": "Articuno (Fossil 2)",
+    "name_ja": "フリーザー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Articuno (Fossil 2)",
+    "tcg_set": "Fossil",
+    "tcg_name": "Articuno",
+    "tcg_num": "2"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "104",
+    "name_en": "Squirtle (Base Set 63)",
+    "name_ja": "ゼニガメ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Squirtle (Base Set 63)",
+    "tcg_set": "Base Set",
+    "tcg_name": "Squirtle",
+    "tcg_num": "63"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "105",
+    "name_en": "Chansey (Base Set 3)",
+    "name_ja": "ラッキー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Chansey (Base Set 3)",
+    "tcg_set": "Base Set",
+    "tcg_name": "Chansey",
+    "tcg_num": "3"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "106",
+    "name_en": "Articuno (ANA promo)",
+    "name_ja": "フリーザー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Articuno (ANA promo)",
+    "tcg_set": "ANA",
+    "tcg_name": "Articuno",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/c/c0/ArticunoANAPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "107",
+    "name_en": "Flying Pikachu (ANA promo 99)",
+    "name_ja": "そらをとぶピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Flying Pikachu (ANA promo 99)",
+    "tcg_set": "ANA promo",
+    "tcg_name": "Flying Pikachu",
+    "tcg_num": "99",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/85/FlyingPikachuANAPromo99.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "108",
+    "name_en": "Marill (CoroCoro promo)",
+    "name_ja": "マリル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Marill (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Marill",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "109",
+    "name_en": "Pokémon Valley (CoroCoro promo) (Jumbo)",
+    "name_ja": "ポケモン谷",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pokémon Valley (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Pokémon Valley",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/e/eb/PokemonValleyCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "110",
+    "name_en": "No.1 Trainer (Tropical Mega Battle promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (Tropical Mega Battle promo)",
+    "tcg_set": "Tropical Mega Battle",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "111",
+    "name_en": "No.2 Trainer (Tropical Mega Battle promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (Tropical Mega Battle promo)",
+    "tcg_set": "Tropical Mega Battle",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "112",
+    "name_en": "No.3 Trainer (Tropical Mega Battle promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (Tropical Mega Battle promo)",
+    "tcg_set": "Tropical Mega Battle",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "113",
+    "name_en": "No.1 Trainer (Secret Super Battle promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (Secret Super Battle promo)",
+    "tcg_set": "Secret Super Battle",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "114",
+    "name_en": "No.2 Trainer (Secret Super Battle promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (Secret Super Battle promo)",
+    "tcg_set": "Secret Super Battle",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "115",
+    "name_en": "No.3 Trainer (Secret Super Battle promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (Secret Super Battle promo)",
+    "tcg_set": "Secret Super Battle",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "116",
+    "name_en": "Ancient Mew (The Power of One promo)",
+    "name_ja": "ミュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Ancient Mew (The Power of One promo)",
+    "tcg_set": "The Power of One",
+    "tcg_name": "Ancient Mew",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/d/dd/AncientMewNintedoError.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "117",
+    "name_en": "Tropical Present (Fan Club promo)",
+    "name_ja": "トロピカルプレゼント",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Tropical Present (Fan Club promo)",
+    "tcg_set": "Fan Club",
+    "tcg_name": "Tropical Present",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/e/e0/TropicalPresentEarly1999Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "118",
+    "name_en": "Giovanni's Nidoking (CoroCoro promo)",
+    "name_ja": "サカキのニドキング",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Giovanni's Nidoking (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Giovanni's Nidoking",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/5/57/GiovanniNidokingCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "119",
+    "name_en": "Koga's Ninja Gym (CoroCoro promo)",
+    "name_ja": "キョウの忍者ジム",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Koga's Ninja Gym (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Koga's Ninja Gym",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/4/41/KogaNinjaGymCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "120",
+    "name_en": "Lawrence III (CoroCoro promo) (Jumbo)",
+    "name_ja": "ジラルダン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Lawrence III (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Lawrence III",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/1/15/LawrenceIIICoroCoropromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "121",
+    "name_en": "Moltres (ANA promo)",
+    "name_ja": "ファイヤー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Moltres (ANA promo)",
+    "tcg_set": "ANA",
+    "tcg_name": "Moltres",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/1/10/MoltresANAPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "122",
+    "name_en": "Zapdos (ANA promo)",
+    "name_ja": "サンダー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Zapdos (ANA promo)",
+    "tcg_set": "ANA",
+    "tcg_name": "Zapdos",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/d/dd/ZapdosANAPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "123",
+    "name_en": "Moltres (Phone Card promo)",
+    "name_ja": "ファイヤー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Moltres (Phone Card promo)",
+    "tcg_set": "Phone Card",
+    "tcg_name": "Moltres",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "124",
+    "name_en": "Articuno (Phone Card promo)",
+    "name_ja": "フリーザー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Articuno (Phone Card promo)",
+    "tcg_set": "Phone Card",
+    "tcg_name": "Articuno",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "125",
+    "name_en": "Zapdos (Phone Card promo)",
+    "name_ja": "サンダー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Zapdos (Phone Card promo)",
+    "tcg_set": "Phone Card",
+    "tcg_name": "Zapdos",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "126",
+    "name_en": "Exeggutor (Tropical Mega Battle promo)",
+    "name_ja": "ナッシー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Exeggutor (Tropical Mega Battle promo)",
+    "tcg_set": "Tropical Mega Battle",
+    "tcg_name": "Exeggutor",
+    "tcg_num": "Promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "127",
+    "name_en": "Tropical Wind (Tropical Mega Battle promo)",
+    "name_ja": "トロピカルウインド",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Tropical Wind (Tropical Mega Battle promo)",
+    "tcg_set": "Tropical Mega Battle",
+    "tcg_name": "Tropical Wind",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/8b/TropicalWindTropicalMegaBattle1999Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "128",
+    "name_en": "Hama-chan's Slowking (CoroCoro promo)",
+    "name_ja": "ハマちゃんのヤドキング",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Hama-chan's Slowking (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Hama-chan's Slowking",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/5/5a/HamachanSlowkingCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "129",
+    "name_en": "Misty's Treatment (CD promo)",
+    "name_ja": "カスミのてあて",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Misty's Treatment (CD promo)",
+    "tcg_set": "CD",
+    "tcg_name": "Misty's Treatment",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/4/42/MistyTreatmentRidingOnLaprasPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "130",
+    "name_en": "Imakuni? (CoroCoro promo)",
+    "name_ja": "イマクニ？",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Imakuni? (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Imakuni?",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/c/c3/ImakuniCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "131",
+    "name_en": "Psyduck (How I Became a Pokémon Card promo)",
+    "name_ja": "コダック",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Psyduck (How I Became a Pokémon Card promo)",
+    "tcg_set": "How I Became a Pokémon Card",
+    "tcg_name": "Psyduck",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "132",
+    "name_en": "Exeggutor (Pokémon Card Trainers promo)",
+    "name_ja": "ナッシー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Exeggutor (Pokémon Card Trainers promo)",
+    "tcg_set": "Pokémon Card Trainers",
+    "tcg_name": "Exeggutor",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "133",
+    "name_en": "Team Rocket's Meowth (CD promo)",
+    "name_ja": "ロケット団のニャース",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Team Rocket's Meowth (CD promo)",
+    "tcg_set": "CD",
+    "tcg_name": "Team Rocket's Meowth",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "134",
+    "name_en": "Trainer Certification Card (Fan Club promo)",
+    "name_ja": "カードトレーナー認定証",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Trainer Certification Card (Fan Club promo)",
+    "tcg_set": "Fan Club",
+    "tcg_name": "Trainer Certification Card",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/7/79/TrainerCertificationCardPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "135",
+    "name_en": "Murkrow (Pokémon Card Trainers promo)",
+    "name_ja": "ヤミカラス",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Murkrow (Pokémon Card Trainers promo)",
+    "tcg_set": "Pokémon Card Trainers",
+    "tcg_name": "Murkrow",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/1/19/MurkrowTrainerpromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "136",
+    "name_en": "Darkness Energy (Pokémon Card Trainers promo)",
+    "name_ja": "特殊悪エネルギー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Darkness Energy (Pokémon Card Trainers promo)",
+    "tcg_set": "Pokémon Card Trainers",
+    "tcg_name": "Darkness Energy",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "137",
+    "name_en": "Chikorita (Premium File promo)",
+    "name_ja": "チコリータ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Chikorita (Premium File promo)",
+    "tcg_set": "Premium File",
+    "tcg_name": "Chikorita",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "138",
+    "name_en": "Bayleef (Premium File promo)",
+    "name_ja": "ベイリーフ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Bayleef (Premium File promo)",
+    "tcg_set": "Premium File",
+    "tcg_name": "Bayleef",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "139",
+    "name_en": "Meganium (Premium File promo)",
+    "name_ja": "メガニウム",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Meganium (Premium File promo)",
+    "tcg_set": "Premium File",
+    "tcg_name": "Meganium",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "140",
+    "name_en": "Cyndaquil (Premium File promo)",
+    "name_ja": "ヒノアラシ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Cyndaquil (Premium File promo)",
+    "tcg_set": "Premium File",
+    "tcg_name": "Cyndaquil",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "141",
+    "name_en": "Quilava (Premium File promo)",
+    "name_ja": "マグマラシ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Quilava (Premium File promo)",
+    "tcg_set": "Premium File",
+    "tcg_name": "Quilava",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "142",
+    "name_en": "Typhlosion (Premium File promo)",
+    "name_ja": "バクフーン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Typhlosion (Premium File promo)",
+    "tcg_set": "Premium File",
+    "tcg_name": "Typhlosion",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "143",
+    "name_en": "Totodile (Premium File promo)",
+    "name_ja": "ワニノコ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Totodile (Premium File promo)",
+    "tcg_set": "Premium File",
+    "tcg_name": "Totodile",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "144",
+    "name_en": "Croconaw (Premium File promo)",
+    "name_ja": "アリゲイツ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Croconaw (Premium File promo)",
+    "tcg_set": "Premium File",
+    "tcg_name": "Croconaw",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "145",
+    "name_en": "Feraligatr (Premium File promo)",
+    "name_ja": "オーダイル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Feraligatr (Premium File promo)",
+    "tcg_set": "Premium File",
+    "tcg_name": "Feraligatr",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "146",
+    "name_en": "Wooper (CoroCoro promo)",
+    "name_ja": "ウパー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Wooper (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Wooper",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/20/WooperCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "147",
+    "name_en": "New Year Present (Fan Club promo)",
+    "name_ja": "ニューイヤープレゼント",
+    "name_en_source": "manual",
+    "bulbapedia_page": "New Year Present (Fan Club promo)",
+    "tcg_set": "Fan Club",
+    "tcg_name": "New Year Present",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/4/45/NewYearPresentFanClubPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "148",
+    "name_en": "Chikorita (WHF promo)",
+    "name_ja": "チコリータ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Chikorita (WHF promo)",
+    "tcg_set": "WHF",
+    "tcg_name": "Chikorita",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "149",
+    "name_en": "Cyndaquil (WHF promo)",
+    "name_ja": "ヒノアラシ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Cyndaquil (WHF promo)",
+    "tcg_set": "WHF",
+    "tcg_name": "Cyndaquil",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "150",
+    "name_en": "Totodile (WHF promo)",
+    "name_ja": "ワニノコ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Totodile (WHF promo)",
+    "tcg_set": "WHF",
+    "tcg_name": "Totodile",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "151",
+    "name_en": "Chikorita (Champion Road promo)",
+    "name_ja": "チコリータ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Chikorita (Champion Road promo)",
+    "tcg_set": "Champion Road",
+    "tcg_name": "Chikorita",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "152",
+    "name_en": "Cyndaquil (Champion Road promo)",
+    "name_ja": "ヒノアラシ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Cyndaquil (Champion Road promo)",
+    "tcg_set": "Champion Road",
+    "tcg_name": "Cyndaquil",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "153",
+    "name_en": "Totodile (Champion Road promo)",
+    "name_ja": "ワニノコ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Totodile (Champion Road promo)",
+    "tcg_set": "Champion Road",
+    "tcg_name": "Totodile",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "154",
+    "name_en": "Berry (Champion Road promo)",
+    "name_ja": "きのみ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Berry (Champion Road promo)",
+    "tcg_set": "Champion Road",
+    "tcg_name": "Berry",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "155",
+    "name_en": "Miracle Berry (Champion Road promo)",
+    "name_ja": "きせきのみ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Miracle Berry (Champion Road promo)",
+    "tcg_set": "Champion Road",
+    "tcg_name": "Miracle Berry",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "156",
+    "name_en": "Cleffa (CoroCoro promo)",
+    "name_ja": "ピィ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Cleffa (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Cleffa",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "157",
+    "name_en": "Jynx (How I Became a Pokémon Card promo)",
+    "name_ja": "ルージュラ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Jynx (How I Became a Pokémon Card promo)",
+    "tcg_set": "How I Became a Pokémon Card",
+    "tcg_name": "Jynx",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "158",
+    "name_en": "Steelix (Pokémon Card Trainers promo)",
+    "name_ja": "ハガネール",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Steelix (Pokémon Card Trainers promo)",
+    "tcg_set": "Pokémon Card Trainers",
+    "tcg_name": "Steelix",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/d/d4/SteelixTrainersPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "159",
+    "name_en": "Charizard (Base Set 4) (Jumbo)",
+    "name_ja": "リザードン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Charizard (Base Set 4)",
+    "tcg_set": "Base Set",
+    "tcg_name": "Charizard",
+    "tcg_num": "4",
+    "image_url": "https://archives.bulbagarden.net/media/upload/e/ef/CharizardBestCDPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "160",
+    "name_en": "Eevee (Fan Club promo)",
+    "name_ja": "イーブイ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Eevee (Fan Club promo)",
+    "tcg_set": "Fan Club",
+    "tcg_name": "Eevee",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/1/11/EeveePok%C3%A9monCardFanClubPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "161",
+    "name_en": "Porygon (Fan Club promo)",
+    "name_ja": "ポリゴン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Porygon (Fan Club promo)",
+    "tcg_set": "Fan Club",
+    "tcg_name": "Porygon",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/82/PorygonPok%C3%A9monCardFanClubPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "162",
+    "name_en": "Mew (Wizards Promo 8)",
+    "name_ja": "ミュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mew (Wizards Promo 8)",
+    "tcg_set": "Wizards Promo",
+    "tcg_name": "Mew",
+    "tcg_num": "8"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "163",
+    "name_en": "Scizor (CoroCoro promo)",
+    "name_ja": "ハッサム",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Scizor (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Scizor",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "164",
+    "name_en": "Dance! Neo Imakuni? (CD promo)",
+    "name_ja": "おどれ!neo★イマクニ?",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Dance! Neo Imakuni? (CD promo)",
+    "tcg_set": "CD",
+    "tcg_name": "Dance! Neo Imakuni?",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/83/DanceNeoImakuniCDPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "165",
+    "name_en": "Pikachu (Wizards Promo 4)",
+    "name_ja": "ピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pikachu (Wizards Promo 4)",
+    "tcg_set": "Wizards Promo",
+    "tcg_name": "Pikachu",
+    "tcg_num": "4"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "166",
+    "name_en": "Lucky Stadium (World Challenge Summer promo) (Onix)",
+    "name_ja": "ラッキースタジアム",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Lucky Stadium (World Challenge Summer promo)",
+    "tcg_set": "World Challenge Summer",
+    "tcg_name": "Lucky Stadium",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "167",
+    "name_en": "Lucky Stadium (World Challenge Summer promo) (Lugia)",
+    "name_ja": "ラッキースタジアム",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Lucky Stadium (World Challenge Summer promo)",
+    "tcg_set": "World Challenge Summer",
+    "tcg_name": "Lucky Stadium",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "168",
+    "name_en": "Lucky Stadium (World Challenge Summer promo) (Ho-Oh)",
+    "name_ja": "ラッキースタジアム",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Lucky Stadium (World Challenge Summer promo)",
+    "tcg_set": "World Challenge Summer",
+    "tcg_name": "Lucky Stadium",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "169",
+    "name_en": "Lucky Stadium (World Challenge Summer promo) (Gyarados)",
+    "name_ja": "ラッキースタジアム",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Lucky Stadium (World Challenge Summer promo)",
+    "tcg_set": "World Challenge Summer",
+    "tcg_name": "Lucky Stadium",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "170",
+    "name_en": "Lucky Stadium (World Challenge Summer promo) (Zapdos)",
+    "name_ja": "ラッキースタジアム",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Lucky Stadium (World Challenge Summer promo)",
+    "tcg_set": "World Challenge Summer",
+    "tcg_name": "Lucky Stadium",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "171",
+    "name_en": "Lucky Stadium (World Challenge Summer promo) (Diglett)",
+    "name_ja": "ラッキースタジアム",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Lucky Stadium (World Challenge Summer promo)",
+    "tcg_set": "World Challenge Summer",
+    "tcg_name": "Lucky Stadium",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "172",
+    "name_en": "Lucky Stadium (World Challenge Summer promo) (Mew)",
+    "name_ja": "ラッキースタジアム",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Lucky Stadium (World Challenge Summer promo)",
+    "tcg_set": "World Challenge Summer",
+    "tcg_name": "Lucky Stadium",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "173",
+    "name_en": "Lucky Stadium (World Challenge Summer promo) (Pikachu)",
+    "name_ja": "ラッキースタジアム",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Lucky Stadium (World Challenge Summer promo)",
+    "tcg_set": "World Challenge Summer",
+    "tcg_name": "Lucky Stadium",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "174",
+    "name_en": "No.1 Trainer (World Challenge Tropical Mega Battle promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (World Challenge Tropical Mega Battle promo)",
+    "tcg_set": "World Challenge Tropical Mega Battle",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "175",
+    "name_en": "No.2 Trainer (World Challenge Tropical Mega Battle promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (World Challenge Tropical Mega Battle promo)",
+    "tcg_set": "World Challenge Tropical Mega Battle",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "176",
+    "name_en": "No.3 Trainer (World Challenge Tropical Mega Battle promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (World Challenge Tropical Mega Battle promo)",
+    "tcg_set": "World Challenge Tropical Mega Battle",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "177",
+    "name_en": "No.1 Trainer (World Challenge Secret Super Battle promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (World Challenge Secret Super Battle promo)",
+    "tcg_set": "World Challenge Secret Super Battle",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "178",
+    "name_en": "No.2 Trainer (World Challenge Secret Super Battle promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (World Challenge Secret Super Battle promo)",
+    "tcg_set": "World Challenge Secret Super Battle",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "179",
+    "name_en": "No.3 Trainer (World Challenge Secret Super Battle promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (World Challenge Secret Super Battle promo)",
+    "tcg_set": "World Challenge Secret Super Battle",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "180",
+    "name_en": "Smeargle (Pokémon Card Trainers promo)",
+    "name_ja": "ドーブル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Smeargle (Pokémon Card Trainers promo)",
+    "tcg_set": "Pokémon Card Trainers",
+    "tcg_name": "Smeargle",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "181",
+    "name_en": "Pikachu & Pichu (CoroCoro promo) (Jumbo)",
+    "name_ja": "ピチューとピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pikachu & Pichu (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Pikachu & Pichu",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/e/e0/PichuPikachuCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "182",
+    "name_en": "Hitmontop (Emperor of the Crystal Tower: Entei promo)",
+    "name_ja": "カポエラー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Hitmontop (Emperor of the Crystal Tower: Entei promo)",
+    "tcg_set": "Emperor of the Crystal Tower: Entei",
+    "tcg_name": "Hitmontop",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "183",
+    "name_en": "Igglybuff (Emperor of the Crystal Tower: Entei promo)",
+    "name_ja": "ププリン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Igglybuff (Emperor of the Crystal Tower: Entei promo)",
+    "tcg_set": "Emperor of the Crystal Tower: Entei",
+    "tcg_name": "Igglybuff",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "184",
+    "name_en": "Charizard (Premium File 2 promo)",
+    "name_ja": "リザードン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Charizard (Premium File 2 promo)",
+    "tcg_set": "Premium File 2",
+    "tcg_name": "Charizard",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/4/4c/CharizardPremiumFile2Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "185",
+    "name_en": "Entei (Premium File 2 promo)",
+    "name_ja": "エンテイ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Entei (Premium File 2 promo)",
+    "tcg_set": "Premium File 2",
+    "tcg_name": "Entei",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "186",
+    "name_en": "Pichu (Premium File 2 promo)",
+    "name_ja": "ピチュー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pichu (Premium File 2 promo)",
+    "tcg_set": "Premium File 2",
+    "tcg_name": "Pichu",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "187",
+    "name_en": "Espeon (Premium File 2 promo)",
+    "name_ja": "エーフィ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Espeon (Premium File 2 promo)",
+    "tcg_set": "Premium File 2",
+    "tcg_name": "Espeon",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "188",
+    "name_en": "Unown E (Premium File 2 promo)",
+    "name_ja": "アンノーン [E]",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Unown E (Premium File 2 promo)",
+    "tcg_set": "Premium File 2",
+    "tcg_name": "Unown E",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "189",
+    "name_en": "Unown N (Premium File 2 promo)",
+    "name_ja": "アンノーン [N]",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Unown N (Premium File 2 promo)",
+    "tcg_set": "Premium File 2",
+    "tcg_name": "Unown N",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "190",
+    "name_en": "Unown O (Premium File 2 promo)",
+    "name_ja": "アンノーン [O]",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Unown O (Premium File 2 promo)",
+    "tcg_set": "Premium File 2",
+    "tcg_name": "Unown O",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "191",
+    "name_en": "Umbreon (Premium File 2 promo)",
+    "name_ja": "ブラッキー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Umbreon (Premium File 2 promo)",
+    "tcg_set": "Premium File 2",
+    "tcg_name": "Umbreon",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "192",
+    "name_en": "Eevee (Premium File 2 promo)",
+    "name_ja": "イーブイ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Eevee (Premium File 2 promo)",
+    "tcg_set": "Premium File 2",
+    "tcg_name": "Eevee",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/e/e9/EeveePremiumFile2Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "193",
+    "name_en": "Crystal Tower's Entei (CoroCoro promo) (Jumbo)",
+    "name_ja": "結晶塔のエンテイ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Crystal Tower's Entei (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Crystal Tower's Entei",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/e/ec/CrystalTowerEnteiCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "194",
+    "name_en": "New Century Present (Fan Club promo)",
+    "name_ja": "ニューセンチュリープレゼント",
+    "name_en_source": "manual",
+    "bulbapedia_page": "New Century Present (Fan Club promo)",
+    "tcg_set": "Fan Club",
+    "tcg_name": "New Century Present",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/9/91/NewCenturyPresentFanClubPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "195",
+    "name_en": "Marill (ANA promo)",
+    "name_ja": "マリル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Marill (ANA promo)",
+    "tcg_set": "ANA",
+    "tcg_name": "Marill",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/a/a3/MarillANAPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "196",
+    "name_en": "Meowth (Wizards Promo 10)",
+    "name_ja": "ニャース",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Meowth (Wizards Promo 10)",
+    "tcg_set": "Wizards Promo",
+    "tcg_name": "Meowth",
+    "tcg_num": "10"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "197",
+    "name_en": "Mewtwo (Wizards Promo 12)",
+    "name_ja": "ミュウツー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mewtwo (Wizards Promo 12)",
+    "tcg_set": "Wizards Promo",
+    "tcg_name": "Mewtwo",
+    "tcg_num": "12"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "198",
+    "name_en": "Eevee (Wizards Promo 11)",
+    "name_ja": "イーブイ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Eevee (Wizards Promo 11)",
+    "tcg_set": "Wizards Promo",
+    "tcg_name": "Eevee",
+    "tcg_num": "11",
+    "image_url": "https://archives.bulbagarden.net/media/upload/1/11/EeveePok%C3%A9monCardFanClubPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "199",
+    "name_en": "No.1 Trainer (World Challenge Secret Super Battle finals promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (World Challenge Secret Super Battle finals promo)",
+    "tcg_set": "World Challenge Secret Super Battle finals",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "200",
+    "name_en": "No.2 Trainer (World Challenge Secret Super Battle finals promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (World Challenge Secret Super Battle finals promo)",
+    "tcg_set": "World Challenge Secret Super Battle finals",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "201",
+    "name_en": "No.3 Trainer (World Challenge Secret Super Battle finals promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (World Challenge Secret Super Battle finals promo)",
+    "tcg_set": "World Challenge Secret Super Battle finals",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "202",
+    "name_en": "Lucky Stadium (Tropical Mega Battle promo)",
+    "name_ja": "ラッキースタジアム",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Lucky Stadium (Tropical Mega Battle promo)",
+    "tcg_set": "Tropical Mega Battle",
+    "tcg_name": "Lucky Stadium",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/e/e7/LuckyStadiumTropicalMegaBattlePromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "203",
+    "name_en": "No.1 Trainer (World Challenge Tropical Mega Battle finals promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (World Challenge Tropical Mega Battle finals promo)",
+    "tcg_set": "World Challenge Tropical Mega Battle finals",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "204",
+    "name_en": "No.2 Trainer (World Challenge Tropical Mega Battle finals promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (World Challenge Tropical Mega Battle finals promo)",
+    "tcg_set": "World Challenge Tropical Mega Battle finals",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "205",
+    "name_en": "No.3 Trainer (World Challenge Tropical Mega Battle finals promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (World Challenge Tropical Mega Battle finals promo)",
+    "tcg_set": "World Challenge Tropical Mega Battle finals",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "206",
+    "name_en": "Sunkern (How I Became a Pokémon Card promo)",
+    "name_ja": "ヒマナッツ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Sunkern (How I Became a Pokémon Card promo)",
+    "tcg_set": "How I Became a Pokémon Card",
+    "tcg_name": "Sunkern",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "207",
+    "name_en": "Togepi (ANA promo)",
+    "name_ja": "トゲピー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Togepi (ANA promo)",
+    "tcg_set": "ANA",
+    "tcg_name": "Togepi",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/4/4a/TogepiANAPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "208",
+    "name_en": "Unown J (Pokémon Card Trainers promo)",
+    "name_ja": "アンノーン ［Ｊ］",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Unown J (Pokémon Card Trainers promo)",
+    "tcg_set": "Pokémon Card Trainers",
+    "tcg_name": "Unown J",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "209",
+    "name_en": "Unown R (CoroCoro promo)",
+    "name_ja": "アンノーン [R]",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Unown R (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Unown R",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/d/dd/UnownRCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "210",
+    "name_en": "Celebi (Premium File 3 promo)",
+    "name_ja": "セレビィ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Celebi (Premium File 3 promo)",
+    "tcg_set": "Premium File 3",
+    "tcg_name": "Celebi",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "211",
+    "name_en": "Entei (Premium File 3 promo)",
+    "name_ja": "エンテイ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Entei (Premium File 3 promo)",
+    "tcg_set": "Premium File 3",
+    "tcg_name": "Entei",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "212",
+    "name_en": "Suicune (Premium File 3 promo)",
+    "name_ja": "スイクン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Suicune (Premium File 3 promo)",
+    "tcg_set": "Premium File 3",
+    "tcg_name": "Suicune",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "213",
+    "name_en": "Raikou (Premium File 3 promo)",
+    "name_ja": "ライコウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Raikou (Premium File 3 promo)",
+    "tcg_set": "Premium File 3",
+    "tcg_name": "Raikou",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "214",
+    "name_en": "Lugia (Premium File 3 promo)",
+    "name_ja": "ルギア",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Lugia (Premium File 3 promo)",
+    "tcg_set": "Premium File 3",
+    "tcg_name": "Lugia",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "215",
+    "name_en": "Sudowoodo (Premium File 3 promo)",
+    "name_ja": "ウソッキー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Sudowoodo (Premium File 3 promo)",
+    "tcg_set": "Premium File 3",
+    "tcg_name": "Sudowoodo",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "216",
+    "name_en": "Skarmory (Premium File 3 promo)",
+    "name_ja": "エアームド",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Skarmory (Premium File 3 promo)",
+    "tcg_set": "Premium File 3",
+    "tcg_name": "Skarmory",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "217",
+    "name_en": "Sneasel (Premium File 3 promo)",
+    "name_ja": "ニューラ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Sneasel (Premium File 3 promo)",
+    "tcg_set": "Premium File 3",
+    "tcg_name": "Sneasel",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "218",
+    "name_en": "Ho-Oh (Premium File 3 promo)",
+    "name_ja": "ホウオウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Ho-Oh (Premium File 3 promo)",
+    "tcg_set": "Premium File 3",
+    "tcg_name": "Ho-Oh",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "219",
+    "name_en": "Misdreavus (Pokémon Card Trainers promo)",
+    "name_ja": "ムウマ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Misdreavus (Pokémon Card Trainers promo)",
+    "tcg_set": "Pokémon Card Trainers",
+    "tcg_name": "Misdreavus",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "220",
+    "name_en": "Smoochum (CoroCoro promo)",
+    "name_ja": "ムチュール",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Smoochum (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Smoochum",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/b/b1/SmoochumCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "221",
+    "name_en": "Dunsparce (Information Pack promo)",
+    "name_ja": "ノコッチ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Dunsparce (Information Pack promo)",
+    "tcg_set": "Information Pack",
+    "tcg_name": "Dunsparce",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/6/6a/DunsparceInformationPackPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "222",
+    "name_en": "No.1 Trainer (Neo Spring Road promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (Neo Spring Road promo)",
+    "tcg_set": "Neo Spring Road",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "223",
+    "name_en": "No.2 Trainer (Neo Spring Road promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (Neo Spring Road promo)",
+    "tcg_set": "Neo Spring Road",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "224",
+    "name_en": "No.3 Trainer (Neo Spring Road promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (Neo Spring Road promo)",
+    "tcg_set": "Neo Spring Road",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "225",
+    "name_en": "Dark Ivysaur (Pokémon Card Trainers promo)",
+    "name_ja": "わるいフシギソウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Dark Ivysaur (Pokémon Card Trainers promo)",
+    "tcg_set": "Pokémon Card Trainers",
+    "tcg_name": "Dark Ivysaur",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/d/de/DarkIvysaurPok%C3%A9monCardTrainersPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "226",
+    "name_en": "Dark Venusaur (Pokémon Card Trainers promo)",
+    "name_ja": "わるいフシギバナ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Dark Venusaur (Pokémon Card Trainers promo)",
+    "tcg_set": "Pokémon Card Trainers",
+    "tcg_name": "Dark Venusaur",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/e/e0/DarkVenusaurPok%C3%A9monCardTrainersPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "227",
+    "name_en": "Team GR's Mewtwo (Pokémon Card GB2 promo)",
+    "name_ja": "GR団のミュウツー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Team GR's Mewtwo (Pokémon Card GB2 promo)",
+    "tcg_set": "Pokémon Card GB2",
+    "tcg_name": "Team GR's Mewtwo",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/9/9f/TeamGRMewtwoPok%C3%A9monCardGB2Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "228",
+    "name_en": "Lugia (Pokémon Card GB2 promo)",
+    "name_ja": "ルギア",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Lugia (Pokémon Card GB2 promo)",
+    "tcg_set": "Pokémon Card GB2",
+    "tcg_name": "Lugia",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/a/ae/LugiaPok%C3%A9monCardGB2Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "229",
+    "name_en": "Dark Fearow (Pokémon Card GB2 promo)",
+    "name_ja": "わるいオニドリル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Dark Fearow (Pokémon Card GB2 promo)",
+    "tcg_set": "Pokémon Card GB2",
+    "tcg_name": "Dark Fearow",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/3/32/DarkFearowPok%C3%A9monCardGB2Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "230",
+    "name_en": "No.1 Trainer (Neo Spring Road finals promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (Neo Spring Road finals promo)",
+    "tcg_set": "Neo Spring Road finals",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "231",
+    "name_en": "No.2 Trainer (Neo Spring Road finals promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (Neo Spring Road finals promo)",
+    "tcg_set": "Neo Spring Road finals",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "232",
+    "name_en": "No.3 Trainer (Neo Spring Road finals promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (Neo Spring Road finals promo)",
+    "tcg_set": "Neo Spring Road finals",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "233",
+    "name_en": "Bellossom (Information Pack promo)",
+    "name_ja": "キレイハナ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Bellossom (Information Pack promo)",
+    "tcg_set": "Information Pack",
+    "tcg_name": "Bellossom",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/b/b6/BellossomInformationPackPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "234",
+    "name_en": "Shining Mew (CoroCoro promo)",
+    "name_ja": "ひかるミュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Shining Mew (CoroCoro promo)",
+    "tcg_set": "CoroCoro",
+    "tcg_name": "Shining Mew",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/f/fe/ShiningMewCoroCoroPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "235",
+    "name_en": "Shining Magikarp (Fan Club promo)",
+    "name_ja": "ひかるコイキング",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Shining Magikarp (Fan Club promo)",
+    "tcg_set": "Fan Club",
+    "tcg_name": "Shining Magikarp",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "236",
+    "name_en": "Tropical Present (Fan Club promo)",
+    "name_ja": "トロピカルプレゼント",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Tropical Present (Fan Club promo)",
+    "tcg_set": "Fan Club",
+    "tcg_name": "Tropical Present",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/e/e0/TropicalPresentEarly1999Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "237",
+    "name_en": "Pryce's Lapras (Information Pack promo)",
+    "name_ja": "ヤナギのラプラス",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pryce's Lapras (Information Pack promo)",
+    "tcg_set": "Information Pack",
+    "tcg_name": "Pryce's Lapras",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "238",
+    "name_en": "No.1 Trainer (Neo Summer Road promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (Neo Summer Road promo)",
+    "tcg_set": "Neo Summer Road",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "239",
+    "name_en": "No.2 Trainer (Neo Summer Road promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (Neo Summer Road promo)",
+    "tcg_set": "Neo Summer Road",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "240",
+    "name_en": "No.3 Trainer (Neo Summer Road promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (Neo Summer Road promo)",
+    "tcg_set": "Neo Summer Road",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "241",
+    "name_en": "Hoppip (How I Became a Pokémon Card promo)",
+    "name_ja": "ハネッコ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Hoppip (How I Became a Pokémon Card promo)",
+    "tcg_set": "How I Became a Pokémon Card",
+    "tcg_name": "Hoppip",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "242",
+    "name_en": "No.1 Trainer (Neo Summer Road finals promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (Neo Summer Road finals promo)",
+    "tcg_set": "Neo Summer Road finals",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "243",
+    "name_en": "No.2 Trainer (Neo Summer Road finals promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (Neo Summer Road finals promo)",
+    "tcg_set": "Neo Summer Road finals",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "244",
+    "name_en": "No.3 Trainer (Neo Summer Road finals promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (Neo Summer Road finals promo)",
+    "tcg_set": "Neo Summer Road finals",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "245",
+    "name_en": "_____'s Pikachu (How I Became a Pokémon Card promo)",
+    "name_ja": "{{tt",
+    "name_en_source": "manual",
+    "bulbapedia_page": "_____'s Pikachu (How I Became a Pokémon Card promo)",
+    "tcg_set": "How I Became a Pokémon Card",
+    "tcg_name": "_____'s Pikachu",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "246",
+    "name_en": "Touch Generation Change! (New Garura Parent/Child promo)",
+    "name_ja": "タッチ世代交代!",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Touch Generation Change! (New Garura Parent/Child promo)",
+    "tcg_set": "New Garura Parent/Child",
+    "tcg_name": "Touch Generation Change!",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/a/a6/TouchGenerationChangeParentChildPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "247",
+    "name_en": "No.1 Trainer (Battle Road Spring 2002 promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (Battle Road Spring 2002 promo)",
+    "tcg_set": "Battle Road Spring 2002",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "248",
+    "name_en": "No.2 Trainer (Battle Road Spring 2002 promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (Battle Road Spring 2002 promo)",
+    "tcg_set": "Battle Road Spring 2002",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "249",
+    "name_en": "No.3 Trainer (Battle Road Spring 2002 promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (Battle Road Spring 2002 promo)",
+    "tcg_set": "Battle Road Spring 2002",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "250",
+    "name_en": "No.1 Trainer (Battle Road Summer 2002 promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (Battle Road Summer 2002 promo)",
+    "tcg_set": "Battle Road Summer 2002",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "251",
+    "name_en": "No.2 Trainer (Battle Road Summer 2002 promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (Battle Road Summer 2002 promo)",
+    "tcg_set": "Battle Road Summer 2002",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "252",
+    "name_en": "No.3 Trainer (Battle Road Summer 2002 promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (Battle Road Summer 2002 promo)",
+    "tcg_set": "Battle Road Summer 2002",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "253",
+    "name_en": "No.1 Trainer (Battle Road Summer 2002 finals promo)",
+    "name_ja": "Ｎｏ.１トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.1 Trainer (Battle Road Summer 2002 finals promo)",
+    "tcg_set": "Battle Road Summer 2002 finals",
+    "tcg_name": "No.1 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "254",
+    "name_en": "No.2 Trainer (Battle Road Summer 2002 finals promo)",
+    "name_ja": "Ｎｏ.２トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.2 Trainer (Battle Road Summer 2002 finals promo)",
+    "tcg_set": "Battle Road Summer 2002 finals",
+    "tcg_name": "No.2 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "255",
+    "name_en": "No.3 Trainer (Battle Road Summer 2002 finals promo)",
+    "name_ja": "Ｎｏ.３トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "No.3 Trainer (Battle Road Summer 2002 finals promo)",
+    "tcg_set": "Battle Road Summer 2002 finals",
+    "tcg_name": "No.3 Trainer",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "256",
+    "name_en": "Elite Four Trainer (Battle Road Summer 2002 finals promo)",
+    "name_ja": "四天王トレーナー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Elite Four Trainer (Battle Road Summer 2002 finals promo)",
+    "tcg_set": "Battle Road Summer 2002 finals",
+    "tcg_name": "Elite Four Trainer",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/1/1d/EliteFourTrainerBattleRoadSummer2002finalspromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "257",
+    "name_en": "Victory Ring (Battle Road promo)",
+    "name_ja": "勝利のリング",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Ring (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Ring",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/8b/VictoryRingBattleRoad2003Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "258",
+    "name_en": "Victory Orb (Battle Road promo)",
+    "name_ja": "勝利のオーブ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Orb (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Orb",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/2f/VictoryOrbBattleRoad2003Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "259",
+    "name_en": "Victory Ring (Battle Road promo)",
+    "name_ja": "勝利のリング",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Ring (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Ring",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/8b/VictoryRingBattleRoad2003Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "260",
+    "name_en": "Victory Ring (Battle Road promo)",
+    "name_ja": "勝利のリング",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Ring (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Ring",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/8b/VictoryRingBattleRoad2003Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "261",
+    "name_en": "Victory Orb (Battle Road promo)",
+    "name_ja": "勝利のオーブ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Orb (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Orb",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/2f/VictoryOrbBattleRoad2003Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "262",
+    "name_en": "Sky-Splitting Deoxys (Movie VS Pack promo)",
+    "name_ja": "裂空のデオキシス",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Sky-Splitting Deoxys (Movie VS Pack promo)",
+    "tcg_set": "Movie VS Pack",
+    "tcg_name": "Sky-Splitting Deoxys",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/6/6e/SkySplittingDeoxysMovieVSPack1.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "263",
+    "name_en": "Poké Dude (Pokémon Daisuki Club promo)",
+    "name_ja": "おしえテレビのおにいさん",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Poké Dude (Pokémon Daisuki Club promo)",
+    "tcg_set": "Pokémon Daisuki Club",
+    "tcg_name": "Poké Dude",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/3/35/Pok%C3%A9DudePok%C3%A9monDaisukiClubPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "264",
+    "name_en": "Tropical Wind (Nintendo Promo 26)",
+    "name_ja": "トロピカルウインド",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Tropical Wind (Nintendo Promo 26)",
+    "tcg_set": "Nintendo Promo",
+    "tcg_name": "Tropical Wind",
+    "tcg_num": "26",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/8b/TropicalWindTropicalMegaBattle1999Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "265",
+    "name_en": "Victory Ring (Battle Road promo)",
+    "name_ja": "勝利のリング",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Ring (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Ring",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/8b/VictoryRingBattleRoad2003Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "266",
+    "name_en": "Victory Medal (Battle Road promo) (Silver)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "267",
+    "name_en": "Victory Ring (Battle Road promo)",
+    "name_ja": "勝利のリング",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Ring (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Ring",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/8b/VictoryRingBattleRoad2003Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "268",
+    "name_en": "Victory Medal (Battle Road promo) (Gold)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "269",
+    "name_en": "Victory Orb (Battle Road promo)",
+    "name_ja": "勝利のオーブ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Orb (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Orb",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/2f/VictoryOrbBattleRoad2003Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "270",
+    "name_en": "Tropical Tidal Wave (Nintendo Promo 27)",
+    "name_ja": "トロピカルタイダルウェーブ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Tropical Tidal Wave (Nintendo Promo 27)",
+    "tcg_set": "Nintendo Promo",
+    "tcg_name": "Tropical Tidal Wave",
+    "tcg_num": "27",
+    "image_url": "https://archives.bulbagarden.net/media/upload/d/d1/TropicalTidalWaveHGSSPromo18.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "271",
+    "name_en": "Champion's League (Champion's League promo)",
+    "name_ja": "チャンピオンズリーグ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Champion's League (Champion's League promo)",
+    "tcg_set": "Champion's League",
+    "tcg_name": "Champion's League",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/9/9f/ChampionLeague2005Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "272",
+    "name_en": "Shadow Lugia (Jumbo)",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Shadow Lugia (Jumbo)"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "273",
+    "name_en": "Ancient Mew (The Power of One promo)",
+    "name_ja": "ミュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Ancient Mew (The Power of One promo)",
+    "tcg_set": "The Power of One",
+    "tcg_name": "Ancient Mew",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/d/dd/AncientMewNintedoError.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "274",
+    "name_en": "Articuno, Moltres, and Zapdos (Warner Bros. promo) (Jumbo)",
+    "name_ja": "サンダーとフリーザーとファイヤー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Articuno, Moltres, and Zapdos (Warner Bros. promo)",
+    "tcg_set": "Warner Bros.",
+    "tcg_name": "Articuno, Moltres, and Zapdos",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/8f/ArticunoMoltresZapdosWarnerBrosPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "275",
+    "name_en": "Shadow Lugia (Nintendo World promo) (Game stamp; Jumbo)",
+    "name_ja": "ダーク・ルギア",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Shadow Lugia (Nintendo World promo)",
+    "tcg_set": "Nintendo World",
+    "tcg_name": "Shadow Lugia",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/86/ShadowLugiaNintendoWorldPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "276",
+    "name_en": "Victory Medal (Battle Road promo)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "277",
+    "name_en": "Victory Medal (Battle Road promo)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "278",
+    "name_en": "Victory Medal (Battle Road promo)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "279",
+    "name_en": "Victory Medal (Battle Road promo)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "280",
+    "name_en": "Victory Medal (Battle Road promo)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "281",
+    "name_en": "Victory Medal (Battle Road promo)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "282",
+    "name_en": "Victory Medal (Battle Road promo)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "283",
+    "name_en": "Victory Medal (Battle Road promo)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "284",
+    "name_en": "Zorua and Celebi (Black and White Tour promo) (Jumbo)",
+    "name_ja": "ゾロアとセレビィ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Zorua and Celebi (Black and White Tour promo)",
+    "tcg_set": "Black and White Tour",
+    "tcg_name": "Zorua and Celebi",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/9/9e/ZoruaCelebiBlackWhiteTourPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "285",
+    "name_en": "Zoroark and Legendary Pokémon (World of Illusions promo) (Jumbo)",
+    "name_ja": "ゾロアークと伝説のポケモン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Zoroark and Legendary Pokémon (World of Illusions promo)",
+    "tcg_set": "World of Illusions",
+    "tcg_name": "Zoroark and Legendary Pokémon",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/7/7d/ZoroarkLegendaryPok%C3%A9monWorldofIllusionsPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "286",
+    "name_en": "Victory Medal (Battle Road promo)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "287",
+    "name_en": "_____'s Snivy (Super Snivy promo) (Jumbo)",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "_____'s Snivy (Super Snivy promo)",
+    "tcg_set": "Super Snivy",
+    "tcg_name": "_____'s Snivy",
+    "tcg_num": "Promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "288",
+    "name_en": "_____'s Tepig (Terrific Tepig promo) (Jumbo)",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "_____'s Tepig (Terrific Tepig promo)",
+    "tcg_set": "Terrific Tepig",
+    "tcg_name": "_____'s Tepig",
+    "tcg_num": "Promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "289",
+    "name_en": "_____'s Oshawott (Outstanding Oshawott promo) (Jumbo)",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "_____'s Oshawott (Outstanding Oshawott promo)",
+    "tcg_set": "Outstanding Oshawott",
+    "tcg_name": "_____'s Oshawott",
+    "tcg_num": "Promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "290",
+    "name_en": "Raikou, Entei & Suicune (Legends of Johto promo) (Legendary Pokémon; Jumbo)",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Raikou, Entei & Suicune (Legends of Johto promo)",
+    "tcg_set": "Legends of Johto",
+    "tcg_name": "Raikou, Entei & Suicune",
+    "tcg_num": "Promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "291",
+    "name_en": "Tornadus, Thundurus & Landorus (Forces of Nature promo) (Legendary Pokémon; Jumbo)",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Tornadus, Thundurus & Landorus (Forces of Nature promo)",
+    "tcg_set": "Forces of Nature",
+    "tcg_name": "Tornadus, Thundurus & Landorus",
+    "tcg_num": "Promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "292",
+    "name_en": "Reshiram, Zekrom & Kyurem (Legends of Unova promo) (Legendary Pokémon; Jumbo)",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Reshiram, Zekrom & Kyurem (Legends of Unova promo)",
+    "tcg_set": "Legends of Unova",
+    "tcg_name": "Reshiram, Zekrom & Kyurem",
+    "tcg_num": "Promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "293",
+    "name_en": "Victory Medal (Battle Road promo) (Silver)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "294",
+    "name_en": "Victory Ring (Battle Road promo)",
+    "name_ja": "勝利のリング",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Ring (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Ring",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/8b/VictoryRingBattleRoad2003Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "295",
+    "name_en": "Victory Medal (Battle Road promo) (Gold)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "296",
+    "name_en": "Victory Orb (Battle Road promo)",
+    "name_ja": "勝利のオーブ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Orb (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Orb",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/2f/VictoryOrbBattleRoad2003Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "297",
+    "name_en": "Tropical Tidal Wave (Nintendo Promo 36)",
+    "name_ja": "トロピカルタイダルウェーブ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Tropical Tidal Wave (Nintendo Promo 36)",
+    "tcg_set": "Nintendo Promo",
+    "tcg_name": "Tropical Tidal Wave",
+    "tcg_num": "36",
+    "image_url": "https://archives.bulbagarden.net/media/upload/d/d1/TropicalTidalWaveHGSSPromo18.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "298",
+    "name_en": "Gardevoir ex δ (EX Dragon Frontiers 93) (Jumbo)",
+    "name_ja": "サーナイト ex δ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Gardevoir ex δ (EX Dragon Frontiers 93)",
+    "tcg_set": "EX Dragon Frontiers",
+    "tcg_name": "Gardevoir ex δ",
+    "tcg_num": "93"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "299",
+    "name_en": "Tyranitar ex δ (EX Dragon Frontiers 99) (Jumbo)",
+    "name_ja": "バンギラス ex δ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Tyranitar ex δ (EX Dragon Frontiers 99)",
+    "tcg_set": "EX Dragon Frontiers",
+    "tcg_name": "Tyranitar ex δ",
+    "tcg_num": "99"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "300",
+    "name_en": "Championship Arena (Battle Road promo)",
+    "name_ja": "バトルロードスタジアム",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Championship Arena (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Championship Arena",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/6/62/ChampionshipArenaBattleRoadStadiumDPPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "301",
+    "name_en": "Grass Energy",
+    "name_ja": "基本草エネルギー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Grass Energy"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "302",
+    "name_en": "Fire Energy",
+    "name_ja": "基本炎エネルギー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Fire Energy"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "303",
+    "name_en": "Lightning Energy",
+    "name_ja": "基本雷エネルギー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Lightning Energy"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "304",
+    "name_en": "Psychic Energy",
+    "name_ja": "基本超エネルギー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Psychic Energy"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "305",
+    "name_en": "Water Energy",
+    "name_ja": "基本水エネルギー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Water Energy"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "306",
+    "name_en": "Fighting Energy",
+    "name_ja": "基本闘エネルギー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Fighting Energy"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "307",
+    "name_en": "Darkness Energy",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Darkness Energy"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "308",
+    "name_en": "Metal Energy",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Metal Energy"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "309",
+    "name_en": "Victory Medal (Battle Road promo) (Silver w/Stamp)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "310",
+    "name_en": "Darkness Energy",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Darkness Energy"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "311",
+    "name_en": "Metal Energy",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Metal Energy"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "312",
+    "name_en": "Victory Medal (Battle Road promo) (Silver)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "313",
+    "name_en": "Armor Fossil (Mysterious Treasures 116)",
+    "name_ja": "たての化石",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Armor Fossil (Mysterious Treasures 116)",
+    "tcg_set": "Mysterious Treasures",
+    "tcg_name": "Armor Fossil",
+    "tcg_num": "116"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "314",
+    "name_en": "Skull Fossil (Mysterious Treasures 117)",
+    "name_ja": "ずがいの化石",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Skull Fossil (Mysterious Treasures 117)",
+    "tcg_set": "Mysterious Treasures",
+    "tcg_name": "Skull Fossil",
+    "tcg_num": "117"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "315",
+    "name_en": "Bebe's Search (Mysterious Treasures 109)",
+    "name_ja": "ミズキの検索",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Bebe's Search (Mysterious Treasures 109)",
+    "tcg_set": "Mysterious Treasures",
+    "tcg_name": "Bebe's Search",
+    "tcg_num": "109"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "316",
+    "name_en": "Time-Space Distortion (Mysterious Treasures 124)",
+    "name_ja": "時空のゆがみ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Time-Space Distortion (Mysterious Treasures 124)",
+    "tcg_set": "Mysterious Treasures",
+    "tcg_name": "Time-Space Distortion",
+    "tcg_num": "124"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "317",
+    "name_en": "Mysterious Pearl (Battle Road promo)",
+    "name_ja": "ミステリアス・パール",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mysterious Pearl (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Mysterious Pearl",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/f/f2/MysteriousPearlBattleRoadPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "318",
+    "name_en": "Turtwig (Diamond & Pearl 103) (Space-Time Creation; Mini)",
+    "name_ja": "ナエトル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Turtwig (Diamond & Pearl 103)",
+    "tcg_set": "Diamond & Pearl",
+    "tcg_name": "Turtwig",
+    "tcg_num": "103"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "319",
+    "name_en": "Chimchar (Diamond & Pearl 76) (Space-Time Creation; Mini)",
+    "name_ja": "ヒコザル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Chimchar (Diamond & Pearl 76)",
+    "tcg_set": "Diamond & Pearl",
+    "tcg_name": "Chimchar",
+    "tcg_num": "76"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "320",
+    "name_en": "Piplup (Diamond & Pearl 93) (Space-Time Creation; Mini)",
+    "name_ja": "ポッチャマ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Piplup (Diamond & Pearl 93)",
+    "tcg_set": "Diamond & Pearl",
+    "tcg_name": "Piplup",
+    "tcg_num": "93"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "321",
+    "name_en": "Champion's League (Champion's League promo)",
+    "name_ja": "チャンピオンズリーグ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Champion's League (Champion's League promo)",
+    "tcg_set": "Champion's League",
+    "tcg_name": "Champion's League",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/9/9f/ChampionLeague2005Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "322",
+    "name_en": "Victory Medal (Battle Road promo) (Gold)",
+    "name_ja": "勝利のメダル",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Victory Medal (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Victory Medal",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/2/26/VictoryMedalLPromo33.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "323",
+    "name_en": "Darkrai (Great Encounters 4) (Shining Darkness; Jumbo)",
+    "name_ja": "ダークライ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Darkrai (Great Encounters 4)",
+    "tcg_set": "Great Encounters",
+    "tcg_name": "Darkrai",
+    "tcg_num": "4"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "324",
+    "name_en": "Pokémon Pal City (Battle Road promo) (Numel & Magby)",
+    "name_ja": "ポケモンパルシティ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pokémon Pal City (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Pokémon Pal City",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/6/64/Pok%C3%A9monPalCityPromoChubu.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "325",
+    "name_en": "Pokémon Pal City (Battle Road promo) (Jirachi & Cherubi)",
+    "name_ja": "ポケモンパルシティ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pokémon Pal City (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Pokémon Pal City",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/6/64/Pok%C3%A9monPalCityPromoChubu.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "326",
+    "name_en": "Pokémon Pal City (Battle Road promo) (Teddiursa & Snover)",
+    "name_ja": "ポケモンパルシティ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pokémon Pal City (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Pokémon Pal City",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/6/64/Pok%C3%A9monPalCityPromoChubu.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "327",
+    "name_en": "Pokémon Pal City (Battle Road promo) (Pikachu & Pichu)",
+    "name_ja": "ポケモンパルシティ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pokémon Pal City (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Pokémon Pal City",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/6/64/Pok%C3%A9monPalCityPromoChubu.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "328",
+    "name_en": "Pokémon Pal City (Battle Road promo) (Magikarp & Hitmonchan)",
+    "name_ja": "ポケモンパルシティ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pokémon Pal City (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Pokémon Pal City",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/6/64/Pok%C3%A9monPalCityPromoChubu.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "329",
+    "name_en": "Pokémon Pal City (Battle Road promo) (Qwilfish & Clamperl)",
+    "name_ja": "ポケモンパルシティ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pokémon Pal City (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Pokémon Pal City",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/6/64/Pok%C3%A9monPalCityPromoChubu.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "330",
+    "name_en": "Pokémon Pal City (Battle Road promo) (Meowth & Stantler)",
+    "name_ja": "ポケモンパルシティ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pokémon Pal City (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Pokémon Pal City",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/6/64/Pok%C3%A9monPalCityPromoChubu.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "331",
+    "name_en": "Touch Exchange! (Battle Road promo)",
+    "name_ja": "タッチ交換!",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Touch Exchange! (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Touch Exchange!",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "332",
+    "name_en": "Roseanne's Research (Secret Wonders 125)",
+    "name_ja": "ハマナのリサーチ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Roseanne's Research (Secret Wonders 125)",
+    "tcg_set": "Secret Wonders",
+    "tcg_name": "Roseanne's Research",
+    "tcg_num": "125"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "333",
+    "name_en": "Professor Oak's Visit (Secret Wonders 122)",
+    "name_ja": "オーキドはかせの訪問",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Professor Oak's Visit (Secret Wonders 122)",
+    "tcg_set": "Secret Wonders",
+    "tcg_name": "Professor Oak's Visit",
+    "tcg_num": "122"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "334",
+    "name_en": "Time-Space Distortion (Mysterious Treasures 124)",
+    "name_ja": "時空のゆがみ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Time-Space Distortion (Mysterious Treasures 124)",
+    "tcg_set": "Mysterious Treasures",
+    "tcg_name": "Time-Space Distortion",
+    "tcg_num": "124"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "335",
+    "name_en": "Miracle Diamond (Battle Road promo)",
+    "name_ja": "ミラクル・ダイヤモンド",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Miracle Diamond (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Miracle Diamond",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/c/c9/MiracleDiamondBattleRoadPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "336",
+    "name_en": "Tropical Wind (DP Promo 5)",
+    "name_ja": "トロピカルウインド",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Tropical Wind (DP Promo 5)",
+    "tcg_set": "DP Promo",
+    "tcg_name": "Tropical Wind",
+    "tcg_num": "5"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "337",
+    "name_en": "Champion's League (Champion's League promo)",
+    "name_ja": "チャンピオンズリーグ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Champion's League (Champion's League promo)",
+    "tcg_set": "Champion's League",
+    "tcg_name": "Champion's League",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/9/9f/ChampionLeague2005Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "338",
+    "name_en": "Time-Space Distortion (Mysterious Treasures 124)",
+    "name_ja": "時空のゆがみ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Time-Space Distortion (Mysterious Treasures 124)",
+    "tcg_set": "Mysterious Treasures",
+    "tcg_name": "Time-Space Distortion",
+    "tcg_num": "124"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "339",
+    "name_en": "Mysterious Pearl (Battle Road promo)",
+    "name_ja": "ミステリアス・パール",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mysterious Pearl (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Mysterious Pearl",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/f/f2/MysteriousPearlBattleRoadPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "340",
+    "name_en": "Buck's Training (Battle Road promo)",
+    "name_ja": "バクのトレーニング",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Buck's Training (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Buck's Training",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "341",
+    "name_en": "Cynthia's Feelings (Battle Road promo)",
+    "name_ja": "シロナの想い",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Cynthia's Feelings (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Cynthia's Feelings",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "342",
+    "name_en": "Miracle Diamond (Battle Road promo)",
+    "name_ja": "ミラクル・ダイヤモンド",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Miracle Diamond (Battle Road promo)",
+    "tcg_set": "Battle Road",
+    "tcg_name": "Miracle Diamond",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/c/c9/MiracleDiamondBattleRoadPromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "343",
+    "name_en": "Luxury Ball (Gym Challenge promo)",
+    "name_ja": "ゴージャスボール",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Luxury Ball (Gym Challenge promo)",
+    "tcg_set": "Gym Challenge",
+    "tcg_name": "Luxury Ball",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "344",
+    "name_en": "Tropical Wind (Nintendo Promo 26)",
+    "name_ja": "トロピカルウインド",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Tropical Wind (Nintendo Promo 26)",
+    "tcg_set": "Nintendo Promo",
+    "tcg_name": "Tropical Wind",
+    "tcg_num": "26",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/8b/TropicalWindTropicalMegaBattle1999Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "345",
+    "name_en": "Captain Pikachu (Pokémon Center promo) (Jumbo)",
+    "name_ja": "キャプテンピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Captain Pikachu (Pokémon Center promo)",
+    "tcg_set": "Pokémon Center",
+    "tcg_name": "Captain Pikachu",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/7/7c/CaptainPikachuPok%C3%A9monCenterpromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "346",
+    "name_en": "_____'s Pikachu (Pokémon Center promo) (Jumbo)",
+    "name_ja": "_____のピカチュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "_____'s Pikachu (Pokémon Center promo)",
+    "tcg_set": "Pokémon Center",
+    "tcg_name": "_____'s Pikachu",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/7/7f/PikachuPok%C3%A9monCenterpromo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "347",
+    "name_en": "[[Spiky-eared Pichu M (Movie Random Pack 9)",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "[[Spiky-eared Pichu M (Movie Random Pack 9)"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "348",
+    "name_en": "[[Spiky-eared Pichu M (Movie Random Pack 9)",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "[[Spiky-eared Pichu M (Movie Random Pack 9)"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "349",
+    "name_en": "[[Spiky-eared Pichu M (Movie Random Pack 9)",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "[[Spiky-eared Pichu M (Movie Random Pack 9)"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "350",
+    "name_en": "Arceus (DPt-P Promo 41)",
+    "name_ja": "アルセウス",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Arceus (DPt-P Promo 41)",
+    "tcg_set": "DPt-P Promo",
+    "tcg_name": "Arceus",
+    "tcg_num": "41"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "351",
+    "name_en": "Arceus (DPt-P Promo 41)",
+    "name_ja": "アルセウス",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Arceus (DPt-P Promo 41)",
+    "tcg_set": "DPt-P Promo",
+    "tcg_name": "Arceus",
+    "tcg_num": "41"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "352",
+    "name_en": "Arceus (DPt-P Promo 41)",
+    "name_ja": "アルセウス",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Arceus (DPt-P Promo 41)",
+    "tcg_set": "DPt-P Promo",
+    "tcg_name": "Arceus",
+    "tcg_num": "41"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "353",
+    "name_en": "Arceus (DPt-P Promo 41)",
+    "name_ja": "アルセウス",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Arceus (DPt-P Promo 41)",
+    "tcg_set": "DPt-P Promo",
+    "tcg_name": "Arceus",
+    "tcg_num": "41"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "354",
+    "name_en": "[[Spiky-eared Pichu M (Movie Random Pack 9)",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "[[Spiky-eared Pichu M (Movie Random Pack 9)"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "355",
+    "name_en": "Arceus (DPt-P Promo 41)",
+    "name_ja": "アルセウス",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Arceus (DPt-P Promo 41)",
+    "tcg_set": "DPt-P Promo",
+    "tcg_name": "Arceus",
+    "tcg_num": "41"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "356",
+    "name_en": "[[Spiky-eared Pichu M (Movie Random Pack 9)",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "[[Spiky-eared Pichu M (Movie Random Pack 9)"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "357",
+    "name_en": "[[Spiky-eared Pichu M (Movie Random Pack 9)",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "[[Spiky-eared Pichu M (Movie Random Pack 9)"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "358",
+    "name_en": "Arceus (DPt-P Promo 41)",
+    "name_ja": "アルセウス",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Arceus (DPt-P Promo 41)",
+    "tcg_set": "DPt-P Promo",
+    "tcg_name": "Arceus",
+    "tcg_num": "41"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "359",
+    "name_en": "Arceus (DPt-P Promo 41)",
+    "name_ja": "アルセウス",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Arceus (DPt-P Promo 41)",
+    "tcg_set": "DPt-P Promo",
+    "tcg_name": "Arceus",
+    "tcg_num": "41"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "360",
+    "name_en": "Tropical Wind (Nintendo Promo 26)",
+    "name_ja": "トロピカルウインド",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Tropical Wind (Nintendo Promo 26)",
+    "tcg_set": "Nintendo Promo",
+    "tcg_name": "Tropical Wind",
+    "tcg_num": "26",
+    "image_url": "https://archives.bulbagarden.net/media/upload/8/8b/TropicalWindTropicalMegaBattle1999Promo.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "361",
+    "name_en": "Zorua and Celebi (Clash at the Summit promo) (Jumbo)",
+    "name_ja": "ゾロアとセレビィ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Zorua and Celebi (Clash at the Summit promo)",
+    "tcg_set": "Clash at the Summit",
+    "tcg_name": "Zorua and Celebi",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "362",
+    "name_en": "Zoroark and the Legendary Pokémon (Clash at the Summit promo) (Jumbo)",
+    "name_ja": "ゾロアークと伝説のポケモン",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Zoroark and the Legendary Pokémon (Clash at the Summit promo)",
+    "tcg_set": "Clash at the Summit",
+    "tcg_name": "Zoroark and the Legendary Pokémon",
+    "tcg_num": "promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "363",
+    "name_en": "Pikachu & Ishihara",
+    "name_ja": "",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Pikachu & Ishihara"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "364",
+    "name_en": "Gardevoir (Illustration Grand Prix promo)",
+    "name_ja": "サーナイト",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Gardevoir (Illustration Grand Prix promo)",
+    "tcg_set": "Illustration Grand Prix",
+    "tcg_name": "Gardevoir",
+    "tcg_num": "Promo"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "365",
+    "name_en": "Ancient Mew (The Power of One promo)",
+    "name_ja": "ミュウ",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Ancient Mew (The Power of One promo)",
+    "tcg_set": "The Power of One",
+    "tcg_name": "Ancient Mew",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/d/dd/AncientMewNintedoError.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "366",
+    "name_en": "Mewtwo (Vending S1)",
+    "name_ja": "ミュウツー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mewtwo (Vending S1)",
+    "tcg_set": "Expansion Sheet 1",
+    "tcg_name": "Mewtwo",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/0/0c/MewtwoVendingS1.jpg"
+  },
+  {
+    "set_id": "UnnumberedPromo",
+    "local_id": "367",
+    "name_en": "Mewtwo (Vending S3)",
+    "name_ja": "ミュウツー",
+    "name_en_source": "manual",
+    "bulbapedia_page": "Mewtwo (Vending S3)",
+    "tcg_set": "Expansion Sheet 3",
+    "tcg_name": "Mewtwo",
+    "tcg_num": "promo",
+    "image_url": "https://archives.bulbagarden.net/media/upload/9/90/MewtwoVendingS3.jpg"
+  }
+]

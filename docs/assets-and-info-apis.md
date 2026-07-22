@@ -115,6 +115,102 @@ where `{id}` is the API card number (`ST-01`, `BO-115`, `MO-06`). The CDN also s
 
 Empty search array / `{"error":"..."}` → `NotFound`; bad JSON / HTTP → `Transient`.
 
+## Japanese Pokémon TCG APIs (TCGdex `ja`)
+
+Japanese Pokémon is wired as `Game::JapanesePokemon` (`dirName` `pokemonjp`, UI label **Pokemon (Japan)**). Upstream: [TCGdex REST API](https://tcgdex.dev/). No API key. Japanese set IDs (e.g. `PMCG1`, `SV1a`) are never merged into Western `Game::Pokemon` / pokemontcg.io ids.
+
+### Info API: TCGdex `GET /v2/ja/sets` (+ per-set detail)
+
+`https://api.tcgdex.net/v2/ja/sets` returns a slim array (`id`, `name`, `cardCount`). Release dates require `GET /v2/ja/sets/{id}` (`releaseDate` as `YYYY-MM-DD`, rewritten to `YYYY/MM/DD`). `JapanesePokemonSetSource`:
+
+- Excludes Chinese-region `CS*` junk rows mislabeled on the JA endpoint.
+- Applies field overrides (e.g. `SV4a` Japanese name → `シャイニートレジャーex`).
+- Prefers English display names and release dates from the bundled EN catalog when present; otherwise keeps the TCGdex Japanese name and fetches detail for the date.
+- After parsing the TCGdex list, **injects Original-era / catalog-only products TCGdex omits** (idempotent by set id — skipped if upstream later adds them). The same injection runs when loading a cached `sets.json` via `ISetSource::augmentCachedSets`, so these products appear without requiring **Update Sets** first. Stable ids and English names:
+
+| Id | English name |
+|---|---|
+| `UnnumberedPromo` | Unnumbered Promotional cards (Bulbapedia catch-all; synthetic `001`… localIds; preview via catalog `image_url` preferring Japanese / Unnumbered Bulbagarden scans) |
+| `ExpSheet1` / `ExpSheet2` / `ExpSheet3` | Expansion Sheet Series 1–3 |
+| `NiviCG` | Nivi City Gym |
+| `HanadaCG` | Hanada City Gym |
+| `KuchibaCG` | Kuchiba City Gym |
+| `TamamushiCG` | Tamamushi City Gym |
+| `YamabukiCG` | Yamabuki City Gym |
+| `GurenTG` | Guren Town Gym |
+| `SouthernIslands` | Southern Islands |
+
+Seed data lives in `tools/pokemon_jp/classic_missing_sets.json` + `classic_missing_prints.json` (merged into the EN catalog via `merge_classic_missing.py`). LocalIds for these products are sequential `001`… within each product (cards were unnumbered in print). Refresh `UnnumberedPromo` prints from Bulbapedia with `python tools/pokemon_jp/harvest_unnumbered_promos.py`, then fill preview images with `python tools/pokemon_jp/enrich_unnumbered_promo_images.py` (prefers Unnumbered / Japanese reprint-gallery scans over English Wizards `|image=` primaries; EN-only Bulbapedia pages leave `image_url` empty), then re-run `merge_classic_missing.py`. Numbered Japanese promo eras (`SV-P`, `S-P`, …) remain out of scope — TCGdex does not expose them, and they are not part of this curated set.
+
+### Asset API: TCGdex card / set-detail images
+
+Preview is **local-id based**. `JapanesePokemonCardPreviewSource`:
+
+1. With `setId` + `setNo` (`localId`), tries `GET /v2/ja/cards/{setId}-{localId}` and reads `image`.
+2. Falls back to set-detail `cards[]` (which often already carries `image` on modern sets).
+3. Appends `/high.png` to the TCGdex image base URL (PNG — wxImage does not decode webp).
+4. If the set-specific card still has no scan (classic sets like `PMCG1`), looks up the bundled EN catalog print for that exact `setId`+`localId` and uses optional `image_url` or a TCGPlayer product image built from `tcgplayer_id` (`https://product-images.tcgplayer.com/fit-in/437x437/{id}.jpg`). Gap-fill sources differ by era:
+   - **PMCG and other data-asia sets with `thirdParty.tcgplayer`**: printing-accurate `tcgplayer_id` harvested offline from [tcgdex/cards-database](https://github.com/tcgdex/cards-database) `data-asia` (the live TCGdex API does not expose them).
+   - **neo1–neo4**: data-asia has no `tcgplayer_id` and TCGdex JA `image` is null; the catalog may carry an ETL-written `image_url` from a **Japanese** [CardIndex](https://www.cardindex.co/) set scan (`enrich_neo_image_urls.py` scrapes the JA neo set pages and matches by English card name). **No English pokemontcg.io fallback** — if CardIndex has no JP image, `image_url` is left empty and the UI shows the card-back. Use `--overwrite` to re-resolve / clear stale EN URLs. Runtime still resolves only by exact JA `setId`+`localId` — no C++ name search across printings.
+   This is **printing-accurate** gap-fill — not a name search across other Charizard printings at runtime.
+5. For **catalog-only products** (Unnumbered Promotional cards, City Gym theme decks, Expansion Sheets, Southern Islands), when TCGdex set/card GETs fail, Auto-detect and preview fall back to the bundled catalog prints for that `setId` (EN/JA name → `localId`; optional `tcgplayer_id` / `image_url` for preview). `UnnumberedPromo` rows typically carry Bulbagarden Archives `image_url` values written by `enrich_unnumbered_promo_images.py`, which prefers Japanese / Unnumbered Promotional reprint scans and omits English-only Wizards Black Star primaries when no JP file is available. Without a catalog image field, preview returns `NotFound` and the UI shows the card-back. Auto-detect matches exact EN/JA names and also qualified English titles (`Mewtwo` → `Mewtwo (CoroCoro promo)`).
+6. City Gym deck exclusives must stay **printing-accurate**. Do **not** reuse Leaders' Stadium / PMCG donor `tcgplayer_id`s for those prints; that shows the wrong set art. Instead, bundle local scans under `assets/pokemon_jp_classic/<setId>/<localId>.jpg` and point the catalog row at `image_url: "asset:pokemon_jp_classic/<setId>/<localId>.jpg"`. `CardPreviewService` loads `asset:` URLs from disk next to the executable, bypassing HTTP entirely.
+
+It does **not** substitute another printing of the same Pokémon when both TCGdex and the catalog lack an image. Then preview returns `NotFound` and the UI shows the Japanese TCG card-back.
+
+Auto-detect / Next uses the same set-detail `cards[]`, matching the typed name against catalog English names or TCGdex Japanese names. Catalog EN aliases are applied only when the catalog `name_ja` agrees with the TCGdex row (stale seed mappings like Charmander→`001` are ignored).
+
+Pokémon English aliases in the catalog come from National Dex → species table (`dexId`) for ordinary Pokémon. When `name_ja` carries a known owner / Rocket's / Dark / Light / Shining prefix, `enrich_preview_images.py` composes the **full English product title** (e.g. `エリカのナゾノクサ` → `Erika's Oddish`, `わるいリザードン` → `Dark Charizard`, `R団のサンダー` → `Rocket's Zapdos`, neo garbled `輝くセレビ` → `Shining Celebi`). Those rows use `name_en_source: "species-table-variant"`. Trainer/Energy English aliases come from the offline JA→EN map `tools/pokemon_jp/non_pokemon_en_by_ja.json` (e.g. Switch ← `ポケモンいれかえ`).
+
+That trainer/energy map is maintained to cover **at least the first 15 chronological main Japanese expansions** present in TCGdex (PMCG1–PMCG6, neo1–neo4, VS1, web1, E1–E3). The same JA→EN entry also applies to later reprints that reuse the Japanese name.
+
+### Variant Pokémon English titles
+
+Auto-detect for English owner / Rocket's / Dark / Light / Shining Pokémon names requires the bundled catalog's **full** `name_en` for that print (same rule as City Gym manuals that already store `Erika's Oddish`). Typing the Japanese TCGdex name still works when `name_ja` is correct.
+
+To extend variant coverage:
+
+1. Add new JA prefix → English title prefix pairs to `VARIANT_JA_PREFIXES` in [`tools/pokemon_jp/enrich_preview_images.py`](../tools/pokemon_jp/enrich_preview_images.py) (longest prefixes first).
+2. Re-run:
+
+```bash
+python tools/pokemon_jp/enrich_preview_images.py
+```
+
+3. For neo1–neo4 Japanese preview images (CardIndex JP scans only; clears EN
+   pokemontcg.io URLs on miss), run:
+
+```bash
+python tools/pokemon_jp/enrich_neo_image_urls.py
+python tools/pokemon_jp/enrich_neo_image_urls.py --overwrite
+```
+
+4. Rebuild so `assets/pokemon_jp_en_catalog.json` next to the exe is updated.
+
+Rows with `name_en_source: "manual"` (City Gym theme decks in `classic_missing_prints.json`) are never overwritten. Prefer stable English TCG product names (Bulbapedia / Limitless English titles).
+
+### Extending Trainer/Energy English aliases
+
+Auto-detect for English Trainer/Energy names only works when the bundled catalog has a `name_en` for that print. Pokémon get `name_en` automatically from `dexId` (bare species) or from variant prefix composition (full titles); Trainers and Energy do not. To add more sets or staples:
+
+1. Collect unique Japanese Trainer/Energy names for the sets you care about (from TCGdex set detail `cards[].name`, or from `tools/pokemon_jp/_tcgdex_cards_database/data-asia/<serie>/<setId>/*.ts` after running enrich once).
+2. Add each missing `name_ja` → English display name to [`tools/pokemon_jp/non_pokemon_en_by_ja.json`](../tools/pokemon_jp/non_pokemon_en_by_ja.json). One entry covers **every set** that reprints that Japanese title.
+3. Re-run:
+
+```bash
+python tools/pokemon_jp/enrich_preview_images.py
+```
+
+4. Confirm `enrich_preview_images.py` prints `FIRST15 trainer/energy coverage OK` (or extend `FIRST15_SETS` in that script if you raise the coverage baseline). Copy/rebuild so `assets/pokemon_jp_en_catalog.json` next to the exe is updated.
+5. Prefer stable English TCG product names (Bulbapedia / Limitless English titles). Do not invent per-set aliases that differ for the same `name_ja`.
+
+### Bundled English catalog
+
+`ui_wx/assets/pokemon_jp_en_catalog.json` is copied next to the exe on build (`assets/pokemon_jp_en_catalog.json`). It supplies English set/card names TCGdex JA cannot provide, plus optional classic-image gap-fill fields (`tcgplayer_id` / `image_url`). Generated offline via `tools/pokemon_jp/` (set EN merge + `enrich_preview_images.py` using species, variant, and trainer/energy tables + optional `enrich_neo_image_urls.py` for neo `image_url`). Missing catalog → Japanese-only labels still work; missing image fields → card-back for unscanned printings. Missing EN aliases for a Trainer still allow Auto-detect when the Japanese name is typed.
+
+Card-back fallback uses the Japanese TCG Bulbagarden scan
+(`TCG_Card_Back_Japanese.jpg`), not the Western `Cardback.jpg`.
+
 ## Runtime Flow In CCM3
 
 The app uses the same flow for every game that registers a module:
@@ -122,13 +218,13 @@ The app uses the same flow for every game that registers a module:
 - `SetService` asks the game's `ISetSource` (info API) for the latest set list.
 - `CardPreviewService` asks the game's `ICardPreviewSource` (asset API) for a preview image URL.
 - `CardPreviewService` performs a second HTTP GET to that URL and returns raw bytes to the UI layer.
-- If preview lookup fails (or returns empty bytes), the UI loads a **per-game card-back fallback** in `BaseSelectedCardPanel`: Magic / Pokémon call `CardPreviewService::fetchImageBytesByUrl(...)` against fixed HTTPS URLs. Yu-Gi-Oh! tries two Yugipedia URLs (thumbnail then full `Back-EN.png`), then reads **`assets/ygo_card_back.png`** next to the executable if both downloads fail (bundled asset; see `app/CMakeLists.txt`).
+- If preview lookup fails (or returns empty bytes), the UI loads a **per-game card-back fallback** in `BaseSelectedCardPanel`: Magic / Pokémon / Japanese Pokémon call `CardPreviewService::fetchImageBytesByUrl(...)` against fixed HTTPS URLs. Yu-Gi-Oh! tries two Yugipedia URLs (thumbnail then full `Back-EN.png`), then reads **`assets/ygo_card_back.png`** next to the executable if both downloads fail (bundled asset; see `app/CMakeLists.txt`).
 
 ### Caching And Connection Reuse
 
 See [caching.md](caching.md) for a dedicated reference on preview cache tiers, internal keys, eviction, clearing, and HTTP session reuse.
 
-Three mechanisms reduce preview latency for **all** games (Magic, Pokemon, Yu-Gi-Oh!, DigiBattle99). In addition, the shared HTTP session speeds **every** `IHttpClient::get` call (including set-list fetches), not only previews:
+Three mechanisms reduce preview latency for **all** games (Magic, Pokemon, Yu-Gi-Oh!, DigiBattle99, JapanesePokemon). In addition, the shared HTTP session speeds **every** `IHttpClient::get` call (including set-list fetches), not only previews:
 
 - **In-memory preview LRU** (`CardPreviewService`). Successful `fetchPreviewBytes` results are cached keyed by `(game, name, setId, setNo)`; successful `fetchImageBytesByUrl` results are cached keyed by URL (used for the per-game card-back fallback). Re-selecting a previously viewed row is decode-only — no HTTP at all. The cache is bounded by `CardPreviewService::kCacheCapacity` (currently 128 entries) and uses a list+map LRU under a mutex (the preview pipeline is invoked from a worker thread in `BaseSelectedCardPanel`). **Source errors are split** by `PreviewLookupError::Kind`: `NotFound` (the upstream answered cleanly that the record has no image) is *negative-cached* in this tier so subsequent selections short-circuit without HTTP, while `Transient` (HTTP/network/parse failures) is **never** cached so a brief outage cannot permanently disable a card's preview.
 - **Persistent disk byte cache** (`LocalPreviewByteCache`, port `IPreviewByteCache`). Wraps the in-memory tier with an on-disk store under `<exeDir>/.cache/preview-cache/` — pinned **next to the executable**, in the same scope as `config.json`, **not** under the user-configurable `Configuration.dataStorage` path. The cache stays put when the user reconfigures or relocates their collection data, and it is not part of the user's data directory backups; it is install-scoped, not collection-scoped. Both positive previews and `NotFound` verdicts survive an app restart. Each entry is a mutually-exclusive `<hash>.bin` (positive payload) or `<hash>.neg` (negative marker) plus a `<hash>.idx` sidecar containing the original key — load-time mismatch on the sidecar treats the entry as a miss, so a hash collision degrades to a one-time HTTP refetch instead of serving the wrong card's bytes (or the wrong card's "no image" verdict). Hashing is FNV-1a 64-bit (no crypto dependency). The cache is bounded by total `.bin` payload bytes (default `kDefaultMaxBytes = 64 MiB`) and evicts oldest entries by mtime when a new write would exceed the cap; reading an entry touches its mtime so frequently-viewed cards survive eviction. Negative `.neg` markers are tiny and not counted against the cap — their count is naturally bounded by the user's actively-viewed records. Filesystem mutations route through `IFileSystem`; size and mtime queries (which the port does not expose) use `std::filesystem` directly inside the adapter. The persistent tier is **fire-and-forget on the way down** — every adapter operation swallows I/O errors so a flaky or full disk never breaks the preview path.
@@ -146,6 +242,7 @@ Fallback card-back sources (`BaseSelectedCardPanel`; Magic/Pokémon URLs match C
 
 - Magic: `https://gamepedia.cursecdn.com/mtgsalvation_gamepedia/f/f8/Magic_card_back.jpg`
 - Pokémon: `https://archives.bulbagarden.net/media/upload/1/17/Cardback.jpg`
+- Japanese Pokémon: `https://archives.bulbagarden.net/media/upload/2/2a/TCG_Card_Back_Japanese.jpg`
 - Yu-Gi-Oh!: Yugipedia English TCG back — try `https://ms.yugipedia.com/thumb/e/e5/Back-EN.png/250px-Back-EN.png`, then `https://ms.yugipedia.com/e/e5/Back-EN.png`; if both fail, load `<exeDir>/assets/ygo_card_back.png` (shipped from `ui_wx/assets/ygo_card_back.png` at link time). `fallbackImageUrlForGame(Game::YuGiOh)` returns the thumbnail URL for helpers that only consult a single string.
 - Digimon (Digi-Battle): no stable public back URL; load `<exeDir>/assets/digibattle99_card_back.png` (shipped from `ui_wx/assets/digibattle99_card_back.png` at link time).
 
@@ -158,6 +255,6 @@ All source types return `Result<T, std::string>` errors so failures cross bounda
 - info API failures (bad set payload, schema mismatch, endpoint/network failure), and
 - asset API failures (query mismatch, no matching card, missing image fields, image download failure).
 
-When previews fail, verify request construction first (name sanitization, number normalization, percent encoding), then verify response shape assumptions: Scryfall (`data`, `image_uris`), Pokemon (`data`, `images.large`/`images.small`; auto-detect also needs `name`, `number`, `rarity`, and `set.id` on each matching row), Yu-Gi-Oh! Yugipedia (`query.pages.<id>.imageinfo[0].url` per filename, missing files tagged `"missing": ""`), Yu-Gi-Oh! YGOPRODeck fallback (`data`, `name`, `card_images`), Digi-Battle digimoncard.io (top-level array with `name`/`id`/`set_name`; CDN `images.digimoncard.io/images/cards/{id}.jpg`). If the UI fallback path succeeds (network card-back and/or bundled PNG), the panel shows the card-back image and the inline label `(image preview unavailable)`; only if every fallback fails does the preview stay empty with status text.
+When previews fail, verify request construction first (name sanitization, number normalization, percent encoding), then verify response shape assumptions: Scryfall (`data`, `image_uris`), Pokemon (`data`, `images.large`/`images.small`; auto-detect also needs `name`, `number`, `rarity`, and `set.id` on each matching row), Yu-Gi-Oh! Yugipedia (`query.pages.<id>.imageinfo[0].url` per filename, missing files tagged `"missing": ""`), Yu-Gi-Oh! YGOPRODeck fallback (`data`, `name`, `card_images`), Digi-Battle digimoncard.io (top-level array with `name`/`id`/`set_name`; CDN `images.digimoncard.io/images/cards/{id}.jpg`), Japanese Pokémon TCGdex (`image` base + `/high.png`; set-detail `cards[]` with `localId`). If the UI fallback path succeeds (network card-back and/or bundled PNG), the panel shows the card-back image and the inline label `(image preview unavailable)`; only if every fallback fails does the preview stay empty with status text.
 
 For Yu-Gi-Oh! specifically, when a printing shows the wrong art compared with Yugipedia’s gallery, debug in this order: (1) verify the candidate list via `YuGiOhCardPreviewSource::buildCandidateFilenames(...)` against the actual file names on Yugipedia’s `Card_Gallery:<Card>` page; (2) confirm the dialog rarity name maps to the expected short code in `ygoRarityShortCode(...)` / `rarityCodeFor(...)` (extend the mapping when a new rarity surfaces); (3) confirm the `firstEdition` flag matches the printed edition stamp — the candidate ordering puts the printed edition first.

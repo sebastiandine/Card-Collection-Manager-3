@@ -292,6 +292,9 @@ private:
             case Game::Pokemon:
                 // Mirrors CCM2's unresolved-preview fallback image.
                 return "https://archives.bulbagarden.net/media/upload/1/17/Cardback.jpg";
+            case Game::JapanesePokemon:
+                // Japanese TCG back (distinct from the Western Cardback.jpg).
+                return "https://archives.bulbagarden.net/media/upload/2/2a/TCG_Card_Back_Japanese.jpg";
             case Game::YuGiOh:
                 // Yugipedia English TCG backing (thumbnail — smaller than full scan).
                 return "https://ms.yugipedia.com/thumb/e/e5/Back-EN.png/250px-Back-EN.png";

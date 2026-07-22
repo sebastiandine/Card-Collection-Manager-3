@@ -14,10 +14,11 @@ namespace {
 
 wxString displayLabelForGame(Game g) {
     switch (g) {
-        case Game::Magic:        return "Magic";
-        case Game::Pokemon:      return "Pokemon";
-        case Game::YuGiOh:       return "Yu-Gi-Oh!";
-        case Game::DigiBattle99: return "Digimon (Digi-Battle)";
+        case Game::Magic:           return "Magic";
+        case Game::Pokemon:         return "Pokemon";
+        case Game::YuGiOh:          return "Yu-Gi-Oh!";
+        case Game::DigiBattle99:    return "Digimon (Digi-Battle)";
+        case Game::JapanesePokemon: return "Pokemon (Japan)";
     }
     return wxString::FromUTF8(to_string(g).data());
 }

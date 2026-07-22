@@ -3,6 +3,7 @@
 #include "ccm/domain/Configuration.hpp"
 #include "ccm/domain/DigiBattle99Card.hpp"
 #include "ccm/domain/Enums.hpp"
+#include "ccm/domain/JapanesePokemonCard.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
 #include "ccm/domain/YuGiOhCard.hpp"
@@ -26,6 +27,9 @@ TEST_SUITE("domain enums round-trip JSON as strings") {
 
         nlohmann::json jDigi = "DigiBattle99";
         CHECK(jDigi.get<Game>() == Game::DigiBattle99);
+
+        nlohmann::json jJp = "JapanesePokemon";
+        CHECK(jJp.get<Game>() == Game::JapanesePokemon);
 
         nlohmann::json j3 = Theme::Dark;
         CHECK(j3.get<std::string>() == "Dark");
@@ -181,6 +185,34 @@ TEST_SUITE("DigiBattle99Card JSON") {
         CHECK(j.at("signed") == true);
 
         const DigiBattle99Card back = j.get<DigiBattle99Card>();
+        CHECK(back == c);
+    }
+}
+
+TEST_SUITE("JapanesePokemonCard JSON") {
+    TEST_CASE("uses 'setNo' and 'firstEdition' aliases") {
+        JapanesePokemonCard c;
+        c.id = 9;
+        c.amount = 1;
+        c.name = "Charmander";
+        c.set = Set{"PMCG1", "Expansion Pack", "1996/10/20"};
+        c.setNo = "001";
+        c.note = "";
+        c.images = {};
+        c.language = Language::Japanese;
+        c.condition = Condition::NearMint;
+        c.firstEdition = true;
+        c.holo = false;
+        c.signed_ = false;
+        c.altered = false;
+
+        nlohmann::json j = c;
+        CHECK(j.at("setNo") == "001");
+        CHECK(j.at("firstEdition") == true);
+        CHECK(j.at("signed") == false);
+        CHECK(j.at("language") == "Japanese");
+
+        const JapanesePokemonCard back = j.get<JapanesePokemonCard>();
         CHECK(back == c);
     }
 }
@@ -556,6 +588,36 @@ TEST_SUITE("Domain JSON required fields") {
             nlohmann::json partial = full;
             partial.erase(key);
             CHECK_THROWS(partial.get<DigiBattle99Card>());
+        }
+    }
+
+    TEST_CASE("JapanesePokemonCard missing each required key throws") {
+        const nlohmann::json full = {
+            {"id", 9},
+            {"amount", 1},
+            {"name", "Charmander"},
+            {"set", nlohmann::json{
+                {"id", "PMCG1"},
+                {"name", "Expansion Pack"},
+                {"releaseDate", "1996/10/20"},
+            }},
+            {"setNo", "001"},
+            {"note", ""},
+            {"images", nlohmann::json::array()},
+            {"language", "Japanese"},
+            {"condition", "NearMint"},
+            {"firstEdition", true},
+            {"holo", false},
+            {"signed", false},
+            {"altered", false},
+        };
+
+        for (const char* key :
+             {"id", "amount", "name", "set", "setNo", "note", "images", "language", "condition",
+              "firstEdition", "holo", "signed", "altered"}) {
+            nlohmann::json partial = full;
+            partial.erase(key);
+            CHECK_THROWS(partial.get<JapanesePokemonCard>());
         }
     }
 

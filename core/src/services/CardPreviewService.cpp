@@ -1,5 +1,6 @@
 #include "ccm/services/CardPreviewService.hpp"
 
+#include <filesystem>
 #include <string>
 #include <utility>
 #include <vector>
@@ -36,11 +37,18 @@ std::string makeUrlKey(std::string_view url) {
     return k;
 }
 
+constexpr std::string_view kAssetScheme = "asset:";
+
 }  // namespace
 
 CardPreviewService::CardPreviewService(IHttpClient& http,
-                                       IPreviewByteCache* persistentCache)
-    : http_(http), persistentCache_(persistentCache) {}
+                                       IPreviewByteCache* persistentCache,
+                                       IFileSystem* fs,
+                                       std::filesystem::path assetRoot)
+    : http_(http),
+      persistentCache_(persistentCache),
+      fs_(fs),
+      assetRoot_(std::move(assetRoot)) {}
 
 void CardPreviewService::registerModule(IGameModule& module) {
     if (auto* src = module.cardPreviewSource(); src != nullptr) {
@@ -122,6 +130,37 @@ Result<std::string> CardPreviewService::fetchAndCache(const std::string& cacheKe
     return Result<std::string>::ok(std::move(payload));
 }
 
+Result<std::string, PreviewLookupError> CardPreviewService::fetchAssetAndCache(
+    const std::string& cacheKey,
+    std::string_view assetUrl) {
+    using R = Result<std::string, PreviewLookupError>;
+    using K = PreviewLookupError::Kind;
+
+    if (fs_ == nullptr || assetRoot_.empty()) {
+        return R::err({K::Transient, "Asset preview path is not configured."});
+    }
+    if (!assetUrl.starts_with(kAssetScheme)) {
+        return R::err({K::Transient, "Asset preview URL is missing the asset: prefix."});
+    }
+    std::filesystem::path rel(std::string(assetUrl.substr(kAssetScheme.size())));
+    const auto fullPath = assetRoot_ / rel;
+    auto bytes = fs_->readText(fullPath);
+    if (!bytes) {
+        return R::err({K::NotFound,
+                       "Bundled preview asset not found: " + fullPath.generic_string()});
+    }
+    std::string payload = std::move(bytes).value();
+    if (payload.empty()) {
+        return R::err({K::NotFound,
+                       "Bundled preview asset is empty: " + fullPath.generic_string()});
+    }
+    cacheStore(cacheKey, payload);
+    if (persistentCache_ != nullptr) {
+        persistentCache_->store(cacheKey, payload);
+    }
+    return R::ok(std::move(payload));
+}
+
 Result<std::string> CardPreviewService::fetchPreviewBytes(Game game,
                                                           std::string_view name,
                                                           std::string_view setId,
@@ -179,6 +218,18 @@ Result<std::string> CardPreviewService::fetchPreviewBytes(Game game,
         }
         return Result<std::string>::err(err.message);
     }
+    if (url.value().starts_with(kAssetScheme)) {
+        auto asset = fetchAssetAndCache(key, url.value());
+        if (!asset) {
+            const auto err = std::move(asset).error();
+            if (err.kind == PreviewLookupError::Kind::NotFound) {
+                cacheStoreNegative(key);
+                if (persistentCache_ != nullptr) persistentCache_->storeNegative(key);
+            }
+            return Result<std::string>::err(err.message);
+        }
+        return Result<std::string>::ok(std::move(asset).value());
+    }
     return fetchAndCache(key, url.value());
 }
 
@@ -230,6 +281,11 @@ Result<std::string> CardPreviewService::fetchImageBytesByUrl(std::string_view ur
             cacheStore(key, disk.payload);
             return Result<std::string>::ok(disk.payload);
         }
+    }
+    if (url.starts_with(kAssetScheme)) {
+        auto asset = fetchAssetAndCache(key, url);
+        if (!asset) return Result<std::string>::err(asset.error().message);
+        return Result<std::string>::ok(std::move(asset).value());
     }
     return fetchAndCache(key, url);
 }
