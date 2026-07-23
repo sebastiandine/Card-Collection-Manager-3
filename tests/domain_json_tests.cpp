@@ -218,6 +218,48 @@ TEST_SUITE("PokemonCard JSON") {
         const PokemonCard legacy = j.get<PokemonCard>();
         CHECK(legacy.region == PokemonRegion::West);
     }
+
+    TEST_CASE("West load migrates legacy pokemontcg set ids to TCGdex EN") {
+        nlohmann::json j = {
+            {"id", 1},
+            {"amount", 1},
+            {"name", "Charizard"},
+            {"set", {{"id", "sv1"}, {"name", "Scarlet & Violet"}, {"releaseDate", "2023/03/31"}}},
+            {"setNo", "6"},
+            {"note", ""},
+            {"images", nlohmann::json::array()},
+            {"language", "English"},
+            {"condition", "NearMint"},
+            {"firstEdition", false},
+            {"holo", false},
+            {"signed", false},
+            {"altered", false},
+            {"region", "West"},
+        };
+        const PokemonCard back = j.get<PokemonCard>();
+        CHECK(back.set.id == "sv01");
+    }
+
+    TEST_CASE("Asia load does not rewrite set ids through West aliases") {
+        nlohmann::json j = {
+            {"id", 1},
+            {"amount", 1},
+            {"name", "Charmander"},
+            {"set", {{"id", "sv1"}, {"name", "Keep Asia id"}, {"releaseDate", "2023/01/01"}}},
+            {"setNo", "001"},
+            {"note", ""},
+            {"images", nlohmann::json::array()},
+            {"language", "Japanese"},
+            {"condition", "NearMint"},
+            {"firstEdition", false},
+            {"holo", false},
+            {"signed", false},
+            {"altered", false},
+            {"region", "Asia"},
+        };
+        const PokemonCard back = j.get<PokemonCard>();
+        CHECK(back.set.id == "sv1");
+    }
 }
 
 TEST_SUITE("DigiBattle99Card JSON") {

@@ -127,6 +127,28 @@ TEST_SUITE("computePokemonSetCompletion") {
         CHECK(rows[0].ownedUnique == 1);
     }
 
+    TEST_CASE("legacy pokemontcg West set id matches TCGdex catalog pack") {
+        PokemonSetCatalog west;
+        PokemonSetCatalogPack pack;
+        pack.setId = "sv01";
+        pack.setName = "Scarlet & Violet";
+        pack.cards = {{"6", "Charizard"}};
+        west.packs.push_back(std::move(pack));
+        PokemonSetCatalog emptyAsia;
+        std::vector<PokemonCard> collection{
+            makeOwned(PokemonRegion::West, "sv1", "6"),
+        };
+        const auto rows = computePokemonSetCompletion(collection, west, emptyAsia);
+        REQUIRE(rows.size() == 1);
+        CHECK(rows[0].setId == "sv01");
+        CHECK(rows[0].ownedUnique == 1);
+
+        const auto checklist = pokemonChecklistForSet(
+            collection, west, emptyAsia, PokemonRegion::West, "sv01");
+        REQUIRE(checklist.size() == 1);
+        CHECK(checklist[0].owned);
+    }
+
     TEST_CASE("amount does not inflate unique ownership") {
         const auto west = westCatalog();
         PokemonSetCatalog emptyAsia;

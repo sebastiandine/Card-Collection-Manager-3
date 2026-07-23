@@ -1,11 +1,9 @@
 #pragma once
 
-// PokemonCardPreviewSource: ICardPreviewSource implementation for the Pokemon
-// TCG. When set id + collector number are both known, prefers
-//   GET https://api.pokemontcg.io/v2/cards/{setId}-{number}
-// then falls back to a name-less search `set.id:… number:…`. Name-based
-// search is kept for lookups that lack a set number (or set id). Returns
-// `images.large` (with `images.small` as a graceful fallback).
+// PokemonCardPreviewSource: West Pokemon previews via TCGdex EN.
+// Prefers GET /v2/en/cards/{setId}-{localId}, then filtered card search, then
+// set-detail name match for auto-detect. Image URLs append /high.png (wxImage
+// decodes PNG, not webp).
 
 #include "ccm/ports/ICardPreviewSource.hpp"
 #include "ccm/ports/IHttpClient.hpp"
@@ -31,40 +29,33 @@ public:
     Result<std::vector<AutoDetectedPrint>> detectPrintVariants(std::string_view name,
                                                                std::string_view setId) override;
 
-    // Build the fully URL-encoded Pokemon TCG search URL for the given card.
-    // When both setId and setNo are non-empty, omits the name: clause so the
-    // Lucene query cannot miss on name∩number intersections.
-    // Exposed for unit testing and to keep encoding rules in one place.
+    // Strip everything after the first '/' (e.g. "4/102" -> "4").
+    static std::string normalizeCollectorNumber(std::string_view setNo);
+
+    static std::string buildCardByIdUrl(std::string_view setId, std::string_view setNo);
+    static std::string buildSetDetailUrl(std::string_view setId);
     static std::string buildSearchUrl(std::string_view name,
                                       std::string_view setId,
                                       std::string_view setNo);
+    static std::string imageUrlFromBase(std::string_view imageBase);
 
-    // Direct card endpoint: /v2/cards/{setId}-{normalizedNumber}.
-    static std::string buildCardByIdUrl(std::string_view setId, std::string_view setNo);
+    struct SetCardRow {
+        std::string localId;
+        std::string name;
+        std::string imageBase;
+        std::string rarity;
+    };
 
-    // Strip everything after the first '/' (e.g. "4/102" -> "4"). Used by
-    // preview lookups, auto-detect, and set-completion ownership matching.
-    static std::string normalizeCollectorNumber(std::string_view setNo);
+    static Result<std::vector<SetCardRow>, PreviewLookupError>
+        parseSetCards(const std::string& body);
 
-    // Slimmer search URL for auto-detect: omits the number clause and asks the
-    // API for only the fields the print-variant parser needs.
-    static std::string buildDetectSearchUrl(std::string_view name,
-                                            std::string_view setId);
-
-    // Parse a Pokemon TCG /v2/cards *search* response body (`data` array) and
-    // pull out the image URL for the first matching card. Prefers
-    // `images.large`, falls back to `images.small`. Errors are classified:
-    //   - JSON parse failure or missing/non-array `data` => Transient.
-    //   - Empty `data` array or missing image variants => NotFound.
-    static Result<std::string, PreviewLookupError>
-        parseResponse(const std::string& body);
-
-    // Parse a Pokemon TCG /v2/cards/{id} response (`data` object).
     static Result<std::string, PreviewLookupError>
         parseCardByIdResponse(const std::string& body);
 
-    // Enumerate distinct collector numbers (and rarities) for an exact card
-    // name inside the chosen set. Exposed for unit testing without HTTP.
+    // Parse a slim TCGdex cards-array search response; prefer first hit with image.
+    static Result<std::string, PreviewLookupError>
+        parseSearchResponse(const std::string& body);
+
     static Result<std::vector<AutoDetectedPrint>>
         parsePrintVariants(const std::string& body,
                            std::string_view setId,

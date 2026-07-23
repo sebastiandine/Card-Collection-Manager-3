@@ -1,12 +1,8 @@
 #pragma once
 
-// PokemonSetSource: ISetSource implementation for the Pokemon TCG.
-// Calls the Pokemon TCG API at https://api.pokemontcg.io/v2/sets, maps the
-// response into our `Set` domain type, and sorts by release date ascending.
-// The Pokemon TCG API already returns `releaseDate` in `YYYY/MM/DD` format,
-// so no rewriting is needed (unlike Scryfall's `released_at`).
-// Behavior matches `pokemon/set_services.rs::update_sets`.
-// Set-completion catalog is built from a paginated /v2/cards dump.
+// PokemonSetSource: ISetSource for West Pokemon via TCGdex EN
+// (https://api.tcgdex.net/v2/en). List endpoint returns a slim array; release
+// dates and set-completion checklists come from per-set detail GETs.
 
 #include "ccm/domain/PokemonSetCatalog.hpp"
 #include "ccm/domain/Set.hpp"
@@ -14,15 +10,14 @@
 #include "ccm/ports/IHttpClient.hpp"
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace ccm {
 
 class PokemonSetSource final : public ISetSource {
 public:
-    static constexpr const char* kEndpoint = "https://api.pokemontcg.io/v2/sets";
-    static constexpr const char* kCardsEndpoint = "https://api.pokemontcg.io/v2/cards";
-    static constexpr int         kCardsPageSize = 250;
+    static constexpr const char* kListEndpoint = "https://api.tcgdex.net/v2/en/sets";
 
     struct FetchWithCatalog {
         std::vector<Set>   sets;
@@ -33,28 +28,18 @@ public:
 
     Result<std::vector<Set>> fetchAll() override;
 
-    // Sets endpoint + paginated cards dump for the offline checklist.
+    // List + per-set detail (cards + release date) for the offline checklist.
     Result<FetchWithCatalog> fetchAllWithCatalog();
 
-    // Pure parser exposed for unit testing without a network round-trip.
-    static Result<std::vector<Set>> parseResponse(const std::string& body);
+    // Pure parsers exposed for unit testing without a network round-trip.
+    static Result<std::vector<Set>> parseListResponse(const std::string& body);
+    static Result<std::string> parseReleaseDate(const std::string& detailBody);
+    static std::string rewriteReleaseDate(std::string_view isoDate);
+    static std::string buildSetDetailUrl(std::string_view setId);
 
-    // Build / merge checklist packs from one /v2/cards page body. Pass an
-    // accumulating catalog; returns page count metadata for pagination.
-    struct CardsPageMeta {
-        int page{1};
-        int pageSize{kCardsPageSize};
-        int count{0};
-        int totalCount{0};
-    };
-    static Result<CardsPageMeta> mergeCardsPage(const std::string& body,
-                                                PokemonSetCatalog& catalog,
-                                                const std::vector<Set>& sets);
-
-    static Result<PokemonSetCatalog> parseCatalog(const std::string& body,
-                                                  const std::vector<Set>& sets);
-
-    static std::string buildCardsPageUrl(int page, int pageSize = kCardsPageSize);
+    static Result<PokemonSetCatalogPack> parseCatalogPackFromSetDetail(
+        const std::string& detailBody,
+        const Set&         set);
 
 private:
     IHttpClient& http_;

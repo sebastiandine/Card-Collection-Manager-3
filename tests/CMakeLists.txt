@@ -19,6 +19,8 @@ add_executable(ccm_core_tests
     card_preview_service_tests.cpp
     local_preview_byte_cache_tests.cpp
     std_file_system_tests.cpp
+    pokemon_west_set_id_tests.cpp
+    pokemon_collection_set_sync_tests.cpp
     pokemon_set_source_tests.cpp
     pokemon_card_preview_source_tests.cpp
     digibattle99_set_source_tests.cpp
