@@ -34,10 +34,13 @@ TEST_SUITE("PokemonCardPreviewSource::buildSearchUrl") {
         CHECK(url.find("number") == std::string::npos);
     }
 
-    TEST_CASE("setNo is appended as a number: clause") {
+    TEST_CASE("setId plus setNo omits name to avoid Lucene name-number misses") {
         const auto url = PokemonCardPreviewSource::buildSearchUrl(
             "Charizard", "base1", "4");
         CHECK(url.find("number%3A4") != std::string::npos);
+        CHECK(url.find("set.id%3Abase1") != std::string::npos);
+        CHECK(url.find("name") == std::string::npos);
+        CHECK(url.find("Charizard") == std::string::npos);
     }
 
     TEST_CASE("setNo with a slash is normalized to the printed number") {
@@ -47,6 +50,7 @@ TEST_SUITE("PokemonCardPreviewSource::buildSearchUrl") {
             "Charizard", "base1", "4/102");
         CHECK(url.find("number%3A4") != std::string::npos);
         CHECK(url.find("102") == std::string::npos);
+        CHECK(url.find("name") == std::string::npos);
     }
 
     TEST_CASE("name with spaces is percent-encoded") {
@@ -55,11 +59,31 @@ TEST_SUITE("PokemonCardPreviewSource::buildSearchUrl") {
         CHECK(url.find("%22Mr.%20Mime%22") != std::string::npos);
     }
 
-    TEST_CASE("empty setId omits the set.id clause") {
+    TEST_CASE("empty setId keeps name and appends number") {
         const auto url =
             PokemonCardPreviewSource::buildSearchUrl("Pikachu", "", "25");
         CHECK(url.find("set.id") == std::string::npos);
+        CHECK(url.find("%22Pikachu%22") != std::string::npos);
         CHECK(url.find("number%3A25") != std::string::npos);
+    }
+}
+
+TEST_SUITE("PokemonCardPreviewSource::buildCardByIdUrl") {
+    TEST_CASE("joins setId and normalized number with a hyphen") {
+        const auto url = PokemonCardPreviewSource::buildCardByIdUrl("base1", "4");
+        CHECK(url == "https://api.pokemontcg.io/v2/cards/base1-4");
+    }
+
+    TEST_CASE("percent-encodes alphanumeric collector numbers") {
+        const auto url =
+            PokemonCardPreviewSource::buildCardByIdUrl("swsh12tg", "TG14");
+        CHECK(url == "https://api.pokemontcg.io/v2/cards/swsh12tg-TG14");
+    }
+
+    TEST_CASE("strips slash form before building the id") {
+        const auto url =
+            PokemonCardPreviewSource::buildCardByIdUrl("base1", "4/102");
+        CHECK(url == "https://api.pokemontcg.io/v2/cards/base1-4");
     }
 }
 
@@ -147,6 +171,50 @@ TEST_SUITE("PokemonCardPreviewSource::parseResponse") {
     }
 }
 
+TEST_SUITE("PokemonCardPreviewSource::parseCardByIdResponse") {
+    TEST_CASE("returns images.large from data object") {
+        const auto out = PokemonCardPreviewSource::parseCardByIdResponse(R"({
+            "data": {
+                "id": "base1-4",
+                "images": {
+                    "small": "https://images.pokemontcg.io/small.png",
+                    "large": "https://images.pokemontcg.io/large.png"
+                }
+            }
+        })");
+        REQUIRE(out.isOk());
+        CHECK(out.value() == "https://images.pokemontcg.io/large.png");
+    }
+
+    TEST_CASE("falls back to images.small when large is absent") {
+        const auto out = PokemonCardPreviewSource::parseCardByIdResponse(R"({
+            "data": {"images":{"small":"https://small.only/img.png"}}
+        })");
+        REQUIRE(out.isOk());
+        CHECK(out.value() == "https://small.only/img.png");
+    }
+
+    TEST_CASE("missing images is NotFound") {
+        const auto out = PokemonCardPreviewSource::parseCardByIdResponse(
+            R"({"data":{"id":"base1-4","name":"Charizard"}})");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::NotFound);
+    }
+
+    TEST_CASE("data array shape is Transient") {
+        const auto out =
+            PokemonCardPreviewSource::parseCardByIdResponse(R"({"data":[]})");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
+    }
+
+    TEST_CASE("invalid JSON is Transient") {
+        const auto out = PokemonCardPreviewSource::parseCardByIdResponse("{not json");
+        REQUIRE(out.isErr());
+        CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
+    }
+}
+
 TEST_SUITE("PokemonCardPreviewSource::fetchImageUrl") {
     TEST_CASE("network error is surfaced as Transient") {
         FixedHttpClient http;
@@ -157,17 +225,54 @@ TEST_SUITE("PokemonCardPreviewSource::fetchImageUrl") {
         CHECK(out.error().kind == PreviewLookupError::Kind::Transient);
     }
 
-    TEST_CASE("network success is parsed end-to-end and uses the encoded URL") {
+    TEST_CASE("with setNo prefers card-by-id endpoint") {
+        FixedHttpClient http;
+        http.ok = true;
+        http.body = R"({"data":{"images":{"large":"https://l/by-id.png"}}})";
+        PokemonCardPreviewSource src{http};
+        const auto out = src.fetchImageUrl("Pikachu", "base1", "25");
+        REQUIRE(out.isOk());
+        CHECK(out.value() == "https://l/by-id.png");
+        CHECK(http.lastUrl == "https://api.pokemontcg.io/v2/cards/base1-25");
+    }
+
+    TEST_CASE("falls back to name-less search when card-by-id HTTP fails") {
+        class RoutingHttp final : public IHttpClient {
+        public:
+            int calls = 0;
+            std::string lastUrl;
+            Result<std::string> get(std::string_view url) override {
+                lastUrl = std::string(url);
+                ++calls;
+                if (url.find("/v2/cards?") == std::string::npos) {
+                    return Result<std::string>::err("HTTP 404 from card id");
+                }
+                return Result<std::string>::ok(
+                    R"({"data":[{"images":{"large":"https://l/search.png"}}]})");
+            }
+        } http;
+
+        PokemonCardPreviewSource src{http};
+        const auto out = src.fetchImageUrl("Charizard", "base1", "4");
+        REQUIRE(out.isOk());
+        CHECK(out.value() == "https://l/search.png");
+        CHECK(http.calls == 2);
+        CHECK(http.lastUrl.find("set.id%3Abase1") != std::string::npos);
+        CHECK(http.lastUrl.find("number%3A4") != std::string::npos);
+        CHECK(http.lastUrl.find("name") == std::string::npos);
+    }
+
+    TEST_CASE("empty setNo uses name search without card-by-id") {
         FixedHttpClient http;
         http.ok = true;
         http.body = R"({"data":[{"images":{"large":"https://l/x.png"}}]})";
         PokemonCardPreviewSource src{http};
-        const auto out = src.fetchImageUrl("Pikachu", "base1", "25");
+        const auto out = src.fetchImageUrl("Pikachu", "base1", "");
         REQUIRE(out.isOk());
         CHECK(out.value() == "https://l/x.png");
         CHECK(http.lastUrl.find("%22Pikachu%22") != std::string::npos);
         CHECK(http.lastUrl.find("set.id%3Abase1") != std::string::npos);
-        CHECK(http.lastUrl.find("number%3A25") != std::string::npos);
+        CHECK(http.lastUrl.find("/v2/cards/base1-") == std::string::npos);
     }
 }
 

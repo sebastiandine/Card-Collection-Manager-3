@@ -13,18 +13,6 @@ namespace ccm {
 
 namespace {
 
-// Strip everything after the first '/' in a Pokemon collector number.
-// The Pokemon TCG API expects `number:"4"`, but cards are commonly stored as
-// `4/102`. Without this, no API match is found.
-std::string normalizeNumber(std::string_view setNo) {
-    std::string s(setNo);
-    const auto slash = s.find('/');
-    if (slash != std::string::npos) {
-        s = s.substr(0, slash);
-    }
-    return s;
-}
-
 std::string trim(std::string s) {
     while (!s.empty() && std::isspace(static_cast<unsigned char>(s.front()))) s.erase(s.begin());
     while (!s.empty() && std::isspace(static_cast<unsigned char>(s.back()))) s.pop_back();
@@ -38,29 +26,72 @@ std::string toLower(std::string s) {
     return s;
 }
 
+Result<std::string, PreviewLookupError> imageUrlFromCardObject(const nlohmann::json& card) {
+    using R = Result<std::string, PreviewLookupError>;
+    using K = PreviewLookupError::Kind;
+    if (!card.contains("images") || !card.at("images").is_object()) {
+        return R::err({K::NotFound, "Card has no 'images' object."});
+    }
+    const auto& images = card.at("images");
+    if (images.contains("large") && images.at("large").is_string()) {
+        return R::ok(images.at("large").get<std::string>());
+    }
+    if (images.contains("small") && images.at("small").is_string()) {
+        return R::ok(images.at("small").get<std::string>());
+    }
+    return R::err({K::NotFound, "Card has no 'large' or 'small' image variant."});
+}
+
 }  // namespace
 
 PokemonCardPreviewSource::PokemonCardPreviewSource(IHttpClient& http) : http_(http) {}
 
+std::string PokemonCardPreviewSource::normalizeCollectorNumber(std::string_view setNo) {
+    // Pokemon TCG search uses an unquoted `number:` clause (e.g. number:4 or
+    // number:TG14). Cards are commonly stored as `4/102`; strip the suffix.
+    std::string s(setNo);
+    const auto slash = s.find('/');
+    if (slash != std::string::npos) {
+        s = s.substr(0, slash);
+    }
+    return s;
+}
+
 std::string PokemonCardPreviewSource::buildSearchUrl(std::string_view name,
                                                      std::string_view setId,
                                                      std::string_view setNo) {
-    // Build the unencoded query first so the output matches what the Pokemon
-    // TCG search syntax expects: name:"<name>" set.id:<setId> number:<num>.
-    std::string query = "name:\"";
-    query += std::string(name);
-    query += "\"";
-    if (!setId.empty()) {
-        query += " set.id:";
+    // When both set id and collector number are known, omit name: — Lucene
+    // name∩number intersections can miss even when the print is real, and
+    // collector numbers are unique within a set.
+    const std::string num = PokemonCardPreviewSource::normalizeCollectorNumber(setNo);
+    std::string query;
+    if (!setId.empty() && !num.empty()) {
+        query = "set.id:";
         query += std::string(setId);
-    }
-    const std::string num = normalizeNumber(setNo);
-    if (!num.empty()) {
         query += " number:";
         query += num;
+    } else {
+        query = "name:\"";
+        query += std::string(name);
+        query += "\"";
+        if (!setId.empty()) {
+            query += " set.id:";
+            query += std::string(setId);
+        }
+        if (!num.empty()) {
+            query += " number:";
+            query += num;
+        }
     }
     return std::string("https://api.pokemontcg.io/v2/cards?q=") +
            rfc3986PercentEncode(query);
+}
+
+std::string PokemonCardPreviewSource::buildCardByIdUrl(std::string_view setId,
+                                                       std::string_view setNo) {
+    const std::string num = PokemonCardPreviewSource::normalizeCollectorNumber(setNo);
+    std::string id = std::string(setId) + "-" + num;
+    return std::string("https://api.pokemontcg.io/v2/cards/") + rfc3986PercentEncode(id);
 }
 
 std::string PokemonCardPreviewSource::buildDetectSearchUrl(std::string_view name,
@@ -84,18 +115,23 @@ PokemonCardPreviewSource::parseResponse(const std::string& body) {
         if (data.empty()) {
             return R::err({K::NotFound, "Pokemon TCG returned no matching cards."});
         }
-        const auto& first = data.at(0);
-        if (!first.contains("images") || !first.at("images").is_object()) {
-            return R::err({K::NotFound, "Card has no 'images' object."});
+        return imageUrlFromCardObject(data.at(0));
+    } catch (const std::exception& e) {
+        return R::err({K::Transient,
+            std::string("Pokemon TCG JSON parse error: ") + e.what()});
+    }
+}
+
+Result<std::string, PreviewLookupError>
+PokemonCardPreviewSource::parseCardByIdResponse(const std::string& body) {
+    using R = Result<std::string, PreviewLookupError>;
+    using K = PreviewLookupError::Kind;
+    try {
+        const auto j = nlohmann::json::parse(body);
+        if (!j.contains("data") || !j.at("data").is_object()) {
+            return R::err({K::Transient, "Pokemon TCG card response missing 'data' object."});
         }
-        const auto& images = first.at("images");
-        if (images.contains("large") && images.at("large").is_string()) {
-            return R::ok(images.at("large").get<std::string>());
-        }
-        if (images.contains("small") && images.at("small").is_string()) {
-            return R::ok(images.at("small").get<std::string>());
-        }
-        return R::err({K::NotFound, "Card has no 'large' or 'small' image variant."});
+        return imageUrlFromCardObject(j.at("data"));
     } catch (const std::exception& e) {
         return R::err({K::Transient,
             std::string("Pokemon TCG JSON parse error: ") + e.what()});
@@ -108,6 +144,18 @@ PokemonCardPreviewSource::fetchImageUrl(std::string_view name,
                                         std::string_view setNo) {
     using R = Result<std::string, PreviewLookupError>;
     using K = PreviewLookupError::Kind;
+
+    const std::string num = normalizeCollectorNumber(setNo);
+    if (!setId.empty() && !num.empty()) {
+        auto byId = http_.get(buildCardByIdUrl(setId, num));
+        if (byId) {
+            auto img = parseCardByIdResponse(byId.value());
+            if (img) return img;
+            // NotFound (no images) or Transient (schema): fall through to search.
+        }
+        // HTTP failure (404/5xx/offline): fall through to search.
+    }
+
     const std::string url = buildSearchUrl(name, setId, setNo);
     auto resp = http_.get(url);
     if (!resp) return R::err({K::Transient, resp.error()});

@@ -139,6 +139,21 @@ TEST_SUITE("JapanesePokemonEnCatalog") {
         CHECK_FALSE(catalog.value().hasPrintsForSet("PMCG1"));
     }
 
+    TEST_CASE("printsForSet returns all prints for a set id") {
+        const auto catalog = JapanesePokemonEnCatalog::parse(R"({
+            "sets": {},
+            "prints": [
+                {"set_id":"A","local_id":"1","name_en":"One"},
+                {"set_id":"A","local_id":"2","name_en":"Two"},
+                {"set_id":"B","local_id":"1","name_en":"Other"}
+            ]
+        })");
+        REQUIRE(catalog.isOk());
+        const auto prints = catalog.value().printsForSet("A");
+        REQUIRE(prints.size() == 2);
+        CHECK(catalog.value().printsForSet("missing").empty());
+    }
+
     TEST_CASE("missing set/print returns nullopt") {
         JapanesePokemonEnCatalog empty;
         CHECK_FALSE(empty.findSet("X").has_value());

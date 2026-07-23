@@ -92,3 +92,55 @@ TEST_SUITE("PokemonSetSource::fetchAll") {
         CHECK(http.lastUrl == "https://api.pokemontcg.io/v2/sets");
     }
 }
+
+TEST_SUITE("PokemonSetSource::parseCatalog") {
+    TEST_CASE("groups cards by set.id and dedupes collector numbers") {
+        const std::vector<Set> sets{
+            Set{"base1", "Base", "1999/01/09"},
+            Set{"jungle", "Jungle", "1999/06/16"},
+        };
+        const std::string json = R"({
+            "data": [
+                {"name":"Charizard","number":"4","set":{"id":"base1","name":"Base"}},
+                {"name":"Charizard","number":"4/102","set":{"id":"base1","name":"Base"}},
+                {"name":"Growlithe","number":"58","set":{"id":"base1","name":"Base"}},
+                {"name":"Pikachu","number":"60","set":{"id":"jungle","name":"Jungle"}}
+            ],
+            "page":1,"pageSize":250,"count":4,"totalCount":4
+        })";
+        const auto catalog = PokemonSetSource::parseCatalog(json, sets);
+        REQUIRE(catalog.isOk());
+        REQUIRE(catalog.value().packs.size() == 2);
+        const auto* base = catalog.value().findPack("base1");
+        REQUIRE(base != nullptr);
+        REQUIRE(base->cards.size() == 2);
+        CHECK(base->cards[0].setNo == "4");
+        CHECK(base->cards[1].setNo == "58");
+        const auto* jungle = catalog.value().findPack("jungle");
+        REQUIRE(jungle != nullptr);
+        REQUIRE(jungle->cards.size() == 1);
+        CHECK(jungle->cards[0].setNo == "60");
+    }
+
+    TEST_CASE("mergeCardsPage accumulates across pages") {
+        const std::vector<Set> sets{Set{"base1", "Base", "1999/01/09"}};
+        PokemonSetCatalog catalog;
+        const std::string page1 = R"({
+            "data":[{"name":"A","number":"1","set":{"id":"base1","name":"Base"}}],
+            "page":1,"pageSize":1,"count":1,"totalCount":2
+        })";
+        const std::string page2 = R"({
+            "data":[{"name":"B","number":"2","set":{"id":"base1","name":"Base"}}],
+            "page":2,"pageSize":1,"count":1,"totalCount":2
+        })";
+        REQUIRE(PokemonSetSource::mergeCardsPage(page1, catalog, sets).isOk());
+        REQUIRE(PokemonSetSource::mergeCardsPage(page2, catalog, sets).isOk());
+        REQUIRE(catalog.packs.size() == 1);
+        REQUIRE(catalog.packs[0].cards.size() == 2);
+    }
+
+    TEST_CASE("buildCardsPageUrl includes select and pagination") {
+        CHECK(PokemonSetSource::buildCardsPageUrl(2) ==
+              "https://api.pokemontcg.io/v2/cards?select=name,number,set&pageSize=250&page=2");
+    }
+}

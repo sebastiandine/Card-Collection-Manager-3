@@ -3,6 +3,7 @@
 #include "ccm/domain/Configuration.hpp"
 #include "ccm/domain/DigiBattle99Card.hpp"
 #include "ccm/domain/DigiBattle99SetCatalog.hpp"
+#include "ccm/domain/PokemonSetCatalog.hpp"
 #include "ccm/domain/YuGiOhSetCatalog.hpp"
 #include "ccm/domain/Enums.hpp"
 #include "ccm/domain/JapanesePokemonCard.hpp"
@@ -287,6 +288,28 @@ TEST_SUITE("YuGiOhSetCatalog JSON") {
         const YuGiOhSetCatalog back = j.get<YuGiOhSetCatalog>();
         CHECK(back == catalog);
         CHECK(back.findPack("LOB") != nullptr);
+        CHECK(back.findPack("missing") == nullptr);
+    }
+}
+
+TEST_SUITE("PokemonSetCatalog JSON") {
+    TEST_CASE("round-trips packs and setNo alias") {
+        PokemonSetCatalog catalog;
+        PokemonSetCatalogPack pack;
+        pack.setId = "base1";
+        pack.setName = "Base";
+        pack.cards.push_back(PokemonCatalogCard{"4", "Charizard"});
+        pack.cards.push_back(PokemonCatalogCard{"58", "Growlithe"});
+        catalog.packs.push_back(std::move(pack));
+
+        nlohmann::json j = catalog;
+        CHECK(j.at("packs").is_array());
+        CHECK(j.at("packs").at(0).at("id") == "base1");
+        CHECK(j.at("packs").at(0).at("cards").at(0).at("setNo") == "4");
+
+        const PokemonSetCatalog back = j.get<PokemonSetCatalog>();
+        CHECK(back == catalog);
+        CHECK(back.findPack("base1") != nullptr);
         CHECK(back.findPack("missing") == nullptr);
     }
 }

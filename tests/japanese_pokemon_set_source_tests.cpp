@@ -315,3 +315,56 @@ TEST_SUITE("JapanesePokemonSetSource::fetchAll") {
         CHECK(jungle->name == "Pokémon Jungle");
     }
 }
+
+TEST_SUITE("JapanesePokemonSetSource::parseCatalogPackFromSetDetail") {
+    TEST_CASE("builds checklist from cards[] and prefers EN catalog names") {
+        const auto catalog = JapanesePokemonEnCatalog::parse(R"({
+            "sets": {"PMCG1": {"name_en":"Expansion Pack","name_ja":"拡張パック"}},
+            "prints": [
+                {"set_id":"PMCG1","local_id":"001","name_en":"Charmander","name_ja":"ヒトカゲ"},
+                {"set_id":"PMCG1","local_id":"099","name_en":"Catalog Only","name_ja":""}
+            ]
+        })");
+        REQUIRE(catalog.isOk());
+        Set set;
+        set.id = "PMCG1";
+        set.name = "Expansion Pack";
+        const std::string detail = R"({
+            "id":"PMCG1",
+            "name":"拡張パック",
+            "cards":[
+                {"localId":"001","name":"ヒトカゲ"},
+                {"localId":"002","name":"リザード"}
+            ]
+        })";
+        const auto pack = JapanesePokemonSetSource::parseCatalogPackFromSetDetail(
+            detail, set, catalog.value());
+        REQUIRE(pack.isOk());
+        REQUIRE(pack.value().cards.size() == 3);
+        CHECK(pack.value().cards[0].setNo == "001");
+        CHECK(pack.value().cards[0].name == "Charmander");
+        CHECK(pack.value().cards[1].setNo == "002");
+        CHECK(pack.value().cards[1].name == "リザード");
+        CHECK(pack.value().cards[2].setNo == "099");
+        CHECK(pack.value().cards[2].name == "Catalog Only");
+    }
+
+    TEST_CASE("catalogPackFromEnCatalog covers classic-only products") {
+        const auto catalog = JapanesePokemonEnCatalog::parse(R"({
+            "sets": {},
+            "prints": [
+                {"set_id":"UnnumberedPromo","local_id":"001","name_en":"Pikachu"},
+                {"set_id":"UnnumberedPromo","local_id":"002","name_en":"Mewtwo"}
+            ]
+        })");
+        REQUIRE(catalog.isOk());
+        Set set;
+        set.id = "UnnumberedPromo";
+        set.name = "Unnumbered Promotional cards";
+        const auto pack =
+            JapanesePokemonSetSource::catalogPackFromEnCatalog(set, catalog.value());
+        REQUIRE(pack.cards.size() == 2);
+        CHECK(pack.cards[0].setNo == "001");
+        CHECK(pack.cards[1].setNo == "002");
+    }
+}

@@ -36,8 +36,9 @@ public:
     virtual wxPanel* selectedPanel(wxWindow* parent) = 0;
 
     // When non-null, MainFrame mounts this as the sole content under the
-    // toolbar instead of the shared selected|list splitter. Digimon uses this
-    // for its Single Cards / Set Completion notebook. Default: no custom host.
+    // toolbar instead of the shared selected|list splitter. Digimon, Yu-Gi-Oh!,
+    // and Pokemon use this for Single Cards / Set Completion notebooks.
+    // Default: no custom host.
     virtual wxPanel* contentPanel(wxWindow* parent) {
         (void)parent;
         return nullptr;

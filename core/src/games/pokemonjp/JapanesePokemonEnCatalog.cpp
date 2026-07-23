@@ -144,6 +144,20 @@ bool JapanesePokemonEnCatalog::hasPrintsForSet(std::string_view setId) const noe
     return it != printKeysBySet_.end() && !it->second.empty();
 }
 
+std::vector<JapanesePokemonPrintEnInfo>
+JapanesePokemonEnCatalog::printsForSet(std::string_view setId) const {
+    std::vector<JapanesePokemonPrintEnInfo> out;
+    const auto keysIt = printKeysBySet_.find(std::string(setId));
+    if (keysIt == printKeysBySet_.end()) return out;
+    out.reserve(keysIt->second.size());
+    for (const auto& key : keysIt->second) {
+        const auto pit = printsByKey_.find(key);
+        if (pit == printsByKey_.end()) continue;
+        out.push_back(pit->second);
+    }
+    return out;
+}
+
 std::string JapanesePokemonEnCatalog::tcgplayerImageUrl(std::string_view productId) {
     if (productId.empty()) return {};
     return std::string("https://product-images.tcgplayer.com/fit-in/437x437/") +

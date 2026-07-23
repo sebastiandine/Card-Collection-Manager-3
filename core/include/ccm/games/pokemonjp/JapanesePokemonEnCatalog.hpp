@@ -54,6 +54,10 @@ public:
 
     [[nodiscard]] bool hasPrintsForSet(std::string_view setId) const noexcept;
 
+    // All prints for a set (catalog gap-fill / set-completion checklists).
+    [[nodiscard]] std::vector<JapanesePokemonPrintEnInfo>
+        printsForSet(std::string_view setId) const;
+
     // TCGPlayer product-image CDN URL for classic JA gap-fill.
     [[nodiscard]] static std::string tcgplayerImageUrl(std::string_view productId);
 

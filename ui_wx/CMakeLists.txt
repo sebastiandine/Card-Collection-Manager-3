@@ -15,6 +15,7 @@ add_library(ccm_ui_wx STATIC
     src/PokemonSelectedCardPanel.cpp
     src/PokemonCardEditDialog.cpp
     src/PokemonGameView.cpp
+    src/PokemonSetCompletionPanel.cpp
     src/YuGiOhCardListPanel.cpp
     src/YuGiOhSelectedCardPanel.cpp
     src/YuGiOhCardEditDialog.cpp

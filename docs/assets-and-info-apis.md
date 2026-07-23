@@ -25,14 +25,25 @@ Unified **Pokemon** Game menu entry. Per-card `region` (`West` / `Asia`) selects
 **Info API:** `https://api.pokemontcg.io/v2/sets`  
 Used by `PokemonSetSource` to fetch all sets. The parser maps `id`, `name`, and `releaseDate` directly into `Set`, then sorts ascending by release date.
 
-**Asset API:** `https://api.pokemontcg.io/v2/cards?q=...`  
+**Asset API:** `https://api.pokemontcg.io/v2/cards` (by id) and `https://api.pokemontcg.io/v2/cards?q=...` (search)  
 Used by `PokemonCardPreviewSource` in two ways:
 
-1. **Preview lookup (`fetchImageUrl`).** Search by `name` plus optional `set.id` and collector number. The parser takes `data[0].images.large` first and falls back to `images.small` if needed.
+1. **Preview lookup (`fetchImageUrl`).** When both set id and collector number are present, prefers `GET /v2/cards/{setId}-{number}` (single-card `data` object) — same idea as Asia’s direct localId fetch — so Lucene `name:` ∩ `number:` misses cannot blank the preview after Auto-detect fills Set #. On HTTP failure or missing images, falls back to a name-less search `set.id:… number:…` (collector numbers are unique within a set). When Set # or set id is missing, keeps the older `name:"…"` search with optional `set.id` / `number`. The parser takes `images.large` first and falls back to `images.small`.
 
-2. **Auto-detect print (`detectFirstPrint` / `detectPrintVariants`, Pokémon edit dialog).** Uses the same endpoint with `name:"<name>"` and `set.id:<setId>` only — **no** `number:` clause — plus `select=name,number,rarity,set` and `pageSize=50` so the response stays small. If the set-scoped HTTP request fails, it retries with **`name:` only** and still filters rows in `PokemonCardPreviewSource::parsePrintVariants(...)` by the picker’s **`set.id`** (not the display set name). The dialog passes `card.set.id` into `CardPreviewService::detectPrintVariants(...)` on a worker thread so the modal stays responsive. Each matching `data[]` row whose **card name matches exactly** (case-insensitive) and whose embedded `set.id` equals the chosen set maps to `AutoDetectedPrint::setNo` as the API `number` field only (for example `25`, not `25/185`). `AutoDetectedPrint::rarity` is filled from the card’s `rarity` field but the Pokémon edit dialog does not auto-sync holo or other flags from it. Distinct `(setNo, rarity)` pairs are deduped. When both an exact card name and `set.id` are supplied, an upstream miss returns an error instead of blending unrelated sets from a broader payload. The edit dialog offers **Auto detect** (fills Set # from the first variant), **Next** (cycles distinct `setNo` values when multiple exist), silent prefetch on **Edit** open, and clears cached variants when **Name** or **Set** changes. The Set # field and persisted `PokemonCard::setNo` keep only the printed-number portion; values such as `4/104` are trimmed to `4` on load and save.
+2. **Auto-detect print (`detectFirstPrint` / `detectPrintVariants`, Pokémon edit dialog).** Uses the search endpoint with `name:"<name>"` and `set.id:<setId>` only — **no** `number:` clause — plus `select=name,number,rarity,set` and `pageSize=50` so the response stays small. If the set-scoped HTTP request fails, it retries with **`name:` only** and still filters rows in `PokemonCardPreviewSource::parsePrintVariants(...)` by the picker’s **`set.id`** (not the display set name). The dialog passes `card.set.id` into `CardPreviewService::detectPrintVariants(...)` on a worker thread so the modal stays responsive. Each matching `data[]` row whose **card name matches exactly** (case-insensitive) and whose embedded `set.id` equals the chosen set maps to `AutoDetectedPrint::setNo` as the API `number` field only (for example `25`, not `25/185`). `AutoDetectedPrint::rarity` is filled from the card’s `rarity` field but the Pokémon edit dialog does not auto-sync holo or other flags from it. Distinct `(setNo, rarity)` pairs are deduped. When both an exact card name and `set.id` are supplied, an upstream miss returns an error instead of blending unrelated sets from a broader payload. The edit dialog offers **Auto detect** (fills Set # from the first variant), **Next** (cycles distinct `setNo` values when multiple exist), silent prefetch on **Edit** open, and clears cached variants when **Name** or **Set** changes. The Set # field and persisted `PokemonCard::setNo` keep only the printed-number portion; values such as `4/104` are trimmed to `4` on load and save.
 
-The preview path normalizes collector numbers before request build. For example, `4/102` is reduced to `4` because the remote `number:` query expects only the printed-number component.
+The preview path normalizes collector numbers before request build. For example, `4/102` is reduced to `4` because the remote `number:` query and card-id path expect only the printed-number component (unquoted `number:4` / `number:TG14`; do not wrap alphanumeric numbers in Lucene quotes when combining with other clauses — that has been observed to 500 on the live API).
+
+### Set-completion catalog (West)
+
+**Sets → Update Pokemon** uses `PokemonSetSource::fetchAllWithCatalog()` so the West path writes:
+
+1. The set list (`pokemon/sets-west.json`) from `/v2/sets` (same as before)
+2. A pack checklist at `<dataStorage>/pokemon/set-catalog-west.json` from a paginated `/v2/cards?select=name,number,set&pageSize=250` dump
+
+Each catalog pack stores `id` (pokemontcg.io set id), `name` (display), and `cards[]` of `{ setNo, name }` keyed by the API `number` field (normalized by stripping anything after `/`). Duplicate collector numbers within a pack collapse to one checklist row. The Pokemon **Set Completion** tab reads this file offline; ownership for a West pack requires `PokemonRegion::West`, matching `card.set.id`, and a normalized collector number match. Amount / holo / 1st Edition are ignored for completion counts.
+
+If `set-catalog-west.json` is missing (and the active region filter is West or All with no Asia catalog either), the Set Completion tab prompts the user to run Update Pokemon.
 
 ## Yu-Gi-Oh! APIs (Yugipedia + YGOPRODeck)
 
@@ -170,6 +181,19 @@ Asia Pokémon is routed internally as `Game::JapanesePokemon` (`dirName` `pokemo
 
 Seed data lives in `tools/pokemon_jp/classic_missing_sets.json` + `classic_missing_prints.json` (merged into the EN catalog via `merge_classic_missing.py`). LocalIds for these products are sequential `001`… within each product (cards were unnumbered in print). Refresh `UnnumberedPromo` prints from Bulbapedia with `python tools/pokemon_jp/harvest_unnumbered_promos.py`, then fill preview images with `python tools/pokemon_jp/enrich_unnumbered_promo_images.py` (prefers Unnumbered / Japanese reprint-gallery scans over English Wizards `|image=` primaries; EN-only Bulbapedia pages leave `image_url` empty), then re-run `merge_classic_missing.py`. Numbered Japanese promo eras (`SV-P`, `S-P`, …) remain out of scope — TCGdex does not expose them, and they are not part of this curated set.
 
+### Set-completion catalog (Asia)
+
+**Sets → Update Pokemon** uses `JapanesePokemonSetSource::fetchAllWithCatalog()` so the Asia path writes:
+
+1. The set list (`pokemon/sets-asia.json`) as above (EN names + classic product injection)
+2. A pack checklist at `<dataStorage>/pokemon/set-catalog-asia.json`
+
+For each set, the source `GET`s `/v2/ja/sets/{id}` and builds checklist rows from `cards[]` (`localId` → `setNo`, display name prefers EN catalog `nameEn`, else TCGdex Japanese `name`). Prints present in the bundled EN catalog but missing from TCGdex `cards[]` are **gap-filled** into the pack (covers UnnumberedPromo / City Gym / Expansion Sheets / Southern Islands and sparse classic sets). Catalog-only products with no TCGdex detail become packs entirely from `JapanesePokemonEnCatalog::printsForSet`.
+
+The Pokemon **Set Completion** tab also loads this file offline; ownership for an Asia pack requires `PokemonRegion::Asia`, matching `card.set.id`, and `normalizeLocalId` on `setNo`. Region and language filters on the tab restrict which packs/cards count. West and Asia never cross-count.
+
+If `set-catalog-asia.json` is missing (and the active region filter needs it), the Set Completion tab prompts the user to run Update Pokemon.
+
 ### Sets without printed collector numbers (`UnnumberedPromo`)
 
 Physically unnumbered Japanese promos (and the other classic catalog-only products above) have **no printed set number**. The app still stores a synthetic `setNo` / catalog `local_id` (`001`, `002`, …) so preview and collection JSON stay keyed by `(setId, localId)` — but that value must not be treated as something the user can read off the card.
@@ -297,6 +321,6 @@ All source types return `Result<T, std::string>` errors so failures cross bounda
 - info API failures (bad set payload, schema mismatch, endpoint/network failure), and
 - asset API failures (query mismatch, no matching card, missing image fields, image download failure).
 
-When previews fail, verify request construction first (name sanitization, number normalization, percent encoding), then verify response shape assumptions: Scryfall (`data`, `image_uris`), Pokemon (`data`, `images.large`/`images.small`; auto-detect also needs `name`, `number`, `rarity`, and `set.id` on each matching row), Yu-Gi-Oh! Yugipedia (`query.pages.<id>.imageinfo[0].url` per filename, missing files tagged `"missing": ""`), Yu-Gi-Oh! YGOPRODeck fallback (`data`, `name`, `card_images`), Digi-Battle digimoncard.io (top-level array with `name`/`id`/`set_name`; CDN `images.digimoncard.io/images/cards/{id}.jpg`), Japanese Pokémon TCGdex (`image` base + `/high.png`; set-detail `cards[]` with `localId`). If the UI fallback path succeeds (network card-back and/or bundled PNG), the panel shows the card-back image and the inline label `(image preview unavailable)`; only if every fallback fails does the preview stay empty with status text.
+When previews fail, verify request construction first (name sanitization, number normalization, percent encoding), then verify response shape assumptions: Scryfall (`data`, `image_uris`), Pokemon West (`GET /v2/cards/{setId}-{number}` → `data` object, or search `data[]`; `images.large`/`images.small`; auto-detect also needs `name`, `number`, `rarity`, and `set.id` on each matching row), Yu-Gi-Oh! Yugipedia (`query.pages.<id>.imageinfo[0].url` per filename, missing files tagged `"missing": ""`), Yu-Gi-Oh! YGOPRODeck fallback (`data`, `name`, `card_images`), Digi-Battle digimoncard.io (top-level array with `name`/`id`/`set_name`; CDN `images.digimoncard.io/images/cards/{id}.jpg`), Japanese Pokémon TCGdex (`image` base + `/high.png`; set-detail `cards[]` with `localId`). If the UI fallback path succeeds (network card-back and/or bundled PNG), the panel shows the card-back image and the inline label `(image preview unavailable)`; only if every fallback fails does the preview stay empty with status text.
 
 For Yu-Gi-Oh! specifically, when a printing shows the wrong art compared with Yugipedia’s gallery, debug in this order: (1) verify the candidate list via `YuGiOhCardPreviewSource::buildCandidateFilenames(...)` against the actual file names on Yugipedia’s `Card_Gallery:<Card>` page; (2) confirm the dialog rarity name maps to the expected short code in `ygoRarityShortCode(...)` / `rarityCodeFor(...)` (extend the mapping when a new rarity surfaces); (3) confirm the `firstEdition` flag matches the printed edition stamp — the candidate ordering puts the printed edition first.
