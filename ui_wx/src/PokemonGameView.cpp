@@ -1,5 +1,6 @@
 #include "ccm/ui/PokemonGameView.hpp"
 
+#include "ccm/games/pokemon/PokemonCollectionSetSync.hpp"
 #include "ccm/games/pokemon/PokemonSetSource.hpp"
 #include "ccm/games/pokemonjp/JapanesePokemonSetSource.hpp"
 #include "ccm/ui/CardEditModalGuard.hpp"
@@ -493,6 +494,30 @@ std::string PokemonGameView::onUpdateSets(wxWindow* parentWindow) {
         asiaErr = asiaBoth.error();
     }
 
+    std::size_t collectionSynced = 0;
+    std::string collectionErr;
+    // Sync collection against whichever set lists we successfully refreshed
+    // (and any still-cached lists from a prior Update).
+    {
+        auto loaded = collection_.list(Game::Pokemon);
+        if (!loaded) {
+            collectionErr = loaded.error();
+        } else {
+            auto cards = std::move(loaded).value();
+            collectionSynced =
+                syncPokemonCollectionSets(cards, setsCacheWest_, setsCacheAsia_);
+            if (collectionSynced > 0) {
+                auto saved = collection_.saveAll(Game::Pokemon, std::move(cards));
+                if (!saved) {
+                    collectionErr = saved.error();
+                    collectionSynced = 0;
+                } else {
+                    refreshCollection();
+                }
+            }
+        }
+    }
+
     if (setCompletionPanel_ != nullptr) {
         setCompletionPanel_->reloadFromStore();
         if (auto loaded = collection_.list(Game::Pokemon)) {
@@ -524,12 +549,22 @@ std::string PokemonGameView::onUpdateSets(wxWindow* parentWindow) {
         return "Pokemon sets partially updated.";
     }
 
-    showThemedMessageDialog(
-        parentWindow,
-        "Updated " + std::to_string(westSets) + " West sets (" +
-            std::to_string(westPacks) + " checklists) and " + std::to_string(asiaSets) +
-            " Asia sets (" + std::to_string(asiaPacks) + " checklists).",
-        "Sets updated", wxOK | wxICON_INFORMATION);
+    std::string body = "Updated " + std::to_string(westSets) + " West sets (" +
+                       std::to_string(westPacks) + " checklists) and " +
+                       std::to_string(asiaSets) + " Asia sets (" +
+                       std::to_string(asiaPacks) + " checklists).";
+    if (collectionSynced > 0) {
+        body += "\nSynced set metadata on " + std::to_string(collectionSynced) +
+                " collection card(s).";
+    }
+    if (!collectionErr.empty()) {
+        body += "\nCollection sync failed: " + collectionErr;
+        showThemedMessageDialog(parentWindow, body, "Sets updated",
+                                wxOK | wxICON_WARNING);
+        return "Pokemon sets updated.";
+    }
+    showThemedMessageDialog(parentWindow, body, "Sets updated",
+                            wxOK | wxICON_INFORMATION);
     return "Pokemon sets updated.";
 }
 

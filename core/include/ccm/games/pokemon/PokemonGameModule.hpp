@@ -1,7 +1,7 @@
 #pragma once
 
 // PokemonGameModule: IGameModule for the Pokemon TCG. Owns its set source
-// and card preview source, both backed by api.pokemontcg.io/v2.
+// and card preview source, both backed by TCGdex EN (api.tcgdex.net/v2/en).
 
 #include "ccm/games/IGameModule.hpp"
 #include "ccm/games/pokemon/PokemonCardPreviewSource.hpp"

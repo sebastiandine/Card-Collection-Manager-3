@@ -1,5 +1,7 @@
 #include "ccm/domain/PokemonCard.hpp"
 
+#include "ccm/games/pokemon/PokemonWestSetId.hpp"
+
 namespace ccm {
 
 void to_json(nlohmann::json& j, const PokemonCard& c) {
@@ -37,6 +39,11 @@ void from_json(const nlohmann::json& j, PokemonCard& c) {
     j.at("altered").get_to(c.altered);
     // Missing `region` defaults to West so pre-merge West-only files still load.
     c.region = j.value("region", PokemonRegion::West);
+    // Migrate legacy pokemontcg.io West set ids to TCGdex EN on load so the
+    // next collection save persists canonical ids. Asia ids are untouched.
+    if (c.region == PokemonRegion::West && !c.set.id.empty()) {
+        c.set.id = canonicalizeWestSetId(c.set.id);
+    }
 }
 
 }  // namespace ccm

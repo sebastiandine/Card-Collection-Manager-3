@@ -80,6 +80,15 @@ public:
         return repo_.save(game, map);
     }
 
+    // Replace the entire collection map in one save (e.g. after bulk set-id sync).
+    Result<void> saveAll(Game game, std::vector<TCard> cards) {
+        Map map;
+        for (auto& card : cards) {
+            map.insert_or_assign(card.id, std::move(card));
+        }
+        return repo_.save(game, map);
+    }
+
     // Remove the card with the given id. Also deletes any associated images
     // via the IImageStore (best-effort - image removal failures are logged in
     // the error string but the card itself is still purged from the JSON).

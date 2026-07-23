@@ -31,7 +31,7 @@ FetchContent_MakeAvailable(nlohmann_json)
 
 # ---------------------------------------------------------------------------
 # cpr - C++ Requests (libcurl wrapper). Builds curl in-tree so we don't need
-# a system libcurl. Used for Scryfall + pokemontcg.io REST calls.
+# a system libcurl. Used for Scryfall + TCGdex REST calls.
 #
 # Pinned at 1.10.5 deliberately. 1.11.x adds an `install(EXPORT cprTargets)`
 # rule that references `libcurl_shared`, which isn't in any export set when

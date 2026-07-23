@@ -1,6 +1,7 @@
 #include "ccm/services/PokemonSetCompletion.hpp"
 
 #include "ccm/games/pokemon/PokemonCardPreviewSource.hpp"
+#include "ccm/games/pokemon/PokemonWestSetId.hpp"
 #include "ccm/games/pokemonjp/JapanesePokemonCardPreviewSource.hpp"
 
 #include <algorithm>
@@ -29,6 +30,10 @@ std::string normalizeForRegion(PokemonRegion region, std::string_view setNo) {
     return PokemonCardPreviewSource::normalizeCollectorNumber(setNo);
 }
 
+std::string westSetKey(std::string_view setId) {
+    return canonicalizeWestSetId(setId);
+}
+
 OwnedBySet ownedSetNosBySetId(const std::vector<PokemonCard>& collection,
                               PokemonRegion                   region,
                               std::optional<Language>         languageFilter) {
@@ -39,7 +44,9 @@ OwnedBySet ownedSetNosBySetId(const std::vector<PokemonCard>& collection,
         if (card.set.id.empty()) continue;
         const std::string setNo = normalizeForRegion(region, card.setNo);
         if (setNo.empty()) continue;
-        out[card.set.id].insert(setNo);
+        const std::string setKey =
+            region == PokemonRegion::West ? westSetKey(card.set.id) : card.set.id;
+        out[setKey].insert(setNo);
     }
     return out;
 }
@@ -157,14 +164,18 @@ pokemonChecklistForSet(const std::vector<PokemonCard>& collection,
                        std::optional<Language>         languageFilter) {
     const PokemonSetCatalog& catalog =
         region == PokemonRegion::Asia ? asiaCatalog : westCatalog;
-    const auto* pack = catalog.findPack(setId);
+    const std::string wantSetId =
+        region == PokemonRegion::West ? westSetKey(setId) : std::string(setId);
+    const auto* pack = catalog.findPack(wantSetId);
     if (pack == nullptr) return {};
 
     std::unordered_set<std::string> ownedNos;
     for (const auto& card : collection) {
         if (card.region != region) continue;
         if (!passesLanguageFilter(card, languageFilter)) continue;
-        if (card.set.id != setId) continue;
+        const std::string cardSetId =
+            region == PokemonRegion::West ? westSetKey(card.set.id) : card.set.id;
+        if (cardSetId != wantSetId) continue;
         const std::string setNo = normalizeForRegion(region, card.setNo);
         if (!setNo.empty()) ownedNos.insert(setNo);
     }

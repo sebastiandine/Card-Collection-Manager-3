@@ -3,6 +3,9 @@
 #include "ccm/games/pokemon/PokemonSetSource.hpp"
 #include "ccm/ports/IHttpClient.hpp"
 
+#include <string>
+#include <unordered_map>
+
 using namespace ccm;
 
 namespace {
@@ -19,56 +22,90 @@ public:
     }
 };
 
+class RoutingHttpClient final : public IHttpClient {
+public:
+    std::string listBody;
+    std::unordered_map<std::string, std::string> byUrl;
+    std::string lastUrl;
+    Result<std::string> get(std::string_view url) override {
+        lastUrl = std::string(url);
+        if (lastUrl == PokemonSetSource::kListEndpoint) {
+            return Result<std::string>::ok(listBody);
+        }
+        const auto it = byUrl.find(lastUrl);
+        if (it == byUrl.end()) return Result<std::string>::err("missing route");
+        return Result<std::string>::ok(it->second);
+    }
+};
+
 }  // namespace
 
-TEST_SUITE("PokemonSetSource::parseResponse") {
-    TEST_CASE("happy path: maps id/name/releaseDate without rewriting separators") {
-        // The Pokemon TCG API returns releaseDate already in YYYY/MM/DD form,
-        // unlike Scryfall's released_at YYYY-MM-DD.
-        const std::string json = R"({
-            "data": [
-                {"id":"base1","name":"Base","releaseDate":"1999/01/09"},
-                {"id":"jungle","name":"Jungle","releaseDate":"1999/06/16"}
-            ]
-        })";
+TEST_SUITE("PokemonSetSource::parseListResponse") {
+    TEST_CASE("happy path: maps id/name from top-level array") {
+        const std::string json = R"([
+            {"id":"base1","name":"Base Set","cardCount":{"total":102,"official":102}},
+            {"id":"base2","name":"Jungle","cardCount":{"total":64,"official":64}}
+        ])";
 
-        const auto out = PokemonSetSource::parseResponse(json);
+        const auto out = PokemonSetSource::parseListResponse(json);
         REQUIRE(out.isOk());
         REQUIRE(out.value().size() == 2);
         CHECK(out.value()[0].id == "base1");
-        CHECK(out.value()[0].name == "Base");
-        CHECK(out.value()[0].releaseDate == "1999/01/09");
-        CHECK(out.value()[1].id == "jungle");
-        CHECK(out.value()[1].releaseDate == "1999/06/16");
+        CHECK(out.value()[0].name == "Base Set");
+        CHECK(out.value()[0].releaseDate.empty());
+        CHECK(out.value()[1].id == "base2");
     }
 
-    TEST_CASE("sorts by release date ascending") {
-        const std::string json = R"({
-            "data": [
-                {"id":"newer","name":"N","releaseDate":"2024/01/01"},
-                {"id":"older","name":"O","releaseDate":"2010/01/01"}
-            ]
-        })";
-        const auto out = PokemonSetSource::parseResponse(json);
-        REQUIRE(out.isOk());
-        CHECK(out.value().front().id == "older");
-        CHECK(out.value().back().id  == "newer");
-    }
-
-    TEST_CASE("empty data array returns an empty list (not an error)") {
-        const auto out = PokemonSetSource::parseResponse(R"({"data":[]})");
+    TEST_CASE("empty array returns an empty list (not an error)") {
+        const auto out = PokemonSetSource::parseListResponse("[]");
         REQUIRE(out.isOk());
         CHECK(out.value().empty());
     }
 
-    TEST_CASE("missing data array returns an error") {
-        const auto out = PokemonSetSource::parseResponse(R"({"meta":{}})");
+    TEST_CASE("object shape returns an error") {
+        const auto out = PokemonSetSource::parseListResponse(R"({"data":[]})");
         CHECK(out.isErr());
     }
 
     TEST_CASE("invalid JSON returns an error") {
-        const auto out = PokemonSetSource::parseResponse("{not json");
+        const auto out = PokemonSetSource::parseListResponse("{not json");
         CHECK(out.isErr());
+    }
+}
+
+TEST_SUITE("PokemonSetSource::parseReleaseDate") {
+    TEST_CASE("rewrites YYYY-MM-DD to YYYY/MM/DD") {
+        const auto out = PokemonSetSource::parseReleaseDate(
+            R"({"id":"base1","releaseDate":"1999-01-09"})");
+        REQUIRE(out.isOk());
+        CHECK(out.value() == "1999/01/09");
+    }
+
+    TEST_CASE("missing releaseDate yields empty string") {
+        const auto out = PokemonSetSource::parseReleaseDate(R"({"id":"base1"})");
+        REQUIRE(out.isOk());
+        CHECK(out.value().empty());
+    }
+}
+
+TEST_SUITE("PokemonSetSource::parseCatalogPackFromSetDetail") {
+    TEST_CASE("builds checklist from cards localId/name and dedupes") {
+        const Set set{"base1", "Base Set", "1999/01/09"};
+        const std::string json = R"({
+            "id":"base1",
+            "name":"Base Set",
+            "cards":[
+                {"id":"base1-4","localId":"4","name":"Charizard"},
+                {"id":"base1-4","localId":"4/102","name":"Charizard"},
+                {"id":"base1-58","localId":"58","name":"Growlithe"}
+            ]
+        })";
+        const auto pack = PokemonSetSource::parseCatalogPackFromSetDetail(json, set);
+        REQUIRE(pack.isOk());
+        CHECK(pack.value().setId == "base1");
+        REQUIRE(pack.value().cards.size() == 2);
+        CHECK(pack.value().cards[0].setNo == "4");
+        CHECK(pack.value().cards[1].setNo == "58");
     }
 }
 
@@ -80,67 +117,42 @@ TEST_SUITE("PokemonSetSource::fetchAll") {
         CHECK(src.fetchAll().isErr());
     }
 
-    TEST_CASE("network success is parsed end-to-end and hits the public endpoint") {
-        FixedHttpClient http;
-        http.ok = true;
-        http.body = R"({"data":[{"id":"x","name":"X","releaseDate":"2020/01/01"}]})";
+    TEST_CASE("list plus set detail fills release dates and hits EN endpoints") {
+        RoutingHttpClient http;
+        http.listBody = R"([{"id":"base1","name":"Base Set"}])";
+        http.byUrl[PokemonSetSource::buildSetDetailUrl("base1")] =
+            R"({"id":"base1","name":"Base Set","releaseDate":"1999-01-09","cards":[]})";
         PokemonSetSource src{http};
         const auto out = src.fetchAll();
         REQUIRE(out.isOk());
-        CHECK(out.value().front().id == "x");
-        CHECK(out.value().front().releaseDate == "2020/01/01");
-        CHECK(http.lastUrl == "https://api.pokemontcg.io/v2/sets");
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value().front().id == "base1");
+        CHECK(out.value().front().releaseDate == "1999/01/09");
+        CHECK(http.lastUrl == PokemonSetSource::buildSetDetailUrl("base1"));
     }
 }
 
-TEST_SUITE("PokemonSetSource::parseCatalog") {
-    TEST_CASE("groups cards by set.id and dedupes collector numbers") {
-        const std::vector<Set> sets{
-            Set{"base1", "Base", "1999/01/09"},
-            Set{"jungle", "Jungle", "1999/06/16"},
-        };
-        const std::string json = R"({
-            "data": [
-                {"name":"Charizard","number":"4","set":{"id":"base1","name":"Base"}},
-                {"name":"Charizard","number":"4/102","set":{"id":"base1","name":"Base"}},
-                {"name":"Growlithe","number":"58","set":{"id":"base1","name":"Base"}},
-                {"name":"Pikachu","number":"60","set":{"id":"jungle","name":"Jungle"}}
-            ],
-            "page":1,"pageSize":250,"count":4,"totalCount":4
+TEST_SUITE("PokemonSetSource::fetchAllWithCatalog") {
+    TEST_CASE("builds catalog packs from set detail cards") {
+        RoutingHttpClient http;
+        http.listBody = R"([{"id":"base1","name":"Base Set"}])";
+        http.byUrl[PokemonSetSource::buildSetDetailUrl("base1")] = R"({
+            "id":"base1",
+            "name":"Base Set",
+            "releaseDate":"1999-01-09",
+            "cards":[
+                {"localId":"4","name":"Charizard"},
+                {"localId":"58","name":"Growlithe"}
+            ]
         })";
-        const auto catalog = PokemonSetSource::parseCatalog(json, sets);
-        REQUIRE(catalog.isOk());
-        REQUIRE(catalog.value().packs.size() == 2);
-        const auto* base = catalog.value().findPack("base1");
-        REQUIRE(base != nullptr);
-        REQUIRE(base->cards.size() == 2);
-        CHECK(base->cards[0].setNo == "4");
-        CHECK(base->cards[1].setNo == "58");
-        const auto* jungle = catalog.value().findPack("jungle");
-        REQUIRE(jungle != nullptr);
-        REQUIRE(jungle->cards.size() == 1);
-        CHECK(jungle->cards[0].setNo == "60");
-    }
-
-    TEST_CASE("mergeCardsPage accumulates across pages") {
-        const std::vector<Set> sets{Set{"base1", "Base", "1999/01/09"}};
-        PokemonSetCatalog catalog;
-        const std::string page1 = R"({
-            "data":[{"name":"A","number":"1","set":{"id":"base1","name":"Base"}}],
-            "page":1,"pageSize":1,"count":1,"totalCount":2
-        })";
-        const std::string page2 = R"({
-            "data":[{"name":"B","number":"2","set":{"id":"base1","name":"Base"}}],
-            "page":2,"pageSize":1,"count":1,"totalCount":2
-        })";
-        REQUIRE(PokemonSetSource::mergeCardsPage(page1, catalog, sets).isOk());
-        REQUIRE(PokemonSetSource::mergeCardsPage(page2, catalog, sets).isOk());
-        REQUIRE(catalog.packs.size() == 1);
-        REQUIRE(catalog.packs[0].cards.size() == 2);
-    }
-
-    TEST_CASE("buildCardsPageUrl includes select and pagination") {
-        CHECK(PokemonSetSource::buildCardsPageUrl(2) ==
-              "https://api.pokemontcg.io/v2/cards?select=name,number,set&pageSize=250&page=2");
+        PokemonSetSource src{http};
+        const auto out = src.fetchAllWithCatalog();
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().sets.size() == 1);
+        REQUIRE(out.value().catalog.packs.size() == 1);
+        const auto* pack = out.value().catalog.findPack("base1");
+        REQUIRE(pack != nullptr);
+        REQUIRE(pack->cards.size() == 2);
+        CHECK(pack->cards[0].setNo == "4");
     }
 }

@@ -236,4 +236,22 @@ TEST_SUITE("CollectionService<MagicCard>") {
         CHECK(store.removed[0].second == "a.png");
         CHECK(store.removed[1].second == "b.png");
     }
+
+    TEST_CASE("saveAll replaces the collection map") {
+        InMemoryRepo repo;
+        StubImageStore store;
+        CollectionService<MagicCard> svc{repo, store};
+
+        REQUIRE(svc.add(Game::Magic, makeCard("A")).isOk());
+        REQUIRE(svc.add(Game::Magic, makeCard("B")).isOk());
+
+        MagicCard only = makeCard("Only");
+        only.id = 7;
+        REQUIRE(svc.saveAll(Game::Magic, {only}).isOk());
+        auto listed = svc.list(Game::Magic);
+        REQUIRE(listed.isOk());
+        REQUIRE(listed.value().size() == 1);
+        CHECK(listed.value()[0].id == 7);
+        CHECK(listed.value()[0].name == "Only");
+    }
 }

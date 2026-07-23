@@ -1,5 +1,6 @@
 #include "ccm/games/pokemon/PokemonCardPreviewSource.hpp"
 
+#include "ccm/games/pokemon/PokemonWestSetId.hpp"
 #include "ccm/util/Rfc3986.hpp"
 
 #include <nlohmann/json.hpp>
@@ -26,29 +27,11 @@ std::string toLower(std::string s) {
     return s;
 }
 
-Result<std::string, PreviewLookupError> imageUrlFromCardObject(const nlohmann::json& card) {
-    using R = Result<std::string, PreviewLookupError>;
-    using K = PreviewLookupError::Kind;
-    if (!card.contains("images") || !card.at("images").is_object()) {
-        return R::err({K::NotFound, "Card has no 'images' object."});
-    }
-    const auto& images = card.at("images");
-    if (images.contains("large") && images.at("large").is_string()) {
-        return R::ok(images.at("large").get<std::string>());
-    }
-    if (images.contains("small") && images.at("small").is_string()) {
-        return R::ok(images.at("small").get<std::string>());
-    }
-    return R::err({K::NotFound, "Card has no 'large' or 'small' image variant."});
-}
-
 }  // namespace
 
 PokemonCardPreviewSource::PokemonCardPreviewSource(IHttpClient& http) : http_(http) {}
 
 std::string PokemonCardPreviewSource::normalizeCollectorNumber(std::string_view setNo) {
-    // Pokemon TCG search uses an unquoted `number:` clause (e.g. number:4 or
-    // number:TG14). Cards are commonly stored as `4/102`; strip the suffix.
     std::string s(setNo);
     const auto slash = s.find('/');
     if (slash != std::string::npos) {
@@ -57,68 +40,85 @@ std::string PokemonCardPreviewSource::normalizeCollectorNumber(std::string_view 
     return s;
 }
 
-std::string PokemonCardPreviewSource::buildSearchUrl(std::string_view name,
-                                                     std::string_view setId,
-                                                     std::string_view setNo) {
-    // When both set id and collector number are known, omit name: — Lucene
-    // name∩number intersections can miss even when the print is real, and
-    // collector numbers are unique within a set.
-    const std::string num = PokemonCardPreviewSource::normalizeCollectorNumber(setNo);
-    std::string query;
-    if (!setId.empty() && !num.empty()) {
-        query = "set.id:";
-        query += std::string(setId);
-        query += " number:";
-        query += num;
-    } else {
-        query = "name:\"";
-        query += std::string(name);
-        query += "\"";
-        if (!setId.empty()) {
-            query += " set.id:";
-            query += std::string(setId);
-        }
-        if (!num.empty()) {
-            query += " number:";
-            query += num;
-        }
-    }
-    return std::string("https://api.pokemontcg.io/v2/cards?q=") +
-           rfc3986PercentEncode(query);
+std::string PokemonCardPreviewSource::imageUrlFromBase(std::string_view imageBase) {
+    if (imageBase.empty()) return {};
+    std::string url(imageBase);
+    while (!url.empty() && (url.back() == '/' || url.back() == ' ')) url.pop_back();
+    return url + "/high.png";
 }
 
 std::string PokemonCardPreviewSource::buildCardByIdUrl(std::string_view setId,
                                                        std::string_view setNo) {
-    const std::string num = PokemonCardPreviewSource::normalizeCollectorNumber(setNo);
-    std::string id = std::string(setId) + "-" + num;
-    return std::string("https://api.pokemontcg.io/v2/cards/") + rfc3986PercentEncode(id);
+    const std::string idCanon = canonicalizeWestSetId(setId);
+    const std::string num = normalizeCollectorNumber(setNo);
+    std::string id = idCanon + "-" + num;
+    return std::string("https://api.tcgdex.net/v2/en/cards/") + rfc3986PercentEncode(id);
 }
 
-std::string PokemonCardPreviewSource::buildDetectSearchUrl(std::string_view name,
-                                                           std::string_view setId) {
-    std::string url = buildSearchUrl(name, setId, "");
-    url += "&select=name,number,rarity,set";
-    url += "&pageSize=50";
+std::string PokemonCardPreviewSource::buildSetDetailUrl(std::string_view setId) {
+    return std::string("https://api.tcgdex.net/v2/en/sets/") +
+           rfc3986PercentEncode(canonicalizeWestSetId(setId));
+}
+
+std::string PokemonCardPreviewSource::buildSearchUrl(std::string_view name,
+                                                     std::string_view setId,
+                                                     std::string_view setNo) {
+    const std::string idCanon = canonicalizeWestSetId(setId);
+    const std::string num = normalizeCollectorNumber(setNo);
+    std::string url = "https://api.tcgdex.net/v2/en/cards?";
+    bool first = true;
+    auto append = [&](std::string_view key, std::string_view value) {
+        if (value.empty()) return;
+        if (!first) url += '&';
+        first = false;
+        url += std::string(key);
+        url += "=eq:";
+        url += rfc3986PercentEncode(value);
+    };
+
+    if (!idCanon.empty() && !num.empty()) {
+        append("set.id", idCanon);
+        append("localId", num);
+    } else {
+        append("name", name);
+        append("set.id", idCanon);
+        append("localId", num);
+    }
     return url;
 }
 
-Result<std::string, PreviewLookupError>
-PokemonCardPreviewSource::parseResponse(const std::string& body) {
-    using R = Result<std::string, PreviewLookupError>;
+Result<std::vector<PokemonCardPreviewSource::SetCardRow>, PreviewLookupError>
+PokemonCardPreviewSource::parseSetCards(const std::string& body) {
+    using R = Result<std::vector<SetCardRow>, PreviewLookupError>;
     using K = PreviewLookupError::Kind;
     try {
         const auto j = nlohmann::json::parse(body);
-        if (!j.contains("data") || !j.at("data").is_array()) {
-            return R::err({K::Transient, "Pokemon TCG response missing 'data' array."});
+        if (!j.is_object() || !j.contains("cards") || !j.at("cards").is_array()) {
+            return R::err({K::Transient,
+                           "TCGdex EN set detail missing 'cards' array."});
         }
-        const auto& data = j.at("data");
-        if (data.empty()) {
-            return R::err({K::NotFound, "Pokemon TCG returned no matching cards."});
+        std::vector<SetCardRow> out;
+        out.reserve(j.at("cards").size());
+        for (const auto& card : j.at("cards")) {
+            SetCardRow row;
+            row.localId = card.value("localId", "");
+            if (row.localId.empty() && card.contains("id") && card.at("id").is_string()) {
+                const std::string id = card.at("id").get<std::string>();
+                const auto dash = id.rfind('-');
+                if (dash != std::string::npos) row.localId = id.substr(dash + 1);
+            }
+            row.name = card.value("name", "");
+            row.rarity = card.value("rarity", "");
+            if (card.contains("image") && card.at("image").is_string()) {
+                row.imageBase = card.at("image").get<std::string>();
+            }
+            if (row.localId.empty()) continue;
+            out.push_back(std::move(row));
         }
-        return imageUrlFromCardObject(data.at(0));
+        return R::ok(std::move(out));
     } catch (const std::exception& e) {
         return R::err({K::Transient,
-            std::string("Pokemon TCG JSON parse error: ") + e.what()});
+                       std::string("TCGdex EN set detail JSON parse error: ") + e.what()});
     }
 }
 
@@ -128,13 +128,48 @@ PokemonCardPreviewSource::parseCardByIdResponse(const std::string& body) {
     using K = PreviewLookupError::Kind;
     try {
         const auto j = nlohmann::json::parse(body);
-        if (!j.contains("data") || !j.at("data").is_object()) {
-            return R::err({K::Transient, "Pokemon TCG card response missing 'data' object."});
+        if (!j.is_object()) {
+            return R::err({K::Transient, "TCGdex EN card response is not a JSON object."});
         }
-        return imageUrlFromCardObject(j.at("data"));
+        if (!j.contains("image") || j.at("image").is_null()) {
+            return R::err({K::NotFound, "TCGdex EN card has no image."});
+        }
+        if (!j.at("image").is_string()) {
+            return R::err({K::Transient, "TCGdex EN card image field is not a string."});
+        }
+        const std::string base = j.at("image").get<std::string>();
+        if (base.empty()) {
+            return R::err({K::NotFound, "TCGdex EN card has no image."});
+        }
+        return R::ok(imageUrlFromBase(base));
     } catch (const std::exception& e) {
         return R::err({K::Transient,
-            std::string("Pokemon TCG JSON parse error: ") + e.what()});
+                       std::string("TCGdex EN card JSON parse error: ") + e.what()});
+    }
+}
+
+Result<std::string, PreviewLookupError>
+PokemonCardPreviewSource::parseSearchResponse(const std::string& body) {
+    using R = Result<std::string, PreviewLookupError>;
+    using K = PreviewLookupError::Kind;
+    try {
+        const auto j = nlohmann::json::parse(body);
+        if (!j.is_array()) {
+            return R::err({K::Transient, "TCGdex EN cards search response is not an array."});
+        }
+        if (j.empty()) {
+            return R::err({K::NotFound, "TCGdex EN returned no matching cards."});
+        }
+        for (const auto& card : j) {
+            if (!card.contains("image") || !card.at("image").is_string()) continue;
+            const std::string base = card.at("image").get<std::string>();
+            if (base.empty()) continue;
+            return R::ok(imageUrlFromBase(base));
+        }
+        return R::err({K::NotFound, "TCGdex EN matching cards have no image."});
+    } catch (const std::exception& e) {
+        return R::err({K::Transient,
+                       std::string("TCGdex EN cards search JSON parse error: ") + e.what()});
     }
 }
 
@@ -145,79 +180,53 @@ PokemonCardPreviewSource::fetchImageUrl(std::string_view name,
     using R = Result<std::string, PreviewLookupError>;
     using K = PreviewLookupError::Kind;
 
+    const std::string idCanon = canonicalizeWestSetId(setId);
     const std::string num = normalizeCollectorNumber(setNo);
-    if (!setId.empty() && !num.empty()) {
-        auto byId = http_.get(buildCardByIdUrl(setId, num));
+    if (!idCanon.empty() && !num.empty()) {
+        auto byId = http_.get(buildCardByIdUrl(idCanon, num));
         if (byId) {
             auto img = parseCardByIdResponse(byId.value());
             if (img) return img;
-            // NotFound (no images) or Transient (schema): fall through to search.
+            // NotFound / Transient schema: fall through to search.
         }
-        // HTTP failure (404/5xx/offline): fall through to search.
     }
 
-    const std::string url = buildSearchUrl(name, setId, setNo);
+    const std::string url = buildSearchUrl(name, idCanon, num);
     auto resp = http_.get(url);
     if (!resp) return R::err({K::Transient, resp.error()});
-    return parseResponse(resp.value());
+    return parseSearchResponse(resp.value());
 }
 
 Result<std::vector<AutoDetectedPrint>> PokemonCardPreviewSource::parsePrintVariants(
     const std::string& body,
-    std::string_view setId,
+    std::string_view /*setId*/,
     std::string_view wantedCardName) {
     using R = Result<std::vector<AutoDetectedPrint>>;
-    try {
-        const auto j = nlohmann::json::parse(body);
-        if (!j.contains("data") || !j.at("data").is_array() || j.at("data").empty()) {
-            return R::err("Pokemon TCG returned no matching cards.");
-        }
-        const std::string wantedSetId = trim(std::string(setId));
-        const std::string wantedNameLower = toLower(trim(std::string(wantedCardName)));
-
-        std::vector<AutoDetectedPrint> collected;
-        auto pushCard = [&collected](const nlohmann::json& card) {
-            AutoDetectedPrint out;
-            out.setNo = trim(card.value("number", ""));
-            out.rarity = trim(card.value("rarity", ""));
-            if (out.setNo.empty() && out.rarity.empty()) return;
-            collected.push_back(std::move(out));
-        };
-
-        for (const auto& card : j.at("data")) {
-            if (!wantedNameLower.empty()) {
-                const std::string cardName = trim(card.value("name", ""));
-                if (toLower(cardName) != wantedNameLower) continue;
-            }
-            if (!wantedSetId.empty()) {
-                std::string cardSetId;
-                if (card.contains("set") && card.at("set").is_object()) {
-                    cardSetId = trim(card.at("set").value("id", ""));
-                }
-                if (cardSetId != wantedSetId) continue;
-            }
-            pushCard(card);
-        }
-
-        if (collected.empty()) {
-            if (!wantedNameLower.empty() && !wantedSetId.empty()) {
-                return R::err("Could not auto-detect set print metadata.");
-            }
-            return R::err("Pokemon TCG returned no matching cards.");
-        }
-
-        std::vector<AutoDetectedPrint> deduped;
-        deduped.reserve(collected.size());
-        std::unordered_set<std::string> seen;
-        seen.reserve(collected.size() * 2);
-        for (auto& p : collected) {
-            const std::string key = p.setNo + '\0' + p.rarity;
-            if (seen.insert(key).second) deduped.push_back(std::move(p));
-        }
-        return R::ok(std::move(deduped));
-    } catch (const std::exception& e) {
-        return R::err(std::string("Pokemon TCG JSON parse error: ") + e.what());
+    auto rows = parseSetCards(body);
+    if (!rows) {
+        return R::err(rows.error().message);
     }
+
+    const std::string wantedLower = toLower(trim(std::string(wantedCardName)));
+    std::vector<AutoDetectedPrint> out;
+    std::unordered_set<std::string> seen;
+
+    for (const auto& row : rows.value()) {
+        if (!wantedLower.empty()) {
+            if (toLower(trim(row.name)) != wantedLower) continue;
+        }
+        const std::string localId = normalizeCollectorNumber(row.localId);
+        if (localId.empty() || !seen.insert(localId + '\0' + row.rarity).second) continue;
+        AutoDetectedPrint print;
+        print.setNo = localId;
+        print.rarity = row.rarity;
+        out.push_back(std::move(print));
+    }
+
+    if (out.empty()) {
+        return R::err("Could not auto-detect set print metadata.");
+    }
+    return R::ok(std::move(out));
 }
 
 Result<AutoDetectedPrint> PokemonCardPreviewSource::detectFirstPrint(std::string_view name,
@@ -234,15 +243,60 @@ Result<std::vector<AutoDetectedPrint>> PokemonCardPreviewSource::detectPrintVari
     std::string_view name,
     std::string_view setId) {
     using R = Result<std::vector<AutoDetectedPrint>>;
-    const std::string url = buildDetectSearchUrl(name, setId);
-    auto resp = http_.get(url);
-    if (resp) {
-        return parsePrintVariants(resp.value(), setId, name);
+    const std::string idCanon = canonicalizeWestSetId(setId);
+    if (!idCanon.empty()) {
+        auto detail = http_.get(buildSetDetailUrl(idCanon));
+        if (detail) {
+            auto parsed = parsePrintVariants(detail.value(), idCanon, name);
+            if (parsed) return parsed;
+        }
     }
-    const std::string fallbackUrl = buildDetectSearchUrl(name, "");
-    auto fallback = http_.get(fallbackUrl);
-    if (!fallback) return R::err(fallback.error());
-    return parsePrintVariants(fallback.value(), setId, name);
+
+    // Fallback: filtered cards search by name (+ optional set).
+    const std::string url = buildSearchUrl(name, idCanon, "");
+    auto resp = http_.get(url);
+    if (!resp) return R::err(resp.error());
+
+    try {
+        const auto j = nlohmann::json::parse(resp.value());
+        if (!j.is_array() || j.empty()) {
+            return R::err("TCGdex EN returned no matching cards.");
+        }
+        const std::string wantedLower = toLower(trim(std::string(name)));
+        std::vector<AutoDetectedPrint> collected;
+        std::unordered_set<std::string> seen;
+        for (const auto& card : j) {
+            if (!wantedLower.empty()) {
+                const std::string cardName = trim(card.value("name", ""));
+                if (toLower(cardName) != wantedLower) continue;
+            }
+            if (!idCanon.empty()) {
+                std::string cardSetId;
+                if (card.contains("set") && card.at("set").is_object()) {
+                    cardSetId = trim(card.at("set").value("id", ""));
+                } else if (card.contains("id") && card.at("id").is_string()) {
+                    // Slim search hits are "setId-localId".
+                    const std::string id = card.at("id").get<std::string>();
+                    const auto dash = id.rfind('-');
+                    if (dash != std::string::npos) cardSetId = id.substr(0, dash);
+                }
+                if (cardSetId != idCanon) continue;
+            }
+            AutoDetectedPrint print;
+            print.setNo = normalizeCollectorNumber(card.value("localId", ""));
+            print.rarity = trim(card.value("rarity", ""));
+            if (print.setNo.empty() && print.rarity.empty()) continue;
+            const std::string key = print.setNo + '\0' + print.rarity;
+            if (!seen.insert(key).second) continue;
+            collected.push_back(std::move(print));
+        }
+        if (collected.empty()) {
+            return R::err("Could not auto-detect set print metadata.");
+        }
+        return R::ok(std::move(collected));
+    } catch (const std::exception& e) {
+        return R::err(std::string("TCGdex EN cards search JSON parse error: ") + e.what());
+    }
 }
 
 }  // namespace ccm
