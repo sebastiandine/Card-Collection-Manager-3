@@ -3,6 +3,7 @@
 #include "ccm/games/digibattle99/DigiBattle99CardPreviewSource.hpp"
 
 #include <algorithm>
+#include <array>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -12,9 +13,16 @@ namespace {
 
 using OwnedBySet = std::unordered_map<std::string, std::unordered_set<std::string>>;
 
-OwnedBySet ownedSetNosBySetId(const std::vector<DigiBattle99Card>& collection) {
+bool passesLanguageFilter(const DigiBattle99Card& card,
+                          std::optional<Language> languageFilter) {
+    return !languageFilter.has_value() || card.language == *languageFilter;
+}
+
+OwnedBySet ownedSetNosBySetId(const std::vector<DigiBattle99Card>& collection,
+                              std::optional<Language>              languageFilter) {
     OwnedBySet out;
     for (const auto& card : collection) {
+        if (!passesLanguageFilter(card, languageFilter)) continue;
         if (card.set.id.empty()) continue;
         const std::string setNo =
             DigiBattle99CardPreviewSource::normalizeCardNumber(card.setNo);
@@ -26,10 +34,31 @@ OwnedBySet ownedSetNosBySetId(const std::vector<DigiBattle99Card>& collection) {
 
 }  // namespace
 
+std::vector<Language>
+digiBattle99LanguagesInCollection(const std::vector<DigiBattle99Card>& collection) {
+    const auto& langs = allLanguages();
+    std::array<bool, 10> present{};
+    for (const auto& card : collection) {
+        for (std::size_t i = 0; i < langs.size(); ++i) {
+            if (langs[i] == card.language) {
+                present[i] = true;
+                break;
+            }
+        }
+    }
+
+    std::vector<Language> out;
+    for (std::size_t i = 0; i < langs.size(); ++i) {
+        if (present[i]) out.push_back(langs[i]);
+    }
+    return out;
+}
+
 std::vector<DigiBattle99SetCompletionProgress>
 computeDigiBattle99SetCompletion(const std::vector<DigiBattle99Card>& collection,
-                                 const DigiBattle99SetCatalog&        catalog) {
-    const OwnedBySet owned = ownedSetNosBySetId(collection);
+                                 const DigiBattle99SetCatalog&        catalog,
+                                 std::optional<Language>              languageFilter) {
+    const OwnedBySet owned = ownedSetNosBySetId(collection, languageFilter);
 
     std::vector<DigiBattle99SetCompletionProgress> out;
     out.reserve(owned.size());
@@ -64,12 +93,14 @@ computeDigiBattle99SetCompletion(const std::vector<DigiBattle99Card>& collection
 std::vector<DigiBattle99ChecklistEntry>
 digiBattle99ChecklistForSet(const std::vector<DigiBattle99Card>& collection,
                             const DigiBattle99SetCatalog&        catalog,
-                            std::string_view                     setId) {
+                            std::string_view                     setId,
+                            std::optional<Language>              languageFilter) {
     const auto* pack = catalog.findPack(setId);
     if (pack == nullptr) return {};
 
     std::unordered_set<std::string> ownedNos;
     for (const auto& card : collection) {
+        if (!passesLanguageFilter(card, languageFilter)) continue;
         if (card.set.id != setId) continue;
         const std::string setNo =
             DigiBattle99CardPreviewSource::normalizeCardNumber(card.setNo);

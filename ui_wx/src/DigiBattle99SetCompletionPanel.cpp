@@ -3,6 +3,7 @@
 #include "ccm/services/DigiBattle99SetCompletion.hpp"
 
 #include <wx/button.h>
+#include <wx/choice.h>
 #include <wx/cursor.h>
 #include <wx/gauge.h>
 #include <wx/listctrl.h>
@@ -11,6 +12,7 @@
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 
+#include <string>
 #include <utility>
 
 namespace ccm::ui {
@@ -33,6 +35,16 @@ DigiBattle99SetCompletionPanel::DigiBattle99SetCompletionPanel(
     wxWindow* parent, DigiBattle99SetCatalogService& catalogStore)
     : wxPanel(parent), catalogStore_(catalogStore) {
     palette_ = paletteForTheme(inferThemeFromWindow(this));
+
+    auto* langRow = new wxBoxSizer(wxHORIZONTAL);
+    auto* langLabel = new wxStaticText(this, wxID_ANY, "Language");
+    languageChoice_ = new wxChoice(this, wxID_ANY);
+    languageChoice_->Append("All languages");
+    languageChoice_->SetSelection(0);
+    languageChoice_->Bind(wxEVT_CHOICE, &DigiBattle99SetCompletionPanel::onLanguageChoice,
+                          this);
+    langRow->Add(langLabel, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 8);
+    langRow->Add(languageChoice_, 0, wxALIGN_CENTER_VERTICAL);
 
     book_ = new wxSimplebook(this, wxID_ANY);
 
@@ -72,6 +84,7 @@ DigiBattle99SetCompletionPanel::DigiBattle99SetCompletionPanel(
     book_->AddPage(detailPage_, "Detail");
 
     auto* root = new wxBoxSizer(wxVERTICAL);
+    root->Add(langRow, 0, wxEXPAND | wxALL, 8);
     root->Add(book_, 1, wxEXPAND);
     SetSizer(root);
 
@@ -80,11 +93,8 @@ DigiBattle99SetCompletionPanel::DigiBattle99SetCompletionPanel(
 
 void DigiBattle99SetCompletionPanel::setCollection(std::vector<DigiBattle99Card> cards) {
     collection_ = std::move(cards);
-    if (book_->GetSelection() == 1 && !detailSetId_.empty()) {
-        rebuildChecklist(detailSetId_);
-    } else {
-        rebuildGrid();
-    }
+    refreshLanguageChoice();
+    rebuildCurrentView();
 }
 
 void DigiBattle99SetCompletionPanel::reloadFromStore() {
@@ -103,24 +113,92 @@ void DigiBattle99SetCompletionPanel::reloadFromStore() {
 void DigiBattle99SetCompletionPanel::applyTheme(const ThemePalette& palette) {
     palette_ = palette;
     applyThemeToWindowTree(this, palette, inferThemeFromWindow(this));
-    if (book_->GetSelection() == 1 && !detailSetId_.empty()) {
-        rebuildChecklist(detailSetId_);
-    } else {
-        rebuildGrid();
-    }
+    rebuildCurrentView();
 }
 
 void DigiBattle99SetCompletionPanel::showGridPage() {
     detailSetId_.clear();
+    detailSetName_.clear();
     book_->SetSelection(0);
 }
 
 void DigiBattle99SetCompletionPanel::showChecklistPage(const std::string& setId,
                                                       const std::string& setName) {
     detailSetId_ = setId;
-    detailTitle_->SetLabelText(wxString::FromUTF8(setName.c_str()));
+    detailSetName_ = setName;
+    detailTitle_->SetLabelText(wxString::FromUTF8(displaySetName(setName).c_str()));
     rebuildChecklist(setId);
     book_->SetSelection(1);
+}
+
+std::string DigiBattle99SetCompletionPanel::displaySetName(const std::string& setName) const {
+    if (!languageFilter_.has_value()) return setName;
+    return setName + " (" + std::string(to_string(*languageFilter_)) + ")";
+}
+
+void DigiBattle99SetCompletionPanel::refreshLanguageChoice() {
+    const auto previous = languageFilter_;
+    const auto present = digiBattle99LanguagesInCollection(collection_);
+
+    languageChoice_->Clear();
+    languageChoice_->Append("All languages");
+    for (const Language lang : present) {
+        languageChoice_->Append(wxString::FromUTF8(std::string(to_string(lang)).c_str()));
+    }
+
+    int selection = 0;
+    languageFilter_ = std::nullopt;
+    if (previous.has_value()) {
+        for (std::size_t i = 0; i < present.size(); ++i) {
+            if (present[i] == *previous) {
+                selection = static_cast<int>(i + 1);
+                languageFilter_ = previous;
+                break;
+            }
+        }
+    }
+    languageChoice_->SetSelection(selection);
+}
+
+void DigiBattle99SetCompletionPanel::onLanguageChoice(wxCommandEvent& /*event*/) {
+    const int sel = languageChoice_->GetSelection();
+    if (sel <= 0) {
+        languageFilter_ = std::nullopt;
+    } else {
+        const auto present = digiBattle99LanguagesInCollection(collection_);
+        const auto idx = static_cast<std::size_t>(sel - 1);
+        if (idx < present.size()) {
+            languageFilter_ = present[idx];
+        } else {
+            languageFilter_ = std::nullopt;
+            languageChoice_->SetSelection(0);
+        }
+    }
+    rebuildCurrentView();
+}
+
+void DigiBattle99SetCompletionPanel::rebuildCurrentView() {
+    if (book_->GetSelection() == 1 && !detailSetId_.empty()) {
+        const auto rows =
+            computeDigiBattle99SetCompletion(collection_, catalog_, languageFilter_);
+        bool stillVisible = false;
+        for (const auto& row : rows) {
+            if (row.setId == detailSetId_) {
+                stillVisible = true;
+                break;
+            }
+        }
+        if (!stillVisible) {
+            showGridPage();
+            rebuildGrid();
+            return;
+        }
+        detailTitle_->SetLabelText(
+            wxString::FromUTF8(displaySetName(detailSetName_).c_str()));
+        rebuildChecklist(detailSetId_);
+    } else {
+        rebuildGrid();
+    }
 }
 
 void DigiBattle99SetCompletionPanel::setEmptyMessage(const wxString& message) {
@@ -145,7 +223,8 @@ void DigiBattle99SetCompletionPanel::rebuildGrid() {
         return;
     }
 
-    const auto rows = computeDigiBattle99SetCompletion(collection_, catalog_);
+    const auto rows =
+        computeDigiBattle99SetCompletion(collection_, catalog_, languageFilter_);
     if (rows.empty()) {
         setEmptyMessage(wxString::FromUTF8(
             "No Digimon (Digi-Battle) sets in progress yet.\n"
@@ -163,7 +242,8 @@ void DigiBattle99SetCompletionPanel::rebuildGrid() {
         tile->SetBackgroundColour(palette_.panelBg);
         auto* tileSizer = new wxBoxSizer(wxVERTICAL);
 
-        auto* nameLbl = new wxStaticText(tile, wxID_ANY, wxString::FromUTF8(row.setName.c_str()));
+        const std::string title = displaySetName(row.setName);
+        auto* nameLbl = new wxStaticText(tile, wxID_ANY, wxString::FromUTF8(title.c_str()));
         auto nameFont = nameLbl->GetFont();
         nameFont.MakeBold();
         nameLbl->SetFont(nameFont);
@@ -207,16 +287,21 @@ void DigiBattle99SetCompletionPanel::rebuildGrid() {
 
 void DigiBattle99SetCompletionPanel::rebuildChecklist(const std::string& setId) {
     checklist_->DeleteAllItems();
-    const auto entries = digiBattle99ChecklistForSet(collection_, catalog_, setId);
+    const auto entries =
+        digiBattle99ChecklistForSet(collection_, catalog_, setId, languageFilter_);
     const wxColour muted = mutedTextColour(palette_);
+    // Fixed green so owned checkmarks stay readable in both light and dark themes.
+    const wxColour ownedGreen(46, 160, 67);
 
     long idx = 0;
     for (const auto& entry : entries) {
-        const std::string line = entry.setNo + "  —  " + entry.name;
+        // Align names: checkmark + two spaces vs four spaces for missing cards.
+        const std::string line =
+            (entry.owned ? "✓  " : "    ") + entry.setNo + "  —  " + entry.name;
         const long row = checklist_->InsertItem(idx++, wxString::FromUTF8(line.c_str()));
         if (row < 0) continue;
         if (entry.owned) {
-            checklist_->SetItemTextColour(row, palette_.text);
+            checklist_->SetItemTextColour(row, ownedGreen);
         } else {
             checklist_->SetItemTextColour(row, muted);
         }

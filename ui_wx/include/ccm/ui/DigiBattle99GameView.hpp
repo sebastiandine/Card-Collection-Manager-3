@@ -17,8 +17,10 @@
 
 class wxBitmapButton;
 class wxBoxSizer;
-class wxNotebook;
+class wxPanel;
+class wxSimplebook;
 class wxSplitterWindow;
+class wxStaticText;
 class wxTextCtrl;
 
 namespace ccm::ui {
@@ -64,7 +66,10 @@ private:
     const std::vector<Set>& setsForDialog();
     void ensureSingleCardsMounted(wxWindow* splitterParent);
     void buildSingleCardsToolbar(wxWindow* parent, wxBoxSizer* pageSizer);
+    void buildTabBar(wxWindow* parent, wxBoxSizer* rootSizer);
+    void selectTab(int index);
     void refreshToolbarIcons(const ThemePalette& palette);
+    void refreshTabBarTheme(const ThemePalette& palette);
 
     ConfigService&                        config_;
     CollectionService<DigiBattle99Card>&  collection_;
@@ -75,11 +80,15 @@ private:
     DigiBattle99SetCatalogService&        catalogStore_;
 
     wxPanel*                       contentPanel_{nullptr};
-    wxNotebook*                    notebook_{nullptr};
+    wxPanel*                       tabBar_{nullptr};
+    wxSimplebook*                  book_{nullptr};
     wxSplitterWindow*              singleSplitter_{nullptr};
     DigiBattle99CardListPanel*     listPanel_{nullptr};
     DigiBattle99SelectedCardPanel* selectedPanel_{nullptr};
     DigiBattle99SetCompletionPanel* setCompletionPanel_{nullptr};
+    std::array<wxPanel*, 2>        tabPanels_{{nullptr, nullptr}};
+    std::array<wxStaticText*, 2>   tabLabels_{{nullptr, nullptr}};
+    int                            activeTab_{0};
     std::array<wxBitmapButton*, 3> toolbarButtons_{{nullptr, nullptr, nullptr}};
     wxTextCtrl*                    filterInput_{nullptr};
     std::vector<Set>               setsCache_;

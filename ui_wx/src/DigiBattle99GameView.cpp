@@ -10,10 +10,12 @@
 #include "ccm/ui/Theme.hpp"
 
 #include <wx/bmpbuttn.h>
-#include <wx/notebook.h>
+#include <wx/dcclient.h>
 #include <wx/panel.h>
+#include <wx/simplebook.h>
 #include <wx/sizer.h>
 #include <wx/splitter.h>
+#include <wx/stattext.h>
 #include <wx/textctrl.h>
 #include <wx/window.h>
 
@@ -24,6 +26,22 @@ namespace ccm::ui {
 namespace {
 constexpr int kDigiToolbarIconPx = 18;
 constexpr const char kDigiFilterHint[] = "Filter";
+
+wxColour lighten(const wxColour& c, int amount) {
+    auto lift = [amount](unsigned char channel) -> unsigned char {
+        const int raised = static_cast<int>(channel) + amount;
+        return static_cast<unsigned char>(raised > 255 ? 255 : raised);
+    };
+    return wxColour(lift(c.Red()), lift(c.Green()), lift(c.Blue()));
+}
+
+wxColour darken(const wxColour& c, int amount) {
+    auto drop = [amount](unsigned char channel) -> unsigned char {
+        const int lowered = static_cast<int>(channel) - amount;
+        return static_cast<unsigned char>(lowered < 0 ? 0 : lowered);
+    };
+    return wxColour(drop(c.Red()), drop(c.Green()), drop(c.Blue()));
+}
 }  // namespace
 
 DigiBattle99GameView::DigiBattle99GameView(ConfigService&                         config,
@@ -128,28 +146,141 @@ void DigiBattle99GameView::refreshToolbarIcons(const ThemePalette& palette) {
     }
 }
 
+void DigiBattle99GameView::selectTab(int index) {
+    if (index < 0 || index > 1 || book_ == nullptr) return;
+    activeTab_ = index;
+    book_->SetSelection(index);
+    refreshTabBarTheme(paletteForTheme(config_.current().theme));
+}
+
+void DigiBattle99GameView::refreshTabBarTheme(const ThemePalette& palette) {
+    if (tabBar_ == nullptr) return;
+
+    const wxColour barBg = palette.panelBg;
+    // Match toolbar button plate (Add/Edit/Delete), not a darker inset fill.
+    const wxColour tabBg = palette.buttonBg;
+
+    tabBar_->SetBackgroundColour(barBg);
+    tabBar_->SetOwnBackgroundColour(barBg);
+
+    for (int i = 0; i < 2; ++i) {
+        auto* tab = tabPanels_[i];
+        auto* label = tabLabels_[i];
+        if (tab == nullptr || label == nullptr) continue;
+        const bool selected = (i == activeTab_);
+        tab->SetBackgroundColour(tabBg);
+        tab->SetOwnBackgroundColour(tabBg);
+        // Keep the label plate identical to the tab fill so a late theme pass
+        // cannot leave a darker box around the caption.
+        label->SetBackgroundColour(tabBg);
+        label->SetOwnBackgroundColour(tabBg);
+        label->SetForegroundColour(palette.text);
+        label->SetOwnForegroundColour(palette.text);
+        wxFont font = label->GetFont();
+        font.SetWeight(selected ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL);
+        label->SetFont(font);
+        tab->Refresh();
+        label->Refresh();
+    }
+    tabBar_->Layout();
+    tabBar_->Refresh();
+}
+
+void DigiBattle99GameView::buildTabBar(wxWindow* parent, wxBoxSizer* rootSizer) {
+    tabBar_ = new wxPanel(parent, wxID_ANY);
+    tabBar_->SetBackgroundStyle(wxBG_STYLE_PAINT);
+    auto* tabSizer = new wxBoxSizer(wxHORIZONTAL);
+    tabSizer->AddSpacer(4);
+
+    const char* labels[2] = {"Single Cards", "Set Completion"};
+    for (int i = 0; i < 2; ++i) {
+        auto* tab = new wxPanel(tabBar_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+        tab->SetCursor(wxCursor(wxCURSOR_HAND));
+        tab->SetBackgroundStyle(wxBG_STYLE_PAINT);
+        auto* label = new wxStaticText(tab, wxID_ANY, wxString::FromUTF8(labels[i]));
+        auto* inner = new wxBoxSizer(wxVERTICAL);
+        // Compact padding so the strip stays short; frame is drawn in paint.
+        inner->Add(label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, 5);
+        tab->SetSizer(inner);
+
+        auto onClick = [this, i](wxMouseEvent&) { selectTab(i); };
+        tab->Bind(wxEVT_LEFT_DOWN, onClick);
+        label->Bind(wxEVT_LEFT_DOWN, onClick);
+        tab->Bind(wxEVT_ERASE_BACKGROUND, [](wxEraseEvent&) {});
+        tab->Bind(wxEVT_PAINT, [this, tab, i](wxPaintEvent&) {
+            wxPaintDC dc(tab);
+            const ThemePalette palette = paletteForTheme(config_.current().theme);
+            const bool dark = config_.current().theme == Theme::Dark;
+            const bool selected = (i == activeTab_);
+            // Same plate as toolbar bitmap buttons.
+            const wxColour bg = palette.buttonBg;
+            const wxColour frame =
+                dark ? lighten(palette.panelBg, 55) : darken(palette.panelBg, 45);
+            const wxColour frameSel = dark ? lighten(palette.panelBg, 85) : darken(palette.panelBg, 70);
+            const wxRect r = tab->GetClientRect();
+            dc.SetPen(wxPen(selected ? frameSel : frame, 1));
+            dc.SetBrush(wxBrush(bg));
+            dc.DrawRectangle(r.x, r.y, r.width, r.height);
+            if (selected) {
+                dc.SetPen(wxPen(palette.text, 2));
+                dc.DrawLine(r.GetLeft() + 4, r.GetBottom() - 1, r.GetRight() - 4,
+                            r.GetBottom() - 1);
+            }
+        });
+
+        tabPanels_[i] = tab;
+        tabLabels_[i] = label;
+        if (i > 0) tabSizer->AddSpacer(4);
+        tabSizer->Add(tab, 0, wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM, 3);
+    }
+    tabSizer->AddStretchSpacer(1);
+
+    tabBar_->Bind(wxEVT_PAINT, [this](wxPaintEvent&) {
+        wxPaintDC dc(tabBar_);
+        const ThemePalette palette = paletteForTheme(config_.current().theme);
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(palette.panelBg));
+        dc.DrawRectangle(tabBar_->GetClientRect());
+        dc.SetPen(wxPen(darken(palette.text, 120), 1));
+        const wxRect r = tabBar_->GetClientRect();
+        dc.DrawLine(r.GetLeft(), r.GetBottom(), r.GetRight(), r.GetBottom());
+    });
+    tabBar_->Bind(wxEVT_ERASE_BACKGROUND, [](wxEraseEvent&) {});
+
+    tabBar_->SetSizer(tabSizer);
+    rootSizer->Add(tabBar_, 0, wxEXPAND);
+    refreshTabBarTheme(paletteForTheme(config_.current().theme));
+}
+
 wxPanel* DigiBattle99GameView::contentPanel(wxWindow* parent) {
     if (contentPanel_ == nullptr) {
         contentPanel_ = new wxPanel(parent);
         auto* root = new wxBoxSizer(wxVERTICAL);
 
-        notebook_ = new wxNotebook(contentPanel_, wxID_ANY);
-        auto* singlePage = new wxPanel(notebook_);
+        buildTabBar(contentPanel_, root);
+
+        book_ = new wxSimplebook(contentPanel_, wxID_ANY);
+        auto* singlePage = new wxPanel(book_);
         auto* singleSizer = new wxBoxSizer(wxVERTICAL);
         buildSingleCardsToolbar(singlePage, singleSizer);
         ensureSingleCardsMounted(singlePage);
         singleSizer->Add(singleSplitter_, 1, wxEXPAND);
         singlePage->SetSizer(singleSizer);
-        notebook_->AddPage(singlePage, "Single Cards");
+        book_->AddPage(singlePage, "Single Cards");
 
-        setCompletionPanel_ = new DigiBattle99SetCompletionPanel(notebook_, catalogStore_);
+        setCompletionPanel_ = new DigiBattle99SetCompletionPanel(book_, catalogStore_);
         setCompletionPanel_->reloadFromStore();
-        notebook_->AddPage(setCompletionPanel_, "Set Completion");
+        book_->AddPage(setCompletionPanel_, "Set Completion");
 
-        root->Add(notebook_, 1, wxEXPAND);
+        root->Add(book_, 1, wxEXPAND | wxTOP, 5);
         contentPanel_->SetSizer(root);
 
+        selectTab(0);
         refreshToolbarIcons(paletteForTheme(config_.current().theme));
+        // First mount: re-assert tab plate colors after the initial layout paint.
+        contentPanel_->CallAfter([this]() {
+            refreshTabBarTheme(paletteForTheme(config_.current().theme));
+        });
     }
     return contentPanel_;
 }
@@ -374,6 +505,7 @@ void DigiBattle99GameView::applyTheme(const ThemePalette& palette) {
     if (selectedPanel_) selectedPanel_->applyTheme(palette);
     if (setCompletionPanel_) setCompletionPanel_->applyTheme(palette);
     refreshToolbarIcons(palette);
+    refreshTabBarTheme(palette);
     if (filterInput_ != nullptr) {
         filterInput_->SetBackgroundColour(palette.inputBg);
         filterInput_->SetForegroundColour(palette.inputText);

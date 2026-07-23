@@ -239,8 +239,10 @@ void MainFrame::mountActiveView() {
         hostSizer->Add(custom, 1, wxEXPAND);
         contentHost_->Layout();
 
+        // Digimon (and other hostsOwnLayout views) apply their own tree theme
+        // and then restore tab-strip colors; a follow-up applyThemeToWindowTree
+        // here would reset tab labels to panelBg and leave a dark box around text.
         view->applyTheme(palette);
-        applyThemeToWindowTree(custom, palette, ctx_.config.current().theme);
         return;
     }
 
