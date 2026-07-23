@@ -9,6 +9,7 @@ add_library(ccm_core STATIC
     src/domain/YuGiOhCard.cpp
     src/domain/DigiBattle99Card.cpp
     src/domain/DigiBattle99SetCatalog.cpp
+    src/domain/YuGiOhSetCatalog.cpp
     src/domain/JapanesePokemonCard.cpp
     src/domain/Configuration.cpp
 
@@ -20,6 +21,8 @@ add_library(ccm_core STATIC
     src/services/CardFilter.cpp
     src/services/DigiBattle99SetCompletion.cpp
     src/services/DigiBattle99SetCatalogService.cpp
+    src/services/YuGiOhSetCompletion.cpp
+    src/services/YuGiOhSetCatalogService.cpp
 
     src/infra/CprHttpClient.cpp
     src/infra/StdFileSystem.cpp

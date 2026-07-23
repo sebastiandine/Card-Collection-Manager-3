@@ -3,6 +3,7 @@
 #include "ccm/domain/Configuration.hpp"
 #include "ccm/domain/DigiBattle99Card.hpp"
 #include "ccm/domain/DigiBattle99SetCatalog.hpp"
+#include "ccm/domain/YuGiOhSetCatalog.hpp"
 #include "ccm/domain/Enums.hpp"
 #include "ccm/domain/JapanesePokemonCard.hpp"
 #include "ccm/domain/MagicCard.hpp"
@@ -264,6 +265,28 @@ TEST_SUITE("DigiBattle99SetCatalog JSON") {
         const DigiBattle99SetCatalog back = j.get<DigiBattle99SetCatalog>();
         CHECK(back == catalog);
         CHECK(back.findPack("series-1-starter-set") != nullptr);
+        CHECK(back.findPack("missing") == nullptr);
+    }
+}
+
+TEST_SUITE("YuGiOhSetCatalog JSON") {
+    TEST_CASE("round-trips packs and setNo alias") {
+        YuGiOhSetCatalog catalog;
+        YuGiOhSetCatalogPack pack;
+        pack.setId = "LOB";
+        pack.setName = "Legend of Blue Eyes White Dragon";
+        pack.cards.push_back(YuGiOhCatalogCard{"LOB-001", "Blue-Eyes White Dragon"});
+        pack.cards.push_back(YuGiOhCatalogCard{"LOB-EN005", "Dark Magician"});
+        catalog.packs.push_back(std::move(pack));
+
+        nlohmann::json j = catalog;
+        CHECK(j.at("packs").is_array());
+        CHECK(j.at("packs").at(0).at("id") == "LOB");
+        CHECK(j.at("packs").at(0).at("cards").at(0).at("setNo") == "LOB-001");
+
+        const YuGiOhSetCatalog back = j.get<YuGiOhSetCatalog>();
+        CHECK(back == catalog);
+        CHECK(back.findPack("LOB") != nullptr);
         CHECK(back.findPack("missing") == nullptr);
     }
 }

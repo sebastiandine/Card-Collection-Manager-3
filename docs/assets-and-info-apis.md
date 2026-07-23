@@ -82,6 +82,17 @@ Used in two situations:
 
 YGOPRODeck publishes rate limits and asks clients to cache responses and avoid abusive hotlinking; treat failures after burst traffic as an upstream policy signal, not an app bug. Yugipedia’s MediaWiki API is similarly polite — one batched call per preview lookup keeps us well under any normal threshold.
 
+### Set-completion catalog (`cardinfo.php` all-cards dump)
+
+**Sets → Update Yu-Gi-Oh!** uses `YuGiOhSetSource::fetchAllWithCatalog()` so two HTTP responses write:
+
+1. The set list (`yugioh/sets.json`) from `cardsets.php` (same as before, including local 25th Anniversary aliases)
+2. A pack checklist at `<dataStorage>/yugioh/set-catalog.json` from the unfiltered `cardinfo.php` dump
+
+Each catalog pack stores `id` (YGOPRODeck product `set_code` / `Set.id`, e.g. `LOB`), `name` (display `set_name`), and `cards[]` of `{ setNo, name }` drawn from each card’s `card_sets[]`. European `-E###` alternate codes are dropped; `LOB-005` / `LOB-EN005`-style equivalents collapse to one checklist row (preferring an `EN`-embedded code when present). The Yu-Gi-Oh! **Set Completion** tab reads this file offline; ownership for a pack requires matching `card.set.id` plus a printing-slot match (`ygoPrintingSlotsMatch` — same abbrev + digit run). Rarity and 1st Edition are ignored for completion counts.
+
+If `set-catalog.json` is missing, the Set Completion tab prompts the user to run Update Yu-Gi-Oh!.
+
 ## Digimon Digi-Battle (1999) APIs (digimoncard.io)
 
 English Digi-Battle is wired as `Game::DigiBattle99` (`dirName` `digibattle99`, UI label **Digimon (Digi-Battle)**). Upstream docs: [digimoncard.io Public API](https://digimoncard.io/api-documentation). Always scope requests with `series=Digimon Digi-Battle Card Game` so modern Digimon Card Game rows are never mixed in. Rate limit: **15 requests / 10 seconds / IP** (429 then temporary block on abuse).

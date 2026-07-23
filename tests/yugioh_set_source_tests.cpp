@@ -3,6 +3,8 @@
 #include "ccm/games/yugioh/YuGiOhSetSource.hpp"
 #include "ccm/ports/IHttpClient.hpp"
 
+#include <vector>
+
 using namespace ccm;
 
 namespace {
@@ -170,5 +172,116 @@ TEST_SUITE("YuGiOhSetSource::fetchAll") {
         const auto out = src.fetchAll();
         REQUIRE(out.isErr());
         CHECK(out.error() == "offline");
+    }
+}
+
+TEST_SUITE("YuGiOhSetSource::parseCatalog") {
+    TEST_CASE("groups by set_name resolved to Set.id and dedupes printing slots") {
+        const std::vector<Set> sets{
+            Set{"LOB", "Legend of Blue Eyes White Dragon", "2002/03/08"},
+            Set{"MRD", "Metal Raiders", "2002/06/26"},
+        };
+        const std::string json = R"({
+            "data": [
+                {
+                    "name": "Blue-Eyes White Dragon",
+                    "card_sets": [
+                        {"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB-001","set_rarity":"Ultra Rare"},
+                        {"set_name":"Metal Raiders","set_code":"MRD-010","set_rarity":"Ultra Rare"}
+                    ]
+                },
+                {
+                    "name": "Dark Magician",
+                    "card_sets": [
+                        {"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB-005","set_rarity":"Ultra Rare"},
+                        {"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB-EN005","set_rarity":"Ultra Rare"},
+                        {"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB-E003","set_rarity":"Ultra Rare"}
+                    ]
+                }
+            ]
+        })";
+        const auto out = YuGiOhSetSource::parseCatalog(json, sets);
+        REQUIRE(out.isOk());
+        const auto* lob = out.value().findPack("LOB");
+        REQUIRE(lob != nullptr);
+        REQUIRE(lob->cards.size() == 2);
+        bool sawBe = false;
+        bool sawDm = false;
+        for (const auto& c : lob->cards) {
+            if (c.name == "Blue-Eyes White Dragon" && c.setNo == "LOB-001") sawBe = true;
+            if (c.name == "Dark Magician" && c.setNo == "LOB-EN005") sawDm = true;
+        }
+        CHECK(sawBe);
+        CHECK(sawDm);
+
+        const auto* mrd = out.value().findPack("MRD");
+        REQUIRE(mrd != nullptr);
+        REQUIRE(mrd->cards.size() == 1);
+        CHECK(mrd->cards[0].setNo == "MRD-010");
+    }
+
+    TEST_CASE("missing data array returns error") {
+        CHECK(YuGiOhSetSource::parseCatalog(R"([])", {}).isErr());
+        CHECK(YuGiOhSetSource::parseCatalog(R"({"data":{}})", {}).isErr());
+    }
+}
+
+namespace {
+
+class RoutingHttpClient final : public IHttpClient {
+public:
+    std::string setsBody;
+    std::string infoBody;
+    bool setsOk = true;
+    bool infoOk = true;
+    std::vector<std::string> urls;
+
+    Result<std::string> get(std::string_view url) override {
+        urls.emplace_back(url);
+        if (url == YuGiOhSetSource::kEndpoint) {
+            return setsOk ? Result<std::string>::ok(setsBody)
+                          : Result<std::string>::err("sets offline");
+        }
+        if (url == YuGiOhSetSource::kCardInfoEndpoint) {
+            return infoOk ? Result<std::string>::ok(infoBody)
+                          : Result<std::string>::err("info offline");
+        }
+        return Result<std::string>::err("unexpected url");
+    }
+};
+
+}  // namespace
+
+TEST_SUITE("YuGiOhSetSource::fetchAllWithCatalog") {
+    TEST_CASE("fetches sets then cardinfo and returns both") {
+        RoutingHttpClient http;
+        http.setsBody = R"([{"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB","tcg_date":"2002-03-08"}])";
+        http.infoBody = R"({
+            "data": [{
+                "name": "Blue-Eyes White Dragon",
+                "card_sets": [
+                    {"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB-001","set_rarity":"Ultra Rare"}
+                ]
+            }]
+        })";
+        YuGiOhSetSource src{http};
+        const auto out = src.fetchAllWithCatalog();
+        REQUIRE(out.isOk());
+        REQUIRE(http.urls.size() == 2);
+        CHECK(http.urls[0] == YuGiOhSetSource::kEndpoint);
+        CHECK(http.urls[1] == YuGiOhSetSource::kCardInfoEndpoint);
+        CHECK(out.value().sets.front().id == "LOB");
+        REQUIRE(out.value().catalog.findPack("LOB") != nullptr);
+        CHECK(out.value().catalog.findPack("LOB")->cards.size() == 1);
+    }
+
+    TEST_CASE("cardinfo failure propagates after sets succeed") {
+        RoutingHttpClient http;
+        http.setsBody = R"([{"set_name":"Set X","set_code":"X","tcg_date":"2020-01-01"}])";
+        http.infoOk = false;
+        YuGiOhSetSource src{http};
+        const auto out = src.fetchAllWithCatalog();
+        REQUIRE(out.isErr());
+        CHECK(out.error() == "info offline");
     }
 }

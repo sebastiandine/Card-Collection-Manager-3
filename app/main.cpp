@@ -22,6 +22,7 @@
 #include "ccm/services/CollectionService.hpp"
 #include "ccm/services/ConfigService.hpp"
 #include "ccm/services/DigiBattle99SetCatalogService.hpp"
+#include "ccm/services/YuGiOhSetCatalogService.hpp"
 #include "ccm/services/ImageService.hpp"
 #include "ccm/services/SetService.hpp"
 #include "ccm/ui/AppContext.hpp"
@@ -113,6 +114,8 @@ public:
         setRepo_   = std::make_unique<ccm::JsonSetRepository>(*fs_, *config_, &dirNameForGame);
         digiBattle99CatalogStore_ =
             std::make_unique<ccm::DigiBattle99SetCatalogService>(*fs_, *config_, &dirNameForGame);
+        ygoCatalogStore_ =
+            std::make_unique<ccm::YuGiOhSetCatalogService>(*fs_, *config_, &dirNameForGame);
         imgStore_  = std::make_unique<ccm::LocalImageStore>(*fs_, *config_, &dirNameForGame);
 
         imgSvc_       = std::make_unique<ccm::ImageService>(*imgStore_);
@@ -163,7 +166,8 @@ public:
         pokeView_  = std::make_unique<ccm::ui::PokemonGameView>(
             *config_, *pokeCollSvc_, *setSvc_, *imgSvc_, *previewSvc_, *pokeMod_);
         ygoView_   = std::make_unique<ccm::ui::YuGiOhGameView>(
-            *config_, *ygoCollSvc_, *setSvc_, *imgSvc_, *previewSvc_, *ygoMod_);
+            *config_, *ygoCollSvc_, *setSvc_, *imgSvc_, *previewSvc_, *ygoMod_,
+            *ygoCatalogStore_);
         digiBattle99View_ = std::make_unique<ccm::ui::DigiBattle99GameView>(
             *config_, *digiBattle99CollSvc_, *setSvc_, *imgSvc_, *previewSvc_,
             *digiBattle99Mod_, *digiBattle99CatalogStore_);
@@ -207,6 +211,7 @@ private:
     std::unique_ptr<ccm::JsonCollectionRepository<ccm::DigiBattle99Card>> digiBattle99Repo_;
     std::unique_ptr<ccm::JsonSetRepository>                          setRepo_;
     std::unique_ptr<ccm::DigiBattle99SetCatalogService>              digiBattle99CatalogStore_;
+    std::unique_ptr<ccm::YuGiOhSetCatalogService>                    ygoCatalogStore_;
     std::unique_ptr<ccm::LocalImageStore>                            imgStore_;
     std::unique_ptr<ccm::ImageService>                               imgSvc_;
     std::unique_ptr<ccm::CollectionService<ccm::MagicCard>>          magicCollSvc_;
