@@ -27,6 +27,10 @@ public:
     // repository, and return the new list.
     Result<std::vector<Set>> updateSets(Game game);
 
+    // Persist an already-fetched set list (no HTTP). Used when a game-specific
+    // Update Sets path fetches sets + side payloads in one round-trip.
+    Result<void> saveSets(Game game, const std::vector<Set>& sets);
+
     // Cached read; returns an error if no local data exists yet.
     Result<std::vector<Set>> getSets(Game game);
 

@@ -15,14 +15,17 @@ add_library(ccm_ui_wx STATIC
     src/PokemonSelectedCardPanel.cpp
     src/PokemonCardEditDialog.cpp
     src/PokemonGameView.cpp
+    src/PokemonSetCompletionPanel.cpp
     src/YuGiOhCardListPanel.cpp
     src/YuGiOhSelectedCardPanel.cpp
     src/YuGiOhCardEditDialog.cpp
     src/YuGiOhGameView.cpp
+    src/YuGiOhSetCompletionPanel.cpp
     src/DigiBattle99CardListPanel.cpp
     src/DigiBattle99SelectedCardPanel.cpp
     src/DigiBattle99CardEditDialog.cpp
     src/DigiBattle99GameView.cpp
+    src/DigiBattle99SetCompletionPanel.cpp
 
     src/SettingsDialog.cpp
     src/SwitchCtrl.cpp

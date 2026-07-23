@@ -1,32 +1,65 @@
 #include "ccm/ui/YuGiOhGameView.hpp"
 
+#include "ccm/games/yugioh/YuGiOhSetSource.hpp"
 #include "ccm/ui/CardEditModalGuard.hpp"
+#include "ccm/ui/SvgIcons.hpp"
+#include "ccm/ui/Theme.hpp"
 #include "ccm/ui/YuGiOhCardEditDialog.hpp"
 #include "ccm/ui/YuGiOhCardListPanel.hpp"
 #include "ccm/ui/YuGiOhSelectedCardPanel.hpp"
-#include "ccm/ui/Theme.hpp"
+#include "ccm/ui/YuGiOhSetCompletionPanel.hpp"
 
-#include <wx/msgdlg.h>
+#include <wx/bmpbuttn.h>
+#include <wx/cursor.h>
+#include <wx/dcclient.h>
+#include <wx/panel.h>
+#include <wx/simplebook.h>
+#include <wx/sizer.h>
+#include <wx/splitter.h>
+#include <wx/stattext.h>
+#include <wx/textctrl.h>
 #include <wx/window.h>
 
-#include <optional>
 #include <algorithm>
 #include <string>
 
 namespace ccm::ui {
 
-YuGiOhGameView::YuGiOhGameView(ConfigService&                        config,
-                               CollectionService<YuGiOhCard>&        collection,
-                               SetService&                           sets,
-                               ImageService&                         images,
-                               CardPreviewService&                   cardPreview,
-                               IGameModule&                          module)
+namespace {
+constexpr int kYgoToolbarIconPx = 18;
+constexpr const char kYgoFilterHint[] = "Filter";
+
+wxColour lighten(const wxColour& c, int amount) {
+    auto lift = [amount](unsigned char channel) -> unsigned char {
+        const int raised = static_cast<int>(channel) + amount;
+        return static_cast<unsigned char>(raised > 255 ? 255 : raised);
+    };
+    return wxColour(lift(c.Red()), lift(c.Green()), lift(c.Blue()));
+}
+
+wxColour darken(const wxColour& c, int amount) {
+    auto drop = [amount](unsigned char channel) -> unsigned char {
+        const int lowered = static_cast<int>(channel) - amount;
+        return static_cast<unsigned char>(lowered < 0 ? 0 : lowered);
+    };
+    return wxColour(drop(c.Red()), drop(c.Green()), drop(c.Blue()));
+}
+}  // namespace
+
+YuGiOhGameView::YuGiOhGameView(ConfigService&                 config,
+                               CollectionService<YuGiOhCard>& collection,
+                               SetService&                    sets,
+                               ImageService&                  images,
+                               CardPreviewService&            cardPreview,
+                               IGameModule&                   module,
+                               YuGiOhSetCatalogService&       catalogStore)
     : config_(config),
       collection_(collection),
       sets_(sets),
       images_(images),
       cardPreview_(cardPreview),
-      module_(module) {}
+      module_(module),
+      catalogStore_(catalogStore) {}
 
 void YuGiOhGameView::ensureSetsLoaded() {
     if (attemptedInitialSetLoad_) return;
@@ -48,6 +81,208 @@ void YuGiOhGameView::ensureSetsLoaded() {
         std::sort(setsCache_.begin(), setsCache_.end(),
                   [](const Set& a, const Set& b) { return a.releaseDate < b.releaseDate; });
     }
+}
+
+void YuGiOhGameView::ensureSingleCardsMounted(wxWindow* splitterParent) {
+    if (singleSplitter_ == nullptr) {
+        singleSplitter_ = new wxSplitterWindow(splitterParent, wxID_ANY, wxDefaultPosition,
+                                               wxDefaultSize, wxSP_LIVE_UPDATE);
+        singleSplitter_->SetMinimumPaneSize(280);
+    }
+    auto* list = listPanel(singleSplitter_);
+    auto* selected = selectedPanel(singleSplitter_);
+    if (!singleSplitter_->IsSplit()) {
+        singleSplitter_->SplitVertically(selected, list, 360);
+    }
+}
+
+void YuGiOhGameView::buildSingleCardsToolbar(wxWindow* parent, wxBoxSizer* pageSizer) {
+    auto* toolbar = new wxBoxSizer(wxHORIZONTAL);
+    auto makeToolBtn = [&](const char* svg, const wxString& tip) {
+        wxBitmap bmp = svgIconBitmap(svg, kYgoToolbarIconPx, "#000000");
+        auto* b = new wxBitmapButton(parent, wxID_ANY, bmp, wxDefaultPosition, wxDefaultSize,
+                                     wxBU_EXACTFIT);
+        b->SetToolTip(tip);
+        return b;
+    };
+    toolbarButtons_[0] = makeToolBtn(kSvgToolbarAdd,    "Add Card");
+    toolbarButtons_[1] = makeToolBtn(kSvgToolbarEdit,   "Edit");
+    toolbarButtons_[2] = makeToolBtn(kSvgToolbarDelete, "Delete");
+    toolbar->AddSpacer(4);
+    toolbar->Add(toolbarButtons_[0], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
+    toolbar->Add(toolbarButtons_[1], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
+    toolbar->Add(toolbarButtons_[2], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
+    toolbar->AddStretchSpacer(1);
+    filterInput_ = new wxTextCtrl(parent, wxID_ANY, "", wxDefaultPosition, wxSize(260, -1));
+    filterInput_->SetHint(kYgoFilterHint);
+    toolbar->Add(filterInput_, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxTOP | wxBOTTOM, 4);
+    pageSizer->Add(toolbar, 0, wxEXPAND);
+
+    toolbarButtons_[0]->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+        wxWindow* owner = wxGetTopLevelParent(contentPanel_);
+        onAddCard(owner != nullptr ? owner : contentPanel_);
+    });
+    toolbarButtons_[1]->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+        wxWindow* owner = wxGetTopLevelParent(contentPanel_);
+        onEditCard(owner != nullptr ? owner : contentPanel_);
+    });
+    toolbarButtons_[2]->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+        wxWindow* owner = wxGetTopLevelParent(contentPanel_);
+        onDeleteCard(owner != nullptr ? owner : contentPanel_);
+    });
+    filterInput_->Bind(wxEVT_TEXT, [this](wxCommandEvent&) {
+        if (filterInput_ == nullptr) return;
+        setFilter(filterInput_->GetValue().ToStdString(wxConvUTF8));
+    });
+}
+
+void YuGiOhGameView::refreshToolbarIcons(const ThemePalette& palette) {
+    const std::string tbHex = palette.buttonText.GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
+    if (toolbarButtons_[0]) {
+        toolbarButtons_[0]->SetBitmap(
+            svgIconBitmap(kSvgToolbarAdd, kYgoToolbarIconPx, tbHex.c_str()));
+    }
+    if (toolbarButtons_[1]) {
+        toolbarButtons_[1]->SetBitmap(
+            svgIconBitmap(kSvgToolbarEdit, kYgoToolbarIconPx, tbHex.c_str()));
+    }
+    if (toolbarButtons_[2]) {
+        toolbarButtons_[2]->SetBitmap(
+            svgIconBitmap(kSvgToolbarDelete, kYgoToolbarIconPx, tbHex.c_str()));
+    }
+}
+
+void YuGiOhGameView::selectTab(int index) {
+    if (index < 0 || index > 1 || book_ == nullptr) return;
+    activeTab_ = index;
+    book_->SetSelection(index);
+    refreshTabBarTheme(paletteForTheme(config_.current().theme));
+}
+
+void YuGiOhGameView::refreshTabBarTheme(const ThemePalette& palette) {
+    if (tabBar_ == nullptr) return;
+
+    const wxColour barBg = palette.panelBg;
+    const wxColour tabBg = palette.buttonBg;
+
+    tabBar_->SetBackgroundColour(barBg);
+    tabBar_->SetOwnBackgroundColour(barBg);
+
+    for (int i = 0; i < 2; ++i) {
+        auto* tab = tabPanels_[i];
+        auto* label = tabLabels_[i];
+        if (tab == nullptr || label == nullptr) continue;
+        const bool selected = (i == activeTab_);
+        tab->SetBackgroundColour(tabBg);
+        tab->SetOwnBackgroundColour(tabBg);
+        label->SetBackgroundColour(tabBg);
+        label->SetOwnBackgroundColour(tabBg);
+        label->SetForegroundColour(palette.text);
+        label->SetOwnForegroundColour(palette.text);
+        wxFont font = label->GetFont();
+        font.SetWeight(selected ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL);
+        label->SetFont(font);
+        tab->Refresh();
+        label->Refresh();
+    }
+    tabBar_->Layout();
+    tabBar_->Refresh();
+}
+
+void YuGiOhGameView::buildTabBar(wxWindow* parent, wxBoxSizer* rootSizer) {
+    tabBar_ = new wxPanel(parent, wxID_ANY);
+    tabBar_->SetBackgroundStyle(wxBG_STYLE_PAINT);
+    auto* tabSizer = new wxBoxSizer(wxHORIZONTAL);
+    tabSizer->AddSpacer(4);
+
+    const char* labels[2] = {"Single Cards", "Set Completion"};
+    for (int i = 0; i < 2; ++i) {
+        auto* tab = new wxPanel(tabBar_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+        tab->SetCursor(wxCursor(wxCURSOR_HAND));
+        tab->SetBackgroundStyle(wxBG_STYLE_PAINT);
+        auto* label = new wxStaticText(tab, wxID_ANY, wxString::FromUTF8(labels[i]));
+        auto* inner = new wxBoxSizer(wxVERTICAL);
+        inner->Add(label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, 5);
+        tab->SetSizer(inner);
+
+        auto onClick = [this, i](wxMouseEvent&) { selectTab(i); };
+        tab->Bind(wxEVT_LEFT_DOWN, onClick);
+        label->Bind(wxEVT_LEFT_DOWN, onClick);
+        tab->Bind(wxEVT_ERASE_BACKGROUND, [](wxEraseEvent&) {});
+        tab->Bind(wxEVT_PAINT, [this, tab, i](wxPaintEvent&) {
+            wxPaintDC dc(tab);
+            const ThemePalette palette = paletteForTheme(config_.current().theme);
+            const bool dark = config_.current().theme == Theme::Dark;
+            const bool selected = (i == activeTab_);
+            const wxColour bg = palette.buttonBg;
+            const wxColour frame =
+                dark ? lighten(palette.panelBg, 55) : darken(palette.panelBg, 45);
+            const wxColour frameSel = dark ? lighten(palette.panelBg, 85) : darken(palette.panelBg, 70);
+            const wxRect r = tab->GetClientRect();
+            dc.SetPen(wxPen(selected ? frameSel : frame, 1));
+            dc.SetBrush(wxBrush(bg));
+            dc.DrawRectangle(r.x, r.y, r.width, r.height);
+            if (selected) {
+                dc.SetPen(wxPen(palette.text, 2));
+                dc.DrawLine(r.GetLeft() + 4, r.GetBottom() - 1, r.GetRight() - 4,
+                            r.GetBottom() - 1);
+            }
+        });
+
+        tabPanels_[i] = tab;
+        tabLabels_[i] = label;
+        if (i > 0) tabSizer->AddSpacer(4);
+        tabSizer->Add(tab, 0, wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM, 3);
+    }
+    tabSizer->AddStretchSpacer(1);
+
+    tabBar_->Bind(wxEVT_PAINT, [this](wxPaintEvent&) {
+        wxPaintDC dc(tabBar_);
+        const ThemePalette palette = paletteForTheme(config_.current().theme);
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(palette.panelBg));
+        dc.DrawRectangle(tabBar_->GetClientRect());
+        dc.SetPen(wxPen(darken(palette.text, 120), 1));
+        const wxRect r = tabBar_->GetClientRect();
+        dc.DrawLine(r.GetLeft(), r.GetBottom(), r.GetRight(), r.GetBottom());
+    });
+    tabBar_->Bind(wxEVT_ERASE_BACKGROUND, [](wxEraseEvent&) {});
+
+    tabBar_->SetSizer(tabSizer);
+    rootSizer->Add(tabBar_, 0, wxEXPAND);
+    refreshTabBarTheme(paletteForTheme(config_.current().theme));
+}
+
+wxPanel* YuGiOhGameView::contentPanel(wxWindow* parent) {
+    if (contentPanel_ == nullptr) {
+        contentPanel_ = new wxPanel(parent);
+        auto* root = new wxBoxSizer(wxVERTICAL);
+
+        buildTabBar(contentPanel_, root);
+
+        book_ = new wxSimplebook(contentPanel_, wxID_ANY);
+        auto* singlePage = new wxPanel(book_);
+        auto* singleSizer = new wxBoxSizer(wxVERTICAL);
+        buildSingleCardsToolbar(singlePage, singleSizer);
+        ensureSingleCardsMounted(singlePage);
+        singleSizer->Add(singleSplitter_, 1, wxEXPAND);
+        singlePage->SetSizer(singleSizer);
+        book_->AddPage(singlePage, "Single Cards");
+
+        setCompletionPanel_ = new YuGiOhSetCompletionPanel(book_, catalogStore_);
+        setCompletionPanel_->reloadFromStore();
+        book_->AddPage(setCompletionPanel_, "Set Completion");
+
+        root->Add(book_, 1, wxEXPAND | wxTOP, 5);
+        contentPanel_->SetSizer(root);
+
+        selectTab(0);
+        refreshToolbarIcons(paletteForTheme(config_.current().theme));
+        contentPanel_->CallAfter([this]() {
+            refreshTabBarTheme(paletteForTheme(config_.current().theme));
+        });
+    }
+    return contentPanel_;
 }
 
 wxPanel* YuGiOhGameView::listPanel(wxWindow* parent) {
@@ -74,16 +309,23 @@ wxPanel* YuGiOhGameView::selectedPanel(wxWindow* parent) {
 }
 
 void YuGiOhGameView::refreshCollection() {
-    if (listPanel_ == nullptr) return;
+    if (contentPanel_ == nullptr && listPanel_ == nullptr) return;
+
     auto loaded = collection_.list(Game::YuGiOh);
     if (!loaded) {
         showThemedMessageDialog(nullptr, "Failed to load Yu-Gi-Oh! collection: " + loaded.error(),
                                 "Error", wxOK | wxICON_ERROR);
         return;
     }
-    listPanel_->setCards(std::move(loaded).value());
-    listPanel_->activateSelection();
-    if (selectedPanel_) selectedPanel_->setCard(listPanel_->selected());
+    auto cards = std::move(loaded).value();
+    if (listPanel_ != nullptr) {
+        listPanel_->setCards(cards);
+        listPanel_->activateSelection();
+        if (selectedPanel_) selectedPanel_->setCard(listPanel_->selected());
+    }
+    if (setCompletionPanel_ != nullptr) {
+        setCompletionPanel_->setCollection(std::move(cards));
+    }
 }
 
 const std::vector<Set>& YuGiOhGameView::setsForDialog() {
@@ -94,8 +336,9 @@ const std::vector<Set>& YuGiOhGameView::setsForDialog() {
         setsCache_ = std::move(loaded).value();
         std::sort(setsCache_.begin(), setsCache_.end(),
                   [](const Set& a, const Set& b) { return a.releaseDate < b.releaseDate; });
+    } else {
+        setsCache_.clear();
     }
-    else        setsCache_.clear();
     return setsCache_;
 }
 
@@ -135,13 +378,18 @@ void YuGiOhGameView::onAddCard(wxWindow* parentWindow) {
             persisted.images = std::move(normalized).value();
             auto updated = collection_.update(Game::YuGiOh, persisted);
             if (!updated) {
-                showThemedMessageDialog(parentWindow, "Card added, but image name normalization failed to persist: " + updated.error(),
-                                        "Warning", wxOK | wxICON_WARNING);
+                showThemedMessageDialog(
+                    parentWindow,
+                    "Card added, but image name normalization failed to persist: " +
+                        updated.error(),
+                    "Warning", wxOK | wxICON_WARNING);
             }
         }
     } else {
-        showThemedMessageDialog(parentWindow, "Card added, but image rename to ID-prefixed format failed: " + normalized.error(),
-                                "Warning", wxOK | wxICON_WARNING);
+        showThemedMessageDialog(
+            parentWindow,
+            "Card added, but image rename to ID-prefixed format failed: " + normalized.error(),
+            "Warning", wxOK | wxICON_WARNING);
     }
     refreshCollection();
 }
@@ -150,7 +398,8 @@ void YuGiOhGameView::onEditCard(wxWindow* parentWindow) {
     if (listPanel_ == nullptr) return;
     auto sel = listPanel_->selected();
     if (!sel) {
-        showThemedMessageDialog(parentWindow, "Select a card first.", "Edit", wxOK | wxICON_INFORMATION);
+        showThemedMessageDialog(parentWindow, "Select a card first.", "Edit",
+                                wxOK | wxICON_INFORMATION);
         return;
     }
     if (cardEditModalIsActive()) {
@@ -176,7 +425,8 @@ void YuGiOhGameView::onDeleteCard(wxWindow* parentWindow) {
     if (listPanel_ == nullptr) return;
     auto sel = listPanel_->selected();
     if (!sel) {
-        showThemedMessageDialog(parentWindow, "Select a card first.", "Delete", wxOK | wxICON_INFORMATION);
+        showThemedMessageDialog(parentWindow, "Select a card first.", "Delete",
+                                wxOK | wxICON_INFORMATION);
         return;
     }
     if (showThemedConfirmDialog(parentWindow, "Delete \"" + sel->name + "\"?",
@@ -193,27 +443,82 @@ void YuGiOhGameView::onDeleteCard(wxWindow* parentWindow) {
 }
 
 std::string YuGiOhGameView::onUpdateSets(wxWindow* parentWindow) {
-    auto out = sets_.updateSets(Game::YuGiOh);
-    if (!out) {
-        showThemedMessageDialog(parentWindow, "Failed to update sets: " + out.error(),
+    auto* ygoSrc = dynamic_cast<YuGiOhSetSource*>(&module_.setSource());
+    if (ygoSrc == nullptr) {
+        showThemedMessageDialog(parentWindow, "Yu-Gi-Oh! set source unavailable.",
                                 "Error", wxOK | wxICON_ERROR);
         return "Update failed";
     }
-    setsCache_ = out.value();
+
+    auto both = ygoSrc->fetchAllWithCatalog();
+    if (!both) {
+        showThemedMessageDialog(parentWindow, "Failed to update sets: " + both.error(),
+                                "Error", wxOK | wxICON_ERROR);
+        return "Update failed";
+    }
+
+    auto savedSets = sets_.saveSets(Game::YuGiOh, both.value().sets);
+    if (!savedSets) {
+        showThemedMessageDialog(parentWindow, "Failed to save sets: " + savedSets.error(),
+                                "Error", wxOK | wxICON_ERROR);
+        return "Update failed";
+    }
+
+    auto savedCatalog = catalogStore_.save(both.value().catalog);
+    if (!savedCatalog) {
+        showThemedMessageDialog(parentWindow,
+                                "Sets saved, but set catalog failed: " + savedCatalog.error(),
+                                "Warning", wxOK | wxICON_WARNING);
+    }
+
+    setsCache_ = both.value().sets;
     std::sort(setsCache_.begin(), setsCache_.end(),
               [](const Set& a, const Set& b) { return a.releaseDate < b.releaseDate; });
-    showThemedMessageDialog(parentWindow, "Updated " + std::to_string(out.value().size()) + " Yu-Gi-Oh! sets.",
-                            "Sets updated", wxOK | wxICON_INFORMATION);
+    if (setCompletionPanel_ != nullptr) {
+        setCompletionPanel_->reloadFromStore();
+        if (auto loaded = collection_.list(Game::YuGiOh)) {
+            setCompletionPanel_->setCollection(std::move(loaded).value());
+        }
+    }
+
+    const std::size_t setCount = both.value().sets.size();
+    const std::size_t packCount = both.value().catalog.packs.size();
+    showThemedMessageDialog(
+        parentWindow,
+        "Updated " + std::to_string(setCount) + " Yu-Gi-Oh! sets and " +
+            std::to_string(packCount) + " set checklists.",
+        "Sets updated", wxOK | wxICON_INFORMATION);
     return "Yu-Gi-Oh! sets updated.";
 }
 
 void YuGiOhGameView::setFilter(std::string_view filter) {
+    if (filterInput_ != nullptr) {
+        const wxString wanted = wxString::FromUTF8(std::string(filter).c_str());
+        if (filterInput_->GetValue() != wanted) {
+            filterInput_->ChangeValue(wanted);
+            if (filter.empty()) {
+                filterInput_->SetHint(kYgoFilterHint);
+                filterInput_->Refresh();
+            }
+        }
+    }
     if (listPanel_) listPanel_->setFilter(filter);
 }
 
 void YuGiOhGameView::applyTheme(const ThemePalette& palette) {
+    if (contentPanel_) applyThemeToWindowTree(contentPanel_, palette, config_.current().theme);
     if (listPanel_)     listPanel_->applyTheme(palette);
     if (selectedPanel_) selectedPanel_->applyTheme(palette);
+    if (setCompletionPanel_) setCompletionPanel_->applyTheme(palette);
+    refreshToolbarIcons(palette);
+    refreshTabBarTheme(palette);
+    if (filterInput_ != nullptr) {
+        filterInput_->SetBackgroundColour(palette.inputBg);
+        filterInput_->SetForegroundColour(palette.inputText);
+        filterInput_->SetOwnBackgroundColour(palette.inputBg);
+        filterInput_->SetOwnForegroundColour(palette.inputText);
+        filterInput_->Refresh();
+    }
 }
 
 }  // namespace ccm::ui

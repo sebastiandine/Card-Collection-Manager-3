@@ -2,6 +2,9 @@
 
 #include "ccm/domain/Configuration.hpp"
 #include "ccm/domain/DigiBattle99Card.hpp"
+#include "ccm/domain/DigiBattle99SetCatalog.hpp"
+#include "ccm/domain/PokemonSetCatalog.hpp"
+#include "ccm/domain/YuGiOhSetCatalog.hpp"
 #include "ccm/domain/Enums.hpp"
 #include "ccm/domain/JapanesePokemonCard.hpp"
 #include "ccm/domain/MagicCard.hpp"
@@ -242,6 +245,72 @@ TEST_SUITE("DigiBattle99Card JSON") {
 
         const DigiBattle99Card back = j.get<DigiBattle99Card>();
         CHECK(back == c);
+    }
+}
+
+TEST_SUITE("DigiBattle99SetCatalog JSON") {
+    TEST_CASE("round-trips packs and setNo alias") {
+        DigiBattle99SetCatalog catalog;
+        DigiBattle99SetCatalogPack pack;
+        pack.setId = "series-1-starter-set";
+        pack.setName = "Series 1 Starter Set";
+        pack.cards.push_back(DigiBattle99CatalogCard{"ST-01", "Agumon"});
+        pack.cards.push_back(DigiBattle99CatalogCard{"ST-126", "Agumon"});
+        catalog.packs.push_back(std::move(pack));
+
+        nlohmann::json j = catalog;
+        CHECK(j.at("packs").is_array());
+        CHECK(j.at("packs").at(0).at("id") == "series-1-starter-set");
+        CHECK(j.at("packs").at(0).at("cards").at(0).at("setNo") == "ST-01");
+
+        const DigiBattle99SetCatalog back = j.get<DigiBattle99SetCatalog>();
+        CHECK(back == catalog);
+        CHECK(back.findPack("series-1-starter-set") != nullptr);
+        CHECK(back.findPack("missing") == nullptr);
+    }
+}
+
+TEST_SUITE("YuGiOhSetCatalog JSON") {
+    TEST_CASE("round-trips packs and setNo alias") {
+        YuGiOhSetCatalog catalog;
+        YuGiOhSetCatalogPack pack;
+        pack.setId = "LOB";
+        pack.setName = "Legend of Blue Eyes White Dragon";
+        pack.cards.push_back(YuGiOhCatalogCard{"LOB-001", "Blue-Eyes White Dragon"});
+        pack.cards.push_back(YuGiOhCatalogCard{"LOB-EN005", "Dark Magician"});
+        catalog.packs.push_back(std::move(pack));
+
+        nlohmann::json j = catalog;
+        CHECK(j.at("packs").is_array());
+        CHECK(j.at("packs").at(0).at("id") == "LOB");
+        CHECK(j.at("packs").at(0).at("cards").at(0).at("setNo") == "LOB-001");
+
+        const YuGiOhSetCatalog back = j.get<YuGiOhSetCatalog>();
+        CHECK(back == catalog);
+        CHECK(back.findPack("LOB") != nullptr);
+        CHECK(back.findPack("missing") == nullptr);
+    }
+}
+
+TEST_SUITE("PokemonSetCatalog JSON") {
+    TEST_CASE("round-trips packs and setNo alias") {
+        PokemonSetCatalog catalog;
+        PokemonSetCatalogPack pack;
+        pack.setId = "base1";
+        pack.setName = "Base";
+        pack.cards.push_back(PokemonCatalogCard{"4", "Charizard"});
+        pack.cards.push_back(PokemonCatalogCard{"58", "Growlithe"});
+        catalog.packs.push_back(std::move(pack));
+
+        nlohmann::json j = catalog;
+        CHECK(j.at("packs").is_array());
+        CHECK(j.at("packs").at(0).at("id") == "base1");
+        CHECK(j.at("packs").at(0).at("cards").at(0).at("setNo") == "4");
+
+        const PokemonSetCatalog back = j.get<PokemonSetCatalog>();
+        CHECK(back == catalog);
+        CHECK(back.findPack("base1") != nullptr);
+        CHECK(back.findPack("missing") == nullptr);
     }
 }
 

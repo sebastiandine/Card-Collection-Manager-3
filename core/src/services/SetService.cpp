@@ -20,6 +20,10 @@ Result<std::vector<Set>> SetService::updateSets(Game game) {
     return fetched;
 }
 
+Result<void> SetService::saveSets(Game game, const std::vector<Set>& sets) {
+    return repo_.save(game, sets);
+}
+
 Result<std::vector<Set>> SetService::getSets(Game game) {
     auto loaded = repo_.load(game);
     if (!loaded) return loaded;

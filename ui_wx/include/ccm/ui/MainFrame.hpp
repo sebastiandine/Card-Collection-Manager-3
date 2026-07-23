@@ -59,6 +59,8 @@ private:
     Game        activeGame_{Game::Magic};
 
     wxSplitterWindow*   splitter_{nullptr};
+    wxPanel*            contentHost_{nullptr};
+    wxPanel*            toolbarPanel_{nullptr};
     wxTextCtrl*         filterInput_{nullptr};
     wxPanel*            menuStrip_{nullptr};
     wxStaticText*       statusText_{nullptr};
