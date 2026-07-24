@@ -3,6 +3,7 @@
 #include "ccm/games/pokemon/PokemonCardPreviewSource.hpp"
 #include "ccm/games/pokemon/PokemonWestSetId.hpp"
 #include "ccm/games/pokemonjp/JapanesePokemonCardPreviewSource.hpp"
+#include "ccm/util/SetNoNatural.hpp"
 
 #include <algorithm>
 #include <array>
@@ -13,7 +14,12 @@ namespace ccm {
 
 namespace {
 
-using OwnedBySet = std::unordered_map<std::string, std::unordered_set<std::string>>;
+struct OwnedSetInfo {
+    std::unordered_set<std::string> nos;
+    std::string                     releaseDate;
+};
+
+using OwnedBySet = std::unordered_map<std::string, OwnedSetInfo>;
 
 bool passesLanguageFilter(const PokemonCard& card, std::optional<Language> languageFilter) {
     return !languageFilter.has_value() || card.language == *languageFilter;
@@ -46,7 +52,11 @@ OwnedBySet ownedSetNosBySetId(const std::vector<PokemonCard>& collection,
         if (setNo.empty()) continue;
         const std::string setKey =
             region == PokemonRegion::West ? westSetKey(card.set.id) : card.set.id;
-        out[setKey].insert(setNo);
+        auto& info = out[setKey];
+        info.nos.insert(setNo);
+        if (info.releaseDate.empty() && !card.set.releaseDate.empty()) {
+            info.releaseDate = card.set.releaseDate;
+        }
     }
     return out;
 }
@@ -61,20 +71,21 @@ computeForCatalog(const std::vector<PokemonCard>& collection,
     std::vector<PokemonSetCompletionProgress> out;
     out.reserve(owned.size());
 
-    for (const auto& [setId, ownedNos] : owned) {
+    for (const auto& [setId, info] : owned) {
         const auto* pack = catalog.findPack(setId);
         if (pack == nullptr || pack->cards.empty()) continue;
 
         std::size_t matched = 0;
         for (const auto& card : pack->cards) {
             const std::string catalogNo = normalizeForRegion(region, card.setNo);
-            if (!catalogNo.empty() && ownedNos.count(catalogNo) != 0) ++matched;
+            if (!catalogNo.empty() && info.nos.count(catalogNo) != 0) ++matched;
         }
 
         PokemonSetCompletionProgress row;
         row.region = region;
         row.setId = pack->setId;
         row.setName = pack->setName;
+        row.releaseDate = info.releaseDate;
         row.ownedUnique = matched;
         row.total = pack->cards.size();
         out.push_back(std::move(row));
@@ -149,6 +160,10 @@ computePokemonSetCompletion(const std::vector<PokemonCard>& collection,
     std::sort(out.begin(), out.end(),
               [](const PokemonSetCompletionProgress& a,
                  const PokemonSetCompletionProgress& b) {
+                  // YYYY/MM/DD lex order is chronological (CardSorter parity).
+                  if (a.releaseDate != b.releaseDate) {
+                      return a.releaseDate < b.releaseDate;
+                  }
                   if (a.setName != b.setName) return a.setName < b.setName;
                   return static_cast<int>(a.region) < static_cast<int>(b.region);
               });
@@ -192,7 +207,8 @@ pokemonChecklistForSet(const std::vector<PokemonCard>& collection,
 
     std::sort(out.begin(), out.end(),
               [](const PokemonChecklistEntry& a, const PokemonChecklistEntry& b) {
-                  if (a.setNo != b.setNo) return a.setNo < b.setNo;
+                  const int cmp = compareSetNoNatural(a.setNo, b.setNo);
+                  if (cmp != 0) return cmp < 0;
                   return a.name < b.name;
               });
     return out;

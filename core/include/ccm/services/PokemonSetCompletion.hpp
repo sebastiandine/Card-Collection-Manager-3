@@ -23,6 +23,7 @@ struct PokemonSetCompletionProgress {
     PokemonRegion region{PokemonRegion::West};
     std::string   setId;
     std::string   setName;
+    std::string   releaseDate;  // YYYY/MM/DD from owned cards; may be empty
     std::size_t   ownedUnique{0};
     std::size_t   total{0};
 
@@ -50,8 +51,9 @@ pokemonRegionsInCollection(const std::vector<PokemonCard>& collection,
                            const PokemonSetCatalog&        westCatalog,
                            const PokemonSetCatalog&        asiaCatalog);
 
-// Packs where the collection owns ≥1 matching card, ordered by setName then
-// region. When regionFilter is set, only that region's catalog/cards count.
+// Packs where the collection owns ≥1 matching card, ordered by releaseDate
+// then setName then region. When regionFilter is set, only that region's
+// catalog/cards count.
 [[nodiscard]] std::vector<PokemonSetCompletionProgress>
 computePokemonSetCompletion(const std::vector<PokemonCard>& collection,
                             const PokemonSetCatalog&        westCatalog,

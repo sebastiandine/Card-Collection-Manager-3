@@ -53,6 +53,7 @@ add_library(ccm_core STATIC
     src/games/pokemonjp/JapanesePokemonGameModule.cpp
 
     src/util/FsNames.cpp
+    src/util/SetNoNatural.cpp
 )
 
 target_include_directories(ccm_core

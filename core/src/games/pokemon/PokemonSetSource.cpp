@@ -2,6 +2,7 @@
 
 #include "ccm/games/pokemon/PokemonCardPreviewSource.hpp"
 #include "ccm/util/Rfc3986.hpp"
+#include "ccm/util/SetNoNatural.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -93,7 +94,8 @@ Result<PokemonSetCatalogPack> PokemonSetSource::parseCatalogPackFromSetDetail(
 
     std::sort(pack.cards.begin(), pack.cards.end(),
               [](const PokemonCatalogCard& a, const PokemonCatalogCard& b) {
-                  if (a.setNo != b.setNo) return a.setNo < b.setNo;
+                  const int cmp = compareSetNoNatural(a.setNo, b.setNo);
+                  if (cmp != 0) return cmp < 0;
                   return a.name < b.name;
               });
     if (pack.cards.empty()) {

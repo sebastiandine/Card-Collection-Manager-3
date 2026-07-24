@@ -38,12 +38,13 @@ public:
     wxPanel* listPanel(wxWindow* parent) override;
     wxPanel* selectedPanel(wxWindow* parent) override;
 
-    void refreshCollection() override;
+    void refreshCollection(std::optional<std::uint32_t> selectId = std::nullopt) override;
     void onAddCard(wxWindow* parentWindow) override;
     void onEditCard(wxWindow* parentWindow) override;
     void onDeleteCard(wxWindow* parentWindow) override;
     std::string onUpdateSets(wxWindow* parentWindow) override;
     void setFilter(std::string_view filter) override;
+    void nudgeSelection(int delta) override;
     void applyTheme(const ThemePalette& palette) override;
     [[nodiscard]] std::string updateSetsMenuLabel() const override { return "Update Magic"; }
 

@@ -71,7 +71,7 @@ wxPanel* MagicGameView::selectedPanel(wxWindow* parent) {
     return selectedPanel_;
 }
 
-void MagicGameView::refreshCollection() {
+void MagicGameView::refreshCollection(std::optional<std::uint32_t> selectId) {
     if (listPanel_ == nullptr) return;
     auto loaded = collection_.list(Game::Magic);
     if (!loaded) {
@@ -79,7 +79,7 @@ void MagicGameView::refreshCollection() {
                                 "Error", wxOK | wxICON_ERROR);
         return;
     }
-    listPanel_->setCards(std::move(loaded).value());
+    listPanel_->setCards(std::move(loaded).value(), selectId);
     listPanel_->activateSelection();
     if (selectedPanel_) selectedPanel_->setCard(listPanel_->selected());
 }
@@ -134,7 +134,7 @@ void MagicGameView::onAddCard(wxWindow* parentWindow) {
         showThemedMessageDialog(parentWindow, "Card added, but image rename to ID-prefixed format failed: " + normalized.error(),
                                 "Warning", wxOK | wxICON_WARNING);
     }
-    refreshCollection();
+    refreshCollection(added.value());
 }
 
 void MagicGameView::onEditCard(wxWindow* parentWindow) {
@@ -198,6 +198,10 @@ std::string MagicGameView::onUpdateSets(wxWindow* parentWindow) {
 
 void MagicGameView::setFilter(std::string_view filter) {
     if (listPanel_) listPanel_->setFilter(filter);
+}
+
+void MagicGameView::nudgeSelection(int delta) {
+    if (listPanel_) listPanel_->nudgeSelection(delta);
 }
 
 void MagicGameView::applyTheme(const ThemePalette& palette) {
