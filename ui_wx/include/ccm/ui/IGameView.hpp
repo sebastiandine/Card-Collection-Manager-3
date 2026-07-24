@@ -13,6 +13,8 @@
 #include "ccm/domain/Set.hpp"
 #include "ccm/ui/Theme.hpp"
 
+#include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -54,9 +56,10 @@ public:
     // list/selected panels parented onto MainFrame's shared splitter.
     [[nodiscard]] virtual bool hostsOwnLayout() const noexcept { return false; }
 
-    // Reload the active collection from disk and refresh the panels. The
-    // selected card is preserved when possible.
-    virtual void refreshCollection() = 0;
+    // Reload the active collection from disk and refresh the panels. When
+    // selectId is set, that card is selected if present (e.g. after Add);
+    // otherwise the previously selected card is preserved when possible.
+    virtual void refreshCollection(std::optional<std::uint32_t> selectId = std::nullopt) = 0;
 
     // Toolbar actions. `parentWindow` is the dialog owner for any modal we
     // open (typically the `MainFrame`).
@@ -70,6 +73,10 @@ public:
 
     // Forwarded by `MainFrame` whenever the filter input changes.
     virtual void setFilter(std::string_view filter) = 0;
+
+    // Move the card-list selection by `delta` rows (+1 / -1). Used when Up/Down
+    // are pressed while the filter text box has focus.
+    virtual void nudgeSelection(int delta) = 0;
 
     // Apply the active palette to all panels owned by this view.
     virtual void applyTheme(const ThemePalette& palette) = 0;

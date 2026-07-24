@@ -185,6 +185,16 @@ void MainFrame::buildLayout() {
             view->setFilter(filterInput_->GetValue().ToStdString());
         }
     });
+    filterInput_->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent& ev) {
+        const int code = ev.GetKeyCode();
+        if (code == WXK_UP || code == WXK_DOWN) {
+            if (auto* view = activeView()) {
+                view->nudgeSelection(code == WXK_UP ? -1 : 1);
+            }
+            return;
+        }
+        ev.Skip();
+    });
 
     // Selection changes are handled per-view (each IGameView binds
     // EVT_CARD_SELECTED on its own typed list panel and pushes the typed

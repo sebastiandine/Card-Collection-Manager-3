@@ -128,6 +128,14 @@ void DigiBattle99GameView::buildSingleCardsToolbar(wxWindow* parent, wxBoxSizer*
         if (filterInput_ == nullptr) return;
         setFilter(filterInput_->GetValue().ToStdString(wxConvUTF8));
     });
+    filterInput_->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent& ev) {
+        const int code = ev.GetKeyCode();
+        if (code == WXK_UP || code == WXK_DOWN) {
+            nudgeSelection(code == WXK_UP ? -1 : 1);
+            return;
+        }
+        ev.Skip();
+    });
 }
 
 void DigiBattle99GameView::refreshToolbarIcons(const ThemePalette& palette) {
@@ -308,7 +316,7 @@ wxPanel* DigiBattle99GameView::selectedPanel(wxWindow* parent) {
     return selectedPanel_;
 }
 
-void DigiBattle99GameView::refreshCollection() {
+void DigiBattle99GameView::refreshCollection(std::optional<std::uint32_t> selectId) {
     // Ensure the Digimon host (and list panel) exist even when MainFrame mounts
     // via contentPanel before an explicit listPanel call.
     if (contentPanel_ == nullptr && listPanel_ == nullptr) return;
@@ -323,7 +331,7 @@ void DigiBattle99GameView::refreshCollection() {
     }
     auto cards = std::move(loaded).value();
     if (listPanel_ != nullptr) {
-        listPanel_->setCards(cards);
+        listPanel_->setCards(cards, selectId);
         listPanel_->activateSelection();
         if (selectedPanel_) selectedPanel_->setCard(listPanel_->selected());
     }
@@ -387,7 +395,7 @@ void DigiBattle99GameView::onAddCard(wxWindow* parentWindow) {
             "Card added, but image rename to ID-prefixed format failed: " + normalized.error(),
             "Warning", wxOK | wxICON_WARNING);
     }
-    refreshCollection();
+    refreshCollection(added.value());
 }
 
 void DigiBattle99GameView::onEditCard(wxWindow* parentWindow) {
@@ -497,6 +505,10 @@ void DigiBattle99GameView::setFilter(std::string_view filter) {
         }
     }
     if (listPanel_) listPanel_->setFilter(filter);
+}
+
+void DigiBattle99GameView::nudgeSelection(int delta) {
+    if (listPanel_) listPanel_->nudgeSelection(delta);
 }
 
 void DigiBattle99GameView::applyTheme(const ThemePalette& palette) {

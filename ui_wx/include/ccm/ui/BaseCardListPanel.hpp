@@ -80,16 +80,23 @@ public:
     using card_type = TCard;
     using sort_column_type = TSortColumn;
 
-    // Replace the displayed rows. Selection is reset (the panel will pick
-    // the first row on the next idle turn — see rebuildRows()).
-    void setCards(std::vector<TCard> cards) {
+    // Replace the displayed rows. When preferSelectId is set, selects that
+    // card if present (used after Add). Otherwise preserves the previously
+    // selected card by id when still present; the first-row CallAfter path in
+    // rebuildRows() runs only when there was no prior selection (startup).
+    void setCards(std::vector<TCard> cards,
+                  std::optional<std::uint32_t> preferSelectId = std::nullopt) {
+        std::optional<std::uint32_t> keepId = preferSelectId;
+        if (!keepId) {
+            if (auto sel = selected()) keepId = sel->id;
+        }
         cards_ = std::move(cards);
         // Drop sort state when the underlying data is replaced - the indicator
         // shown in the header should match the order actually rendered, and
         // wxListCtrl keeps the indicator across DeleteAllItems().
         nextDirByCol_.clear();
         list_->RemoveSortIndicator();
-        rebuildRows();
+        rebuildRows(keepId);
         if (!autoSizedOnce_ && !cards_.empty()) {
             autoSizeAllColumns();
             autoSizedOnce_ = true;
@@ -141,6 +148,30 @@ public:
                             wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED);
         list_->EnsureVisible(row);
         list_->SetFocus();
+    }
+
+    // Move the selection by `delta` rows (+1 / -1). Used when Up/Down are
+    // pressed while focus is on the filter box. Clamps to the visible range;
+    // leaves list HWND focus alone so the caret can stay in the filter.
+    void nudgeSelection(int delta) {
+        if (list_ == nullptr || list_->GetItemCount() <= 0 || delta == 0) return;
+        long row = list_->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+        if (row < 0) row = 0;
+        const long count = list_->GetItemCount();
+        long next = row + delta;
+        if (next < 0) next = 0;
+        if (next >= count) next = count - 1;
+        if (next == row) {
+            list_->EnsureVisible(next);
+            return;
+        }
+        suppressListFocus_ = true;
+        list_->SetItemState(row, 0, wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED);
+        list_->SetItemState(next,
+                            wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED,
+                            wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED);
+        list_->EnsureVisible(next);
+        suppressListFocus_ = false;
     }
 
 protected:
@@ -330,6 +361,17 @@ private:
         addText(textCols_.back().label, textCols_.back().width, noteCol);
 
         headerRow_->SetSizer(s);
+
+        // Header is mouse-only (sort / resize). Keep it out of the tab order so
+        // Up/Down after a header click still drive the list, not wx focus travel.
+        headerRow_->SetCanFocus(false);
+        for (wxWindow* cell : headerCells_) {
+            if (cell == nullptr) continue;
+            cell->SetCanFocus(false);
+            for (wxWindow* child : cell->GetChildren()) {
+                if (child != nullptr) child->SetCanFocus(false);
+            }
+        }
     }
 
     // ----- header drag-resize / sort hit-test ---------------------------------
@@ -486,6 +528,7 @@ private:
 
         sortBy(*sortCol, ascending);
         rebuildRows(keepId);
+        if (list_ != nullptr) list_->SetFocus();
     }
 
     // ----- cached icon bitmaps for NM_CUSTOMDRAW -----------------------------
@@ -644,15 +687,22 @@ private:
         // no per-row icon swap is required here.
         (void)event;
         if (inRebuild_) return;
+        // Row click / native arrow keys: keep HWND focus on the list. Filter
+        // nudge sets suppressListFocus_ so the caret stays in the text box.
+        if (!suppressListFocus_ && list_ != nullptr) list_->SetFocus();
         notifySelectionChanged();
     }
 
     void onListItemActivated(wxListEvent& event) {
         (void)event;
         if (inRebuild_) return;
-        wxCommandEvent ev(EVT_CARD_ACTIVATED, GetId());
-        ev.SetEventObject(this);
-        ProcessWindowEvent(ev);
+        // Defer so ShowModal (Edit) does not run inside the list notify path.
+        CallAfter([this]() {
+            if (inRebuild_) return;
+            wxCommandEvent ev(EVT_CARD_ACTIVATED, GetId());
+            ev.SetEventObject(this);
+            ProcessWindowEvent(ev);
+        });
     }
 
     // ----- members ----------------------------------------------------------
@@ -682,6 +732,8 @@ private:
 
     // Rebuild guard - see ui_wx/AGENTS.md for the burst-suppression rationale.
     bool inRebuild_{false};
+    // When true, onSelectionChanged skips list_->SetFocus (filter Up/Down nudge).
+    bool suppressListFocus_{false};
 
     std::map<TSortColumn, bool> nextDirByCol_;
 

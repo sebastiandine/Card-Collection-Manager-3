@@ -98,6 +98,34 @@ TEST_SUITE("computePokemonSetCompletion") {
         CHECK(rows[1].ownedUnique == 1);
     }
 
+    TEST_CASE("orders packs by releaseDate then setName") {
+        PokemonSetCatalog west;
+        PokemonSetCatalogPack newer;
+        newer.setId = "sv01";
+        newer.setName = "Scarlet & Violet";
+        newer.cards = {{"1", "Sprigatito"}};
+        PokemonSetCatalogPack older;
+        older.setId = "base1";
+        older.setName = "Zoo Set";  // would sort after Scarlet by name
+        older.cards = {{"4", "Charizard"}};
+        west.packs.push_back(std::move(newer));
+        west.packs.push_back(std::move(older));
+        PokemonSetCatalog emptyAsia;
+
+        PokemonCard base = makeOwned(PokemonRegion::West, "base1", "4");
+        base.set.releaseDate = "1999/01/09";
+        PokemonCard sv = makeOwned(PokemonRegion::West, "sv01", "1");
+        sv.id = 2;
+        sv.set.releaseDate = "2023/03/31";
+
+        const auto rows = computePokemonSetCompletion({base, sv}, west, emptyAsia);
+        REQUIRE(rows.size() == 2);
+        CHECK(rows[0].setId == "base1");
+        CHECK(rows[0].releaseDate == "1999/01/09");
+        CHECK(rows[1].setId == "sv01");
+        CHECK(rows[1].releaseDate == "2023/03/31");
+    }
+
     TEST_CASE("region filter isolates catalogs") {
         const auto west = westCatalog();
         const auto asia = asiaCatalog();
@@ -202,6 +230,30 @@ TEST_SUITE("pokemonChecklistForSet") {
         CHECK(list[1].owned == true);
         CHECK(list[2].setNo == "59");
         CHECK(list[2].owned == false);
+    }
+
+    TEST_CASE("orders unpadded set numbers numerically") {
+        PokemonSetCatalog west;
+        PokemonSetCatalogPack pack;
+        pack.setId = "base1";
+        pack.setName = "Base";
+        // Insert out of order / in lex-favoring order to prove we re-sort.
+        pack.cards = {
+            {"100", "Lightning Energy"},
+            {"1", "Alakazam"},
+            {"10", "Mewtwo"},
+            {"2", "Blastoise"},
+        };
+        west.packs.push_back(std::move(pack));
+        PokemonSetCatalog emptyAsia;
+
+        const auto list = pokemonChecklistForSet({}, west, emptyAsia,
+                                                 PokemonRegion::West, "base1");
+        REQUIRE(list.size() == 4);
+        CHECK(list[0].setNo == "1");
+        CHECK(list[1].setNo == "2");
+        CHECK(list[2].setNo == "10");
+        CHECK(list[3].setNo == "100");
     }
 
     TEST_CASE("asia card does not mark west checklist") {

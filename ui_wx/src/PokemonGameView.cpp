@@ -136,6 +136,14 @@ void PokemonGameView::buildSingleCardsToolbar(wxWindow* parent, wxBoxSizer* page
         if (filterInput_ == nullptr) return;
         setFilter(filterInput_->GetValue().ToStdString(wxConvUTF8));
     });
+    filterInput_->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent& ev) {
+        const int code = ev.GetKeyCode();
+        if (code == WXK_UP || code == WXK_DOWN) {
+            nudgeSelection(code == WXK_UP ? -1 : 1);
+            return;
+        }
+        ev.Skip();
+    });
 }
 
 void PokemonGameView::refreshToolbarIcons(const ThemePalette& palette) {
@@ -310,7 +318,7 @@ wxPanel* PokemonGameView::selectedPanel(wxWindow* parent) {
     return selectedPanel_;
 }
 
-void PokemonGameView::refreshCollection() {
+void PokemonGameView::refreshCollection(std::optional<std::uint32_t> selectId) {
     if (contentPanel_ == nullptr && listPanel_ == nullptr) return;
 
     auto loaded = collection_.list(Game::Pokemon);
@@ -321,7 +329,7 @@ void PokemonGameView::refreshCollection() {
     }
     auto cards = std::move(loaded).value();
     if (listPanel_ != nullptr) {
-        listPanel_->setCards(cards);
+        listPanel_->setCards(cards, selectId);
         listPanel_->activateSelection();
         if (selectedPanel_) selectedPanel_->setCard(listPanel_->selected());
     }
@@ -389,7 +397,7 @@ void PokemonGameView::onAddCard(wxWindow* parentWindow) {
         showThemedMessageDialog(parentWindow, "Card added, but image rename to ID-prefixed format failed: " + normalized.error(),
                                 "Warning", wxOK | wxICON_WARNING);
     }
-    refreshCollection();
+    refreshCollection(added.value());
 }
 
 void PokemonGameView::onEditCard(wxWindow* parentWindow) {
@@ -580,6 +588,10 @@ void PokemonGameView::setFilter(std::string_view filter) {
         }
     }
     if (listPanel_) listPanel_->setFilter(filter);
+}
+
+void PokemonGameView::nudgeSelection(int delta) {
+    if (listPanel_) listPanel_->nudgeSelection(delta);
 }
 
 void PokemonGameView::applyTheme(const ThemePalette& palette) {
