@@ -601,12 +601,7 @@ void PokemonGameView::applyTheme(const ThemePalette& palette) {
     if (setCompletionPanel_) setCompletionPanel_->applyTheme(palette);
     refreshToolbarIcons(palette);
     refreshTabBarTheme(palette);
-    if (filterInput_ != nullptr) {
-        filterInput_->SetBackgroundColour(palette.inputBg);
-        filterInput_->SetForegroundColour(palette.inputText);
-        filterInput_->SetOwnBackgroundColour(palette.inputBg);
-        filterInput_->SetOwnForegroundColour(palette.inputText);
-    }
+    applyPaletteToTextCtrl(filterInput_, palette, config_.current().theme);
 }
 
 }  // namespace ccm::ui

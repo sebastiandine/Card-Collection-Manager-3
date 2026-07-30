@@ -136,6 +136,10 @@ protected:
     // controls cannot outlive the lookup identity.
     virtual void onCardLookupContextChanged() {}
 
+    // Extra validation after name/set checks and writeFromControls(). Return
+    // false to block OK (subclass should show its own themed dialog).
+    [[nodiscard]] virtual bool validateExtraFields() { return true; }
+
     // Common helpers ----------------------------------------------------------
 
     void appendRow(wxFlexGridSizer* grid, const wxString& label, wxWindow* ctrl) {
@@ -148,6 +152,8 @@ protected:
     [[nodiscard]] const TCard& constCard() const noexcept   { return card_; }
     void syncCardFromControls() { writeFromControls(); }
     [[nodiscard]] wxComboBox* setComboControl() const noexcept { return setCombo_; }
+    [[nodiscard]] wxTextCtrl* nameControl() const noexcept { return nameCtrl_; }
+    [[nodiscard]] wxChoice*   languageChoiceControl() const noexcept { return languageChoice_; }
 
     [[nodiscard]] const Set* selectedSetFromControls() const {
         const auto& available = availableSets();
@@ -471,6 +477,7 @@ private:
                                     "Add card", wxOK | wxICON_INFORMATION);
             return;
         }
+        if (!validateExtraFields()) return;
         if (mode_ == EditMode::Edit && !(card_ == openingSnapshot_)) {
             if (showThemedConfirmDialog(
                     this,

@@ -109,6 +109,37 @@ Each catalog pack stores `id` (YGOPRODeck product `set_code` / `Set.id`, e.g. `L
 
 If `set-catalog.json` is missing, the Set Completion tab prompts the user to run Update Yu-Gi-Oh!.
 
+## Yu-Gi-Oh! (Bandai) APIs (Yugipedia)
+
+Bandai Carddass (pre-Konami) is wired as `Game::YuGiOhBandai` (`dirName` `yugiohbandai`, UI label **Yu-Gi-Oh! (Bandai)**). There is no dedicated Bandai REST API; everything goes through Yugipedia MediaWiki + Semantic MediaWiki.
+
+### Info API (sets + catalog)
+
+`YuGiOhBandaiSetSource` keeps an **app-owned set manifest** (stable ids, no fragile category scrape):
+
+| id | Name | Numbers |
+|---|---|---|
+| `ban1` | 1st Generation | 1–42 |
+| `ban2` | 2nd Generation | 43–88 |
+| `ban3` | 3rd Generation | 89–118 |
+| `banpromo-j` | Jump Promos | J1–J3 |
+| `banpromo-ta` | Toei Promos | TA1–TA2 |
+| `bansealdass` | Sealdass | 1–42 |
+
+`fetchAll()` returns that manifest (offline — no HTTP). `fetchAllWithCatalog()` additionally `GET`s each set’s Yugipedia gallery page via `action=parse&prop=wikitext` and parses lines like `… | {{pound}}014 ([[R]]) {{Gallery card names|Dark Magician (Bandai)|…}}` into checklist entries `{setNo, name, rarity}` (rarity codes `C`/`R`/`SR` → Common/Rare/Super Rare). The shared promo gallery is split by `setNo` prefix (`J*` vs `TA*`). Persisted at `yugiohbandai/set-catalog.json`.
+
+**Set Completion** ownership keys on `(set.id, normalized setNo)`. Because `fetchAll()` is offline, Add/Edit can work before any catalog download; the catalog is filled on the first visit to the Set Completion tab (or via **Sets → Update Yu-Gi-Oh! (Bandai)**). Cards without a set number do not count toward progress.
+
+English Blue-Eyes is **not** a separate set — it is `ban3` card `#118` with language English.
+
+### Asset API (preview + auto-detect)
+
+1. **Preview:** `pageimages` on preferred titles `Name (Bandai)` / `Name (English Bandai)` / `Name (Bandai Sealdass)`, falling back to SMW `ask` by English name then `pageimages` on the best hit.
+2. **Auto-detect by name:** SMW `ask` `[[Category:Bandai cards]][[English name::…]]` → fills `name`, `setId`/`setName`, `setNo`, `rarity`, `language`.
+3. **Auto-detect by number:** SMW `ask` `[[Bandai number::…]]` → same fields.
+
+Card-back fallback URL: `https://ms.yugipedia.com//3/34/Back-BAN-JP-1999.png`.
+
 ## Digimon Digi-Battle (1999) APIs (digimoncard.io)
 
 English Digi-Battle is wired as `Game::DigiBattle99` (`dirName` `digibattle99`, UI label **Digimon (Digi-Battle)**). Upstream docs: [digimoncard.io Public API](https://digimoncard.io/api-documentation). Always scope requests with `series=Digimon Digi-Battle Card Game` so modern Digimon Card Game rows are never mixed in. Rate limit: **15 requests / 10 seconds / IP** (429 then temporary block on abuse).
@@ -315,6 +346,7 @@ Fallback card-back sources (`BaseSelectedCardPanel`; Magic/Pokémon URLs match C
 - Pokémon: `https://archives.bulbagarden.net/media/upload/1/17/Cardback.jpg`
 - Japanese Pokémon: `https://archives.bulbagarden.net/media/upload/2/2a/TCG_Card_Back_Japanese.jpg`
 - Yu-Gi-Oh!: Yugipedia English TCG back — try `https://ms.yugipedia.com/thumb/e/e5/Back-EN.png/250px-Back-EN.png`, then `https://ms.yugipedia.com/e/e5/Back-EN.png`; if both fail, load `<exeDir>/assets/ygo_card_back.png` (shipped from `ui_wx/assets/ygo_card_back.png` at link time). `fallbackImageUrlForGame(Game::YuGiOh)` returns the thumbnail URL for helpers that only consult a single string.
+- Yu-Gi-Oh! (Bandai): `https://ms.yugipedia.com//3/34/Back-BAN-JP-1999.png`.
 - Digimon (Digi-Battle): no stable public back URL; load `<exeDir>/assets/digibattle99_card_back.png` (shipped from `ui_wx/assets/digibattle99_card_back.png` at link time).
 
 If a game module does not provide a preview source (`cardPreviewSource() == nullptr`), preview registration is skipped and the UI behaves as "no remote preview API available."

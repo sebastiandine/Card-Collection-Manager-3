@@ -27,6 +27,7 @@ struct AppContext {
     IGameModule&                         pokemonModule;
     IGameModule&                         yuGiOhModule;
     IGameModule&                         digiBattle99Module;
+    IGameModule&                         yuGiOhBandaiModule;
     // Asia Pokemon sets/preview backend (not a separate Game menu entry).
     IGameModule&                         japanesePokemonModule;
     // Active per-game UI bundles. The order is the order shown in the

@@ -26,6 +26,11 @@ add_library(ccm_ui_wx STATIC
     src/DigiBattle99CardEditDialog.cpp
     src/DigiBattle99GameView.cpp
     src/DigiBattle99SetCompletionPanel.cpp
+    src/YuGiOhBandaiCardListPanel.cpp
+    src/YuGiOhBandaiSelectedCardPanel.cpp
+    src/YuGiOhBandaiCardEditDialog.cpp
+    src/YuGiOhBandaiGameView.cpp
+    src/YuGiOhBandaiSetCompletionPanel.cpp
 
     src/SettingsDialog.cpp
     src/SwitchCtrl.cpp
@@ -61,8 +66,10 @@ target_link_libraries(ccm_ui_wx
 # the per-row flag glyphs with proper transparency. Without msimg32 linked
 # explicitly the linker fails on `AlphaBlend@44` even though gdi32 is pulled
 # in transitively by wxWidgets.
+# Theme.cpp subclasses EDIT parents via SetWindowSubclass / DefSubclassProc /
+# RemoveWindowSubclass (comctl32); those symbols are not pulled in by wx alone.
 if (WIN32)
-    target_link_libraries(ccm_ui_wx PRIVATE msimg32)
+    target_link_libraries(ccm_ui_wx PRIVATE msimg32 comctl32)
 endif()
 
 target_compile_features(ccm_ui_wx PUBLIC cxx_std_20)

@@ -31,6 +31,7 @@ public:
         if (gameId == Game::Pokemon) return "pokemon";
         if (gameId == Game::YuGiOh) return "yugioh";
         if (gameId == Game::DigiBattle99) return "digibattle99";
+        if (gameId == Game::YuGiOhBandai) return "yugiohbandai";
         if (gameId == Game::JapanesePokemon) return "pokemon";
         return "yugioh";
     }
@@ -180,6 +181,43 @@ TEST_SUITE("SetService") {
         CHECK(pokemon.source.calls == 1);
         CHECK(yugioh.source.calls == 1);
         CHECK(digi.source.calls == 1);
+    }
+
+    TEST_CASE("YuGiOhBandai module routes independently when all games are registered") {
+        InMemSetRepo repo;
+        SetService svc{repo};
+
+        FakeGameModule magic{Game::Magic};
+        magic.source.result = Result<std::vector<Set>>::ok({{"lea", "Alpha", "1993/08/05"}});
+        FakeGameModule pokemon{Game::Pokemon};
+        pokemon.source.result = Result<std::vector<Set>>::ok({{"base1", "Base", "1999/01/09"}});
+        FakeGameModule yugioh{Game::YuGiOh};
+        yugioh.source.result = Result<std::vector<Set>>::ok({{"LOB", "Legend of Blue Eyes", "2002/03/08"}});
+        FakeGameModule digi{Game::DigiBattle99};
+        digi.source.result = Result<std::vector<Set>>::ok(
+            {{"series-1-starter-set", "Series 1 Starter Set", "1999/06/01"}});
+        FakeGameModule bandai{Game::YuGiOhBandai};
+        bandai.source.result = Result<std::vector<Set>>::ok(
+            {{"ban1", "1st Generation", "1998/09/01"}});
+
+        svc.registerModule(&magic);
+        svc.registerModule(&pokemon);
+        svc.registerModule(&yugioh);
+        svc.registerModule(&digi);
+        svc.registerModule(&bandai);
+
+        REQUIRE(svc.updateSets(Game::Magic).isOk());
+        REQUIRE(svc.updateSets(Game::Pokemon).isOk());
+        REQUIRE(svc.updateSets(Game::YuGiOh).isOk());
+        REQUIRE(svc.updateSets(Game::DigiBattle99).isOk());
+        const auto out = svc.updateSets(Game::YuGiOhBandai);
+        REQUIRE(out.isOk());
+        CHECK(out.value().front().id == "ban1");
+        CHECK(magic.source.calls == 1);
+        CHECK(pokemon.source.calls == 1);
+        CHECK(yugioh.source.calls == 1);
+        CHECK(digi.source.calls == 1);
+        CHECK(bandai.source.calls == 1);
     }
 
     TEST_CASE("JapanesePokemon module routes independently when all games are registered") {

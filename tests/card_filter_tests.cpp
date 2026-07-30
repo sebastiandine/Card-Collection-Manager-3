@@ -10,6 +10,7 @@
 #include "ccm/domain/JapanesePokemonCard.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
+#include "ccm/domain/YuGiOhBandaiCard.hpp"
 #include "ccm/domain/YuGiOhCard.hpp"
 #include "ccm/services/CardFilter.hpp"
 
@@ -284,6 +285,39 @@ TEST_SUITE("CardFilter::matchesDigiBattle99Filter") {
         c.altered = true;
         CHECK_FALSE(matchesDigiBattle99Filter(c, "true"));
         CHECK(matchesDigiBattle99Filter(c, "agu"));
+    }
+}
+
+TEST_SUITE("CardFilter::matchesYuGiOhBandaiFilter") {
+    TEST_CASE("matches name set setNo rarity language") {
+        YuGiOhBandaiCard c;
+        c.name = "Dark Magician";
+        c.set.name = "1st Generation";
+        c.setNo = "14";
+        c.rarity = "Rare";
+        c.language = Language::Japanese;
+        CHECK(matchesYuGiOhBandaiFilter(c, "magician"));
+        CHECK(matchesYuGiOhBandaiFilter(c, "1st"));
+        CHECK(matchesYuGiOhBandaiFilter(c, "14"));
+        CHECK(matchesYuGiOhBandaiFilter(c, "rare"));
+        CHECK(matchesYuGiOhBandaiFilter(c, "japanese"));
+        CHECK_FALSE(matchesYuGiOhBandaiFilter(c, "blue-eyes"));
+    }
+
+    TEST_CASE("empty filter matches everything") {
+        YuGiOhBandaiCard c;
+        c.name = "Dark Magician";
+        CHECK(matchesYuGiOhBandaiFilter(c, ""));
+    }
+
+    TEST_CASE("boolean flag columns are not matched") {
+        YuGiOhBandaiCard c;
+        c.name = "Dark Magician";
+        c.holo = true;
+        c.signed_ = true;
+        c.altered = true;
+        CHECK_FALSE(matchesYuGiOhBandaiFilter(c, "true"));
+        CHECK(matchesYuGiOhBandaiFilter(c, "dark"));
     }
 }
 

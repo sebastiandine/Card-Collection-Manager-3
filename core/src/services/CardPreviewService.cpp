@@ -262,6 +262,33 @@ Result<std::vector<AutoDetectedPrint>> CardPreviewService::detectPrintVariants(
     return it->second->detectPrintVariants(name, setId);
 }
 
+Result<AutoDetectedPrint> CardPreviewService::detectBySetNo(Game game,
+                                                            std::string_view setNo) {
+    auto it = sources_.find(game);
+    if (it == sources_.end() || it->second == nullptr) {
+        return Result<AutoDetectedPrint>::err("No preview source registered for this game.");
+    }
+    if (!it->second->supportsAutoDetectPrint()) {
+        return Result<AutoDetectedPrint>::err("Auto-detect not enabled for this game.");
+    }
+    return it->second->detectBySetNo(setNo);
+}
+
+Result<std::vector<AutoDetectedPrint>> CardPreviewService::detectVariantsBySetNo(
+    Game game,
+    std::string_view setNo) {
+    auto it = sources_.find(game);
+    if (it == sources_.end() || it->second == nullptr) {
+        return Result<std::vector<AutoDetectedPrint>>::err(
+            "No preview source registered for this game.");
+    }
+    if (!it->second->supportsAutoDetectPrint()) {
+        return Result<std::vector<AutoDetectedPrint>>::err(
+            "Auto-detect not enabled for this game.");
+    }
+    return it->second->detectVariantsBySetNo(setNo);
+}
+
 Result<std::string> CardPreviewService::fetchImageBytesByUrl(std::string_view url) {
     // The by-URL path is used for fixed per-game card-back fallback images.
     // A failure there is always transient (the URL itself is constant), so

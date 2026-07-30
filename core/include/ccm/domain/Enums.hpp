@@ -21,6 +21,7 @@ enum class Game {
     Pokemon,
     YuGiOh,
     DigiBattle99,
+    YuGiOhBandai,
     JapanesePokemon,  // internal Asia sets/preview routing; not in allGames()
 };
 
@@ -70,7 +71,7 @@ std::optional<Condition>     conditionFromString(std::string_view s) noexcept;
 std::optional<Theme>         themeFromString(std::string_view s) noexcept;
 
 // User-facing games (Game menu / Settings). JapanesePokemon is internal-only.
-const std::array<Game, 4>&       allGames() noexcept;
+const std::array<Game, 5>&       allGames() noexcept;
 const std::array<Language, 10>&  allLanguages() noexcept;
 const std::array<Condition, 7>&  allConditions() noexcept;
 const std::array<Theme, 2>&      allThemes() noexcept;

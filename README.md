@@ -9,6 +9,7 @@ Currently, the application supports the following TCGs:
 - Magic the Gathering
 - Pokemon TCG
 - Yu-Gi-Oh!
+- Yu-Gi-Oh! (Bandai)
 - Digimon (Digi-Battle)
 
 ## Screenshots
@@ -31,6 +32,13 @@ Currently, the application supports the following TCGs:
 <summary>Yu-Gi-Oh!</summary>
 
 ![CCM3 Demo - YuGiOh](docs/assets/images/demo-ygo.png)
+
+</details>
+
+<details>
+<summary>Yu-Gi-Oh! (Bandai)</summary>
+
+![CCM3 Demo - Yu-Gi-Oh! (Bandai)](docs/assets/images/demo-ygo-bandai.png)
 
 </details>
 

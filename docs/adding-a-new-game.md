@@ -141,7 +141,7 @@ Mirror `core/include/ccm/games/pokemon/PokemonCardPreviewSource.hpp`. The header
 - `static std::string buildSearchUrl(std::string_view name, std::string_view setId, std::string_view setNo);`
 - `static Result<std::string> parseResponse(const std::string& body);`
 
-If your game benefits from edit-dialog metadata helpers (for example auto-detecting collector number / rarity), you can opt in to `ICardPreviewSource::detectFirstPrint(...)` and route it via `CardPreviewService::detectFirstPrint(...)`. If you need to enumerate multiple upstream printings (for example Yu-Gi-Oh! “Next” cycling between alternate `set_code` or `set_rarity` values), also override `ICardPreviewSource::detectPrintVariants(...)` and expose it through `CardPreviewService::detectPrintVariants(...)`. Keep both optional per game — default behavior should remain an explicit unsupported error.
+If your game benefits from edit-dialog metadata helpers (for example auto-detecting collector number / rarity), you can opt in to `ICardPreviewSource::detectFirstPrint(...)` and route it via `CardPreviewService::detectFirstPrint(...)`. If you need to enumerate multiple upstream printings (for example Yu-Gi-Oh! “Next” cycling between alternate `set_code` or `set_rarity` values), also override `ICardPreviewSource::detectPrintVariants(...)` and expose it through `CardPreviewService::detectPrintVariants(...)`. Games that can resolve metadata from a collector / Bandai number alone (Yu-Gi-Oh! Bandai) should also override `detectBySetNo(...)` / `detectVariantsBySetNo(...)` and wire them through `CardPreviewService`. `AutoDetectedPrint` carries `setNo` + `rarity` for every game; optional `name` / `setId` / `setName` / `language` fields stay empty when unused. Keep all of these optional per game — default behavior should remain an explicit unsupported error.
 
 Both `buildSearchUrl` and `parseResponse` are static and pure on purpose: every URL-encoding and JSON-shape rule is testable without HTTP. Common edge cases your tests must cover:
 
@@ -325,6 +325,7 @@ Derive from `BaseCardEditDialog<<Name>Card>`. Override:
 - `readExtraFromCard()` — copy fields from `constCard()` into your widgets.
 - `writeExtraToCard()` — copy values from your widgets back into `mutableCard()`.
 - `updateMenuName()` — return `"Update <Display>"`. This is what the dialog's "no sets cached" hint shows the user.
+- `validateExtraFields()` — optional; called from OK after name/set checks. Return `false` to block save (show your own themed dialog). Yu-Gi-Oh! (Bandai) requires a non-empty set number here.
 
 Optional `BaseCardEditDialog` extension points (defaults keep a single read-only set combo in the **Set** row):
 

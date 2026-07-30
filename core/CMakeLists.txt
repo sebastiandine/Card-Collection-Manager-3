@@ -7,6 +7,8 @@ add_library(ccm_core STATIC
     src/domain/MagicCard.cpp
     src/domain/PokemonCard.cpp
     src/domain/YuGiOhCard.cpp
+    src/domain/YuGiOhBandaiCard.cpp
+    src/domain/YuGiOhBandaiSetCatalog.cpp
     src/domain/DigiBattle99Card.cpp
     src/domain/DigiBattle99SetCatalog.cpp
     src/domain/YuGiOhSetCatalog.cpp
@@ -24,6 +26,8 @@ add_library(ccm_core STATIC
     src/services/DigiBattle99SetCatalogService.cpp
     src/services/YuGiOhSetCompletion.cpp
     src/services/YuGiOhSetCatalogService.cpp
+    src/services/YuGiOhBandaiSetCompletion.cpp
+    src/services/YuGiOhBandaiSetCatalogService.cpp
     src/services/PokemonSetCompletion.cpp
     src/services/PokemonSetCatalogService.cpp
 
@@ -47,6 +51,9 @@ add_library(ccm_core STATIC
     src/games/digibattle99/DigiBattle99SetSource.cpp
     src/games/digibattle99/DigiBattle99CardPreviewSource.cpp
     src/games/digibattle99/DigiBattle99GameModule.cpp
+    src/games/yugiohbandai/YuGiOhBandaiSetSource.cpp
+    src/games/yugiohbandai/YuGiOhBandaiCardPreviewSource.cpp
+    src/games/yugiohbandai/YuGiOhBandaiGameModule.cpp
     src/games/pokemonjp/JapanesePokemonEnCatalog.cpp
     src/games/pokemonjp/JapanesePokemonSetSource.cpp
     src/games/pokemonjp/JapanesePokemonCardPreviewSource.cpp

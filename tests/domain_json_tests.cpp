@@ -9,6 +9,8 @@
 #include "ccm/domain/JapanesePokemonCard.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
+#include "ccm/domain/YuGiOhBandaiCard.hpp"
+#include "ccm/domain/YuGiOhBandaiSetCatalog.hpp"
 #include "ccm/domain/YuGiOhCard.hpp"
 #include "ccm/domain/Set.hpp"
 
@@ -30,6 +32,9 @@ TEST_SUITE("domain enums round-trip JSON as strings") {
 
         nlohmann::json jDigi = "DigiBattle99";
         CHECK(jDigi.get<Game>() == Game::DigiBattle99);
+
+        nlohmann::json jBandai = "YuGiOhBandai";
+        CHECK(jBandai.get<Game>() == Game::YuGiOhBandai);
 
         nlohmann::json jJp = "JapanesePokemon";
         CHECK(jJp.get<Game>() == Game::JapanesePokemon);
@@ -77,7 +82,7 @@ TEST_SUITE("domain enums round-trip JSON as strings") {
         for (const auto game : allGames()) {
             CHECK(game != Game::JapanesePokemon);
         }
-        CHECK(allGames().size() == 4);
+        CHECK(allGames().size() == 5);
         CHECK(gameFromString("JapanesePokemon") == Game::JapanesePokemon);
         CHECK(pokemonBackendGame(PokemonRegion::West) == Game::Pokemon);
         CHECK(pokemonBackendGame(PokemonRegion::Asia) == Game::JapanesePokemon);
@@ -308,6 +313,87 @@ TEST_SUITE("DigiBattle99SetCatalog JSON") {
         const DigiBattle99SetCatalog back = j.get<DigiBattle99SetCatalog>();
         CHECK(back == catalog);
         CHECK(back.findPack("series-1-starter-set") != nullptr);
+        CHECK(back.findPack("missing") == nullptr);
+    }
+}
+
+TEST_SUITE("YuGiOhBandaiCard JSON") {
+    TEST_CASE("round-trips with setNo, rarity, holo and signed alias") {
+        YuGiOhBandaiCard c;
+        c.id = 14;
+        c.amount = 2;
+        c.name = "Dark Magician";
+        c.set = Set{"ban1", "1st Generation", "1998/09/01"};
+        c.setNo = "14";
+        c.rarity = "Rare";
+        c.note = "classic";
+        c.images = {"a.png"};
+        c.language = Language::Japanese;
+        c.condition = Condition::NearMint;
+        c.holo = true;
+        c.signed_ = true;
+        c.altered = false;
+
+        nlohmann::json j = c;
+        CHECK(j.at("setNo") == "14");
+        CHECK(j.at("rarity") == "Rare");
+        CHECK(j.at("holo") == true);
+        CHECK(j.at("signed") == true);
+        CHECK_FALSE(j.contains("firstEdition"));
+
+        const YuGiOhBandaiCard back = j.get<YuGiOhBandaiCard>();
+        CHECK(back == c);
+    }
+
+    TEST_CASE("missing each required key throws") {
+        const nlohmann::json full = {
+            {"id", 14},
+            {"amount", 1},
+            {"name", "Dark Magician"},
+            {"set", nlohmann::json{
+                {"id", "ban1"},
+                {"name", "1st Generation"},
+                {"releaseDate", "1998/09/01"},
+            }},
+            {"setNo", "14"},
+            {"rarity", "Rare"},
+            {"note", ""},
+            {"images", nlohmann::json::array()},
+            {"language", "Japanese"},
+            {"condition", "NearMint"},
+            {"holo", false},
+            {"signed", false},
+            {"altered", false},
+        };
+
+        for (const char* key : {
+                 "id", "amount", "name", "set", "setNo", "rarity", "note", "images",
+                 "language", "condition", "holo", "signed", "altered"}) {
+            nlohmann::json partial = full;
+            partial.erase(key);
+            CHECK_THROWS(partial.get<YuGiOhBandaiCard>());
+        }
+    }
+}
+
+TEST_SUITE("YuGiOhBandaiSetCatalog JSON") {
+    TEST_CASE("round-trips packs with rarity") {
+        YuGiOhBandaiSetCatalog catalog;
+        YuGiOhBandaiSetCatalogPack pack;
+        pack.setId = "ban1";
+        pack.setName = "1st Generation";
+        pack.cards.push_back(YuGiOhBandaiCatalogCard{"14", "Dark Magician", "Rare"});
+        pack.cards.push_back(YuGiOhBandaiCatalogCard{"9", "Blue-Eyes White Dragon", "Super Rare"});
+        catalog.packs.push_back(std::move(pack));
+
+        nlohmann::json j = catalog;
+        CHECK(j.at("packs").at(0).at("id") == "ban1");
+        CHECK(j.at("packs").at(0).at("cards").at(0).at("setNo") == "14");
+        CHECK(j.at("packs").at(0).at("cards").at(0).at("rarity") == "Rare");
+
+        const YuGiOhBandaiSetCatalog back = j.get<YuGiOhBandaiSetCatalog>();
+        CHECK(back == catalog);
+        CHECK(back.findPack("ban1") != nullptr);
         CHECK(back.findPack("missing") == nullptr);
     }
 }

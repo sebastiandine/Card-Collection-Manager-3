@@ -10,6 +10,7 @@
 #include "ccm/domain/JapanesePokemonCard.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
+#include "ccm/domain/YuGiOhBandaiCard.hpp"
 #include "ccm/domain/YuGiOhCard.hpp"
 #include "ccm/domain/Set.hpp"
 #include "ccm/services/CardSorter.hpp"
@@ -545,6 +546,51 @@ TEST_SUITE("CardSorter - DigiBattle99 columns") {
         };
         sortDigiBattle99Cards(v, DigiBattle99SortColumn::Name, /*ascending=*/true);
         CHECK(ids(v) == std::vector<std::uint32_t>{2, 1});
+    }
+}
+
+TEST_SUITE("CardSorter - YuGiOhBandai columns") {
+    TEST_CASE("Holo sorts false before true; Rarity and SetNo sort") {
+        YuGiOhBandaiCard a;
+        a.id = 1;
+        a.name = "a";
+        a.set = Set{"ban1", "1st Generation", "1998/09/01"};
+        a.setNo = "14";
+        a.rarity = "Rare";
+        a.holo = true;
+
+        YuGiOhBandaiCard b;
+        b.id = 2;
+        b.name = "b";
+        b.set = Set{"ban1", "1st Generation", "1998/09/01"};
+        b.setNo = "9";
+        b.rarity = "Common";
+        b.holo = false;
+
+        std::vector<YuGiOhBandaiCard> v = {a, b};
+        sortYuGiOhBandaiCards(v, YuGiOhBandaiSortColumn::Holo, /*ascending=*/true);
+        CHECK(v[0].id == 2);
+        CHECK(v[1].id == 1);
+
+        sortYuGiOhBandaiCards(v, YuGiOhBandaiSortColumn::SetNo, /*ascending=*/true);
+        CHECK(v[0].setNo == "14");
+        CHECK(v[1].setNo == "9");
+
+        sortYuGiOhBandaiCards(v, YuGiOhBandaiSortColumn::Rarity, /*ascending=*/true);
+        CHECK(v[0].rarity == "Common");
+    }
+
+    TEST_CASE("Set column sorts by release date") {
+        YuGiOhBandaiCard a;
+        a.id = 1;
+        a.set = Set{"ban3", "3rd Generation", "1999/03/06"};
+        YuGiOhBandaiCard b;
+        b.id = 2;
+        b.set = Set{"ban1", "1st Generation", "1998/09/01"};
+        std::vector<YuGiOhBandaiCard> v = {a, b};
+        sortYuGiOhBandaiCards(v, YuGiOhBandaiSortColumn::SetReleaseDate, /*ascending=*/true);
+        CHECK(v[0].id == 2);
+        CHECK(v[1].id == 1);
     }
 }
 

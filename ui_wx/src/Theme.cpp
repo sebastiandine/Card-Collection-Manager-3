@@ -20,6 +20,7 @@
 #include <wx/toplevel.h>
 #include <wx/window.h>
 
+#include <unordered_map>
 #include <unordered_set>
 
 #ifdef __WXMSW__
@@ -214,6 +215,79 @@ void applyNativeClassTheme(wxWindow* window, Theme theme, const wchar_t* darkCla
 
     const bool dark = (theme == Theme::Dark);
     setWindowTheme(hwnd, dark ? darkClass : lightClass, nullptr);
+}
+
+// WM_CTLCOLOREDIT is sent to the EDIT's parent, not the top-level frame. Immersive
+// dark mode can still paint black typed text even when wx colours are set, so we
+// subclass each parent once and force text/background from the wxTextCtrl palette.
+constexpr UINT_PTR kEditColorSubclassId = 0x43434d45;  // 'CCME'
+std::unordered_set<HWND> gEditColorSubclassedParents;
+std::unordered_map<HWND, wxTextCtrl*> gPaletteTextCtrls;
+std::unordered_set<wxTextCtrl*> gPaletteTextCtrlDestroyBound;
+
+LRESULT CALLBACK editColorParentSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                                         UINT_PTR /*subclassId*/, DWORD_PTR /*refData*/) {
+    if (msg == WM_CTLCOLOREDIT) {
+        const HWND editHwnd = reinterpret_cast<HWND>(lParam);
+        const auto it = gPaletteTextCtrls.find(editHwnd);
+        if (it != gPaletteTextCtrls.end() && it->second != nullptr) {
+            wxTextCtrl* text = it->second;
+            const wxColour fg = text->GetForegroundColour();
+            const wxColour bg = text->GetBackgroundColour();
+            if (fg.IsOk() && bg.IsOk()) {
+                HDC hdc = reinterpret_cast<HDC>(wParam);
+                ::SetTextColor(hdc, RGB(fg.Red(), fg.Green(), fg.Blue()));
+                ::SetBkColor(hdc, RGB(bg.Red(), bg.Green(), bg.Blue()));
+                ::SetDCBrushColor(hdc, RGB(bg.Red(), bg.Green(), bg.Blue()));
+                return reinterpret_cast<LRESULT>(::GetStockObject(DC_BRUSH));
+            }
+        }
+    } else if (msg == WM_NCDESTROY) {
+        gEditColorSubclassedParents.erase(hwnd);
+        ::RemoveWindowSubclass(hwnd, editColorParentSubclass, kEditColorSubclassId);
+    }
+    return ::DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
+void ensureEditColorParentSubclass(wxTextCtrl* text) {
+    if (text == nullptr) return;
+    const HWND editHwnd = reinterpret_cast<HWND>(text->GetHandle());
+    if (editHwnd == nullptr) return;
+    gPaletteTextCtrls[editHwnd] = text;
+    if (gPaletteTextCtrlDestroyBound.insert(text).second) {
+        text->Bind(wxEVT_DESTROY, [text, editHwnd](wxWindowDestroyEvent& event) {
+            gPaletteTextCtrls.erase(editHwnd);
+            gPaletteTextCtrlDestroyBound.erase(text);
+            event.Skip();
+        });
+    }
+    const HWND parent = ::GetParent(editHwnd);
+    if (parent == nullptr) return;
+    if (gEditColorSubclassedParents.count(parent) != 0) return;
+    if (::SetWindowSubclass(parent, editColorParentSubclass, kEditColorSubclassId, 0) != FALSE) {
+        gEditColorSubclassedParents.insert(parent);
+    }
+}
+
+void hardenTextCtrlNativeTheme(wxTextCtrl* text, Theme theme) {
+    if (text == nullptr) return;
+    const bool darkLike = isDarkLikeTheme(theme);
+    text->SetThemeEnabled(!darkLike);
+
+    const HWND hwnd = reinterpret_cast<HWND>(text->GetHandle());
+    if (hwnd == nullptr) return;
+
+    // Opt this EDIT out of immersive dark mode so typed text uses our palette.
+    if (auto allowDarkModeForWindow = resolveAllowDarkModeForWindow()) {
+        allowDarkModeForWindow(hwnd, FALSE);
+    }
+    if (darkLike) {
+        if (auto setWindowTheme = resolveSetWindowTheme()) {
+            // Empty theme class disables visual-style painting of the EDIT contents.
+            setWindowTheme(hwnd, L"", L"");
+        }
+    }
+    ensureEditColorParentSubclass(text);
 }
 
 COLORREF toColorRef(const wxColour& c) {
@@ -412,9 +486,13 @@ void applyThemeToWindowTree(wxWindow* root, const ThemePalette& palette, Theme t
         dynamic_cast<wxSpinCtrl*>(root) != nullptr) {
         if (auto* text = dynamic_cast<wxTextCtrl*>(root)) {
             // On Windows, themed EDIT controls can ignore wx foreground color
-            // while typing in dark mode; disable native theming there so the
-            // control consistently uses palette-driven text/background colors.
+            // while typing in dark mode; disable native theming and force
+            // WM_CTLCOLOREDIT colours via the parent subclass helper.
+#ifdef __WXMSW__
+            hardenTextCtrlNativeTheme(text, theme);
+#else
             text->SetThemeEnabled(!isDarkLikeTheme(theme));
+#endif
         }
         root->SetBackgroundColour(palette.inputBg);
         root->SetForegroundColour(palette.inputText);
@@ -428,7 +506,7 @@ void applyThemeToWindowTree(wxWindow* root, const ThemePalette& palette, Theme t
         } else if (dynamic_cast<wxTextCtrl*>(root) != nullptr) {
             // Do not apply Explorer class theming to edit controls: on some
             // Windows builds it forces black typed text in dark mode.
-            // Keep text fields palette-driven via wx colors instead.
+            // Keep text fields palette-driven via wx colours + CTLCOLOR fix.
         } else {
             applyNativeClassTheme(root, theme, L"DarkMode_Explorer", L"Explorer");
         }
@@ -635,6 +713,20 @@ void applyThemeToWindowTree(wxWindow* root, const ThemePalette& palette, Theme t
     for (wxWindowList::compatibility_iterator it = children.GetFirst(); it; it = it->GetNext()) {
         applyThemeToWindowTree(it->GetData(), palette, theme);
     }
+}
+
+void applyPaletteToTextCtrl(wxTextCtrl* text, const ThemePalette& palette, Theme theme) {
+    if (text == nullptr) return;
+#ifdef __WXMSW__
+    hardenTextCtrlNativeTheme(text, theme);
+#else
+    text->SetThemeEnabled(!isDarkLikeTheme(theme));
+#endif
+    text->SetBackgroundColour(palette.inputBg);
+    text->SetForegroundColour(palette.inputText);
+    text->SetOwnBackgroundColour(palette.inputBg);
+    text->SetOwnForegroundColour(palette.inputText);
+    text->Refresh();
 }
 
 void themeModalDialog(wxDialog* dlg, Theme theme) {
