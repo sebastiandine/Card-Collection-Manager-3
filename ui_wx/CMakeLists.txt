@@ -66,8 +66,10 @@ target_link_libraries(ccm_ui_wx
 # the per-row flag glyphs with proper transparency. Without msimg32 linked
 # explicitly the linker fails on `AlphaBlend@44` even though gdi32 is pulled
 # in transitively by wxWidgets.
+# Theme.cpp subclasses EDIT parents via SetWindowSubclass / DefSubclassProc /
+# RemoveWindowSubclass (comctl32); those symbols are not pulled in by wx alone.
 if (WIN32)
-    target_link_libraries(ccm_ui_wx PRIVATE msimg32)
+    target_link_libraries(ccm_ui_wx PRIVATE msimg32 comctl32)
 endif()
 
 target_compile_features(ccm_ui_wx PUBLIC cxx_std_20)
