@@ -19,6 +19,12 @@ namespace ccm {
 struct AutoDetectedPrint {
     std::string setNo;
     std::string rarity;
+    // Optional fields used by games that resolve set/name/language during
+    // auto-detect (e.g. Yu-Gi-Oh! Bandai). Existing games leave them empty.
+    std::string name;
+    std::string setId;
+    std::string setName;
+    std::string language;  // Language enum spelling when known ("Japanese" / "English")
 };
 
 // Classified error returned by ICardPreviewSource::fetchImageUrl. The kind
@@ -78,6 +84,18 @@ public:
         detectPrintVariants(std::string_view /*name*/, std::string_view /*setId*/) {
         return Result<std::vector<AutoDetectedPrint>>::err(
             "Print variant listing not supported by this game.");
+    }
+
+    // Optional lookup by collector / Bandai number (fills name + set + rarity).
+    virtual Result<AutoDetectedPrint> detectBySetNo(std::string_view /*setNo*/) {
+        return Result<AutoDetectedPrint>::err(
+            "Detect-by-number not supported by this game.");
+    }
+
+    virtual Result<std::vector<AutoDetectedPrint>>
+        detectVariantsBySetNo(std::string_view /*setNo*/) {
+        return Result<std::vector<AutoDetectedPrint>>::err(
+            "Detect-by-number variants not supported by this game.");
     }
 };
 

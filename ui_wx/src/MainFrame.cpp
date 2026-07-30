@@ -29,10 +29,6 @@
 #include <string>
 #include <utility>
 
-#ifdef __WXMSW__
-#include <windows.h>
-#endif
-
 namespace ccm::ui {
 
 namespace {
@@ -44,6 +40,7 @@ std::string dirNameForGame(Game g) {
         case Game::Magic:           return "magic";
         case Game::Pokemon:         return "pokemon";
         case Game::YuGiOh:          return "yugioh";
+        case Game::YuGiOhBandai:    return "yugiohbandai";
         case Game::DigiBattle99:    return "digibattle99";
         case Game::JapanesePokemon: return "pokemon";
     }
@@ -314,11 +311,7 @@ void MainFrame::applyTheme() {
     SetBackgroundColour(palette.windowBg);
     SetForegroundColour(palette.text);
     if (filterInput_ != nullptr) {
-        filterInput_->SetBackgroundColour(palette.inputBg);
-        filterInput_->SetForegroundColour(palette.inputText);
-        filterInput_->SetOwnBackgroundColour(palette.inputBg);
-        filterInput_->SetOwnForegroundColour(palette.inputText);
-        filterInput_->Refresh();
+        applyPaletteToTextCtrl(filterInput_, palette, currentTheme);
     }
     for (auto* view : ctx_.gameViews) {
         if (view != nullptr) view->applyTheme(palette);
@@ -480,26 +473,5 @@ void MainFrame::onEdit(wxCommandEvent&) {
 void MainFrame::onDelete(wxCommandEvent&) {
     if (auto* view = activeView()) view->onDeleteCard(this);
 }
-
-#ifdef __WXMSW__
-WXLRESULT MainFrame::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
-    if (message == WM_CTLCOLOREDIT && filterInput_ != nullptr) {
-        const HWND target = reinterpret_cast<HWND>(lParam);
-        const HWND filterHwnd = reinterpret_cast<HWND>(filterInput_->GetHandle());
-        if (target != nullptr && filterHwnd != nullptr && target == filterHwnd) {
-            const ThemePalette palette = paletteForTheme(ctx_.config.current().theme);
-            HDC hdc = reinterpret_cast<HDC>(wParam);
-            ::SetTextColor(hdc, RGB(palette.inputText.Red(), palette.inputText.Green(),
-                                    palette.inputText.Blue()));
-            ::SetBkColor(hdc, RGB(palette.inputBg.Red(), palette.inputBg.Green(),
-                                  palette.inputBg.Blue()));
-            ::SetDCBrushColor(hdc, RGB(palette.inputBg.Red(), palette.inputBg.Green(),
-                                       palette.inputBg.Blue()));
-            return reinterpret_cast<WXLRESULT>(::GetStockObject(DC_BRUSH));
-        }
-    }
-    return wxFrame::MSWWindowProc(message, wParam, lParam);
-}
-#endif
 
 }  // namespace ccm::ui

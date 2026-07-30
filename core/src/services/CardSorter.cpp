@@ -293,6 +293,79 @@ void sortDigiBattle99Cards(std::vector<DigiBattle99Card>& cards,
     }
 }
 
+void sortYuGiOhBandaiCards(std::vector<YuGiOhBandaiCard>& cards,
+                           YuGiOhBandaiSortColumn column,
+                           bool ascending) {
+    switch (column) {
+    case YuGiOhBandaiSortColumn::Name:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhBandaiCard& a, const YuGiOhBandaiCard& b) {
+                return asciiLower(a.name) < asciiLower(b.name);
+            }, ascending));
+        break;
+    case YuGiOhBandaiSortColumn::SetReleaseDate:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhBandaiCard& a, const YuGiOhBandaiCard& b) {
+                return asciiLower(a.set.releaseDate) < asciiLower(b.set.releaseDate);
+            }, ascending));
+        break;
+    case YuGiOhBandaiSortColumn::SetNo:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhBandaiCard& a, const YuGiOhBandaiCard& b) {
+                return asciiLower(a.setNo) < asciiLower(b.setNo);
+            }, ascending));
+        break;
+    case YuGiOhBandaiSortColumn::Rarity:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhBandaiCard& a, const YuGiOhBandaiCard& b) {
+                return asciiLower(a.rarity) < asciiLower(b.rarity);
+            }, ascending));
+        break;
+    case YuGiOhBandaiSortColumn::Language:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhBandaiCard& a, const YuGiOhBandaiCard& b) {
+                return asciiLower(to_string(a.language)) < asciiLower(to_string(b.language));
+            }, ascending));
+        break;
+    case YuGiOhBandaiSortColumn::Condition:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhBandaiCard& a, const YuGiOhBandaiCard& b) {
+                return asciiLower(to_string(a.condition)) < asciiLower(to_string(b.condition));
+            }, ascending));
+        break;
+    case YuGiOhBandaiSortColumn::Amount:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhBandaiCard& a, const YuGiOhBandaiCard& b) {
+                return a.amount < b.amount;
+            }, ascending));
+        break;
+    case YuGiOhBandaiSortColumn::Holo:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhBandaiCard& a, const YuGiOhBandaiCard& b) {
+                return a.holo < b.holo;
+            }, ascending));
+        break;
+    case YuGiOhBandaiSortColumn::Signed:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhBandaiCard& a, const YuGiOhBandaiCard& b) {
+                return a.signed_ < b.signed_;
+            }, ascending));
+        break;
+    case YuGiOhBandaiSortColumn::Altered:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhBandaiCard& a, const YuGiOhBandaiCard& b) {
+                return a.altered < b.altered;
+            }, ascending));
+        break;
+    case YuGiOhBandaiSortColumn::Note:
+        std::stable_sort(cards.begin(), cards.end(), directional(
+            [](const YuGiOhBandaiCard& a, const YuGiOhBandaiCard& b) {
+                return asciiLower(a.note) < asciiLower(b.note);
+            }, ascending));
+        break;
+    }
+}
+
 void sortJapanesePokemonCards(std::vector<JapanesePokemonCard>& cards,
                               JapanesePokemonSortColumn column,
                               bool ascending) {

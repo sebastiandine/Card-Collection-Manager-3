@@ -51,10 +51,6 @@ private:
 
     [[nodiscard]] IGameView* activeView();
 
-#ifdef __WXMSW__
-    WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) override;
-#endif
-
     AppContext& ctx_;
     Game        activeGame_{Game::Magic};
 

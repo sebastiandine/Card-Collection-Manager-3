@@ -18,6 +18,7 @@ wxString displayLabelForGame(Game g) {
         case Game::Pokemon:         return "Pokemon";
         case Game::YuGiOh:          return "Yu-Gi-Oh!";
         case Game::DigiBattle99:    return "Digimon (Digi-Battle)";
+        case Game::YuGiOhBandai:    return "Yu-Gi-Oh! (Bandai)";
         case Game::JapanesePokemon: return "Pokemon";  // internal; not in allGames()
     }
     return wxString::FromUTF8(to_string(g).data());

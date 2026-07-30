@@ -20,6 +20,7 @@
 #include "ccm/domain/JapanesePokemonCard.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
+#include "ccm/domain/YuGiOhBandaiCard.hpp"
 #include "ccm/domain/YuGiOhCard.hpp"
 
 #include <vector>
@@ -82,6 +83,20 @@ enum class DigiBattle99SortColumn {
     Note,
 };
 
+enum class YuGiOhBandaiSortColumn {
+    Name,
+    SetReleaseDate,
+    SetNo,
+    Rarity,
+    Language,
+    Condition,
+    Amount,
+    Holo,
+    Signed,
+    Altered,
+    Note,
+};
+
 // Japanese Pokemon mirrors Pokemon columns.
 enum class JapanesePokemonSortColumn {
     Name,
@@ -106,6 +121,9 @@ void sortYuGiOhCards(std::vector<YuGiOhCard>& cards, YuGiOhSortColumn column,
                      bool ascending);
 void sortDigiBattle99Cards(std::vector<DigiBattle99Card>& cards,
                            DigiBattle99SortColumn column,
+                           bool ascending);
+void sortYuGiOhBandaiCards(std::vector<YuGiOhBandaiCard>& cards,
+                           YuGiOhBandaiSortColumn column,
                            bool ascending);
 void sortJapanesePokemonCards(std::vector<JapanesePokemonCard>& cards,
                               JapanesePokemonSortColumn column,

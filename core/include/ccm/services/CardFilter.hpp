@@ -23,6 +23,7 @@
 #include "ccm/domain/JapanesePokemonCard.hpp"
 #include "ccm/domain/MagicCard.hpp"
 #include "ccm/domain/PokemonCard.hpp"
+#include "ccm/domain/YuGiOhBandaiCard.hpp"
 #include "ccm/domain/YuGiOhCard.hpp"
 
 #include <string_view>
@@ -45,6 +46,10 @@ namespace ccm {
 
 // Digi-Battle mirrors Pokemon searchable columns (includes setNo).
 [[nodiscard]] bool matchesDigiBattle99Filter(const DigiBattle99Card& card,
+                                             std::string_view filter);
+
+// Bandai: name, set.name, setNo, rarity, language, condition, amount, note.
+[[nodiscard]] bool matchesYuGiOhBandaiFilter(const YuGiOhBandaiCard& card,
                                              std::string_view filter);
 
 // Japanese Pokemon mirrors Pokemon searchable columns (includes setNo).

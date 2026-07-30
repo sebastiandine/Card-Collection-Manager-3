@@ -26,6 +26,11 @@ add_library(ccm_ui_wx STATIC
     src/DigiBattle99CardEditDialog.cpp
     src/DigiBattle99GameView.cpp
     src/DigiBattle99SetCompletionPanel.cpp
+    src/YuGiOhBandaiCardListPanel.cpp
+    src/YuGiOhBandaiSelectedCardPanel.cpp
+    src/YuGiOhBandaiCardEditDialog.cpp
+    src/YuGiOhBandaiGameView.cpp
+    src/YuGiOhBandaiSetCompletionPanel.cpp
 
     src/SettingsDialog.cpp
     src/SwitchCtrl.cpp

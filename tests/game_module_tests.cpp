@@ -5,6 +5,7 @@
 #include "ccm/games/pokemon/PokemonGameModule.hpp"
 #include "ccm/games/pokemonjp/JapanesePokemonGameModule.hpp"
 #include "ccm/games/yugioh/YuGiOhGameModule.hpp"
+#include "ccm/games/yugiohbandai/YuGiOhBandaiGameModule.hpp"
 #include "ccm/ports/IHttpClient.hpp"
 
 using namespace ccm;
@@ -61,6 +62,17 @@ TEST_SUITE("game modules expose stable identity and wiring") {
         CHECK(module.id() == Game::DigiBattle99);
         CHECK(module.dirName() == "digibattle99");
         CHECK(module.displayName() == "Digimon (Digi-Battle)");
+        CHECK(module.cardPreviewSource() != nullptr);
+        CHECK(static_cast<void*>(&module.setSource()) != static_cast<void*>(module.cardPreviewSource()));
+    }
+
+    TEST_CASE("YuGiOhBandai module reports canonical metadata") {
+        NoopHttpClient http;
+        YuGiOhBandaiGameModule module(http);
+
+        CHECK(module.id() == Game::YuGiOhBandai);
+        CHECK(module.dirName() == "yugiohbandai");
+        CHECK(module.displayName() == "Yu-Gi-Oh! (Bandai)");
         CHECK(module.cardPreviewSource() != nullptr);
         CHECK(static_cast<void*>(&module.setSource()) != static_cast<void*>(module.cardPreviewSource()));
     }

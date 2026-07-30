@@ -307,6 +307,8 @@ private:
             case Game::DigiBattle99:
                 // No stable public Digi-Battle back URL; UI uses bundled PNG.
                 return {};
+            case Game::YuGiOhBandai:
+                return "https://ms.yugipedia.com//3/34/Back-BAN-JP-1999.png";
         }
         return {};
     }
