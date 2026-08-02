@@ -27,6 +27,22 @@ std::string toLower(std::string s) {
     return s;
 }
 
+std::string stripLeadingZeros(std::string_view s) {
+    std::size_t i = 0;
+    while (i + 1 < s.size() && s[i] == '0') ++i;
+    return std::string(s.substr(i));
+}
+
+// Exact localId match after slash-normalization, or leading-zero-insensitive
+// equality ("4" ↔ "04", not "4" ↔ "14").
+bool localIdsMatch(std::string_view a, std::string_view b) {
+    const std::string na = PokemonCardPreviewSource::normalizeCollectorNumber(a);
+    const std::string nb = PokemonCardPreviewSource::normalizeCollectorNumber(b);
+    if (na.empty() || nb.empty()) return false;
+    if (na == nb) return true;
+    return stripLeadingZeros(na) == stripLeadingZeros(nb);
+}
+
 }  // namespace
 
 PokemonCardPreviewSource::PokemonCardPreviewSource(IHttpClient& http) : http_(http) {}
@@ -294,6 +310,103 @@ Result<std::vector<AutoDetectedPrint>> PokemonCardPreviewSource::detectPrintVari
             return R::err("Could not auto-detect set print metadata.");
         }
         return R::ok(std::move(collected));
+    } catch (const std::exception& e) {
+        return R::err(std::string("TCGdex EN cards search JSON parse error: ") + e.what());
+    }
+}
+
+Result<AutoDetectedPrint> PokemonCardPreviewSource::parsePrintFromCardById(
+    const std::string& body) {
+    using R = Result<AutoDetectedPrint>;
+    try {
+        const auto j = nlohmann::json::parse(body);
+        if (!j.is_object()) {
+            return R::err("TCGdex EN card response is not a JSON object.");
+        }
+        AutoDetectedPrint print;
+        print.name = trim(j.value("name", ""));
+        print.setNo = normalizeCollectorNumber(j.value("localId", ""));
+        print.rarity = trim(j.value("rarity", ""));
+        if (print.name.empty()) {
+            return R::err("TCGdex EN card has no name.");
+        }
+        if (print.setNo.empty() && j.contains("id") && j.at("id").is_string()) {
+            const std::string id = j.at("id").get<std::string>();
+            const auto dash = id.rfind('-');
+            if (dash != std::string::npos) {
+                print.setNo = normalizeCollectorNumber(id.substr(dash + 1));
+            }
+        }
+        return R::ok(std::move(print));
+    } catch (const std::exception& e) {
+        return R::err(std::string("TCGdex EN card JSON parse error: ") + e.what());
+    }
+}
+
+Result<AutoDetectedPrint> PokemonCardPreviewSource::detectBySetNo(std::string_view setId,
+                                                                  std::string_view setNo) {
+    auto list = detectVariantsBySetNo(setId, setNo);
+    if (!list) return Result<AutoDetectedPrint>::err(list.error());
+    if (list.value().empty()) {
+        return Result<AutoDetectedPrint>::err("Could not auto-detect card name from set number.");
+    }
+    return Result<AutoDetectedPrint>::ok(list.value().front());
+}
+
+Result<std::vector<AutoDetectedPrint>> PokemonCardPreviewSource::detectVariantsBySetNo(
+    std::string_view setId,
+    std::string_view setNo) {
+    using R = Result<std::vector<AutoDetectedPrint>>;
+    const std::string idCanon = canonicalizeWestSetId(setId);
+    const std::string num = normalizeCollectorNumber(setNo);
+    if (idCanon.empty()) return R::err("Select a set first.");
+    if (num.empty()) return R::err("Card number is empty.");
+
+    auto byId = http_.get(buildCardByIdUrl(idCanon, num));
+    if (byId) {
+        auto parsed = parsePrintFromCardById(byId.value());
+        if (parsed && localIdsMatch(parsed.value().setNo, num)) {
+            std::vector<AutoDetectedPrint> out;
+            out.push_back(std::move(parsed).value());
+            return R::ok(std::move(out));
+        }
+    }
+
+    // Fallback: filtered search by set.id + localId.
+    const std::string url = buildSearchUrl("", idCanon, num);
+    auto resp = http_.get(url);
+    if (!resp) return R::err(resp.error());
+    try {
+        const auto j = nlohmann::json::parse(resp.value());
+        if (!j.is_array() || j.empty()) {
+            return R::err("Could not auto-detect card name from set number.");
+        }
+        std::vector<AutoDetectedPrint> out;
+        std::unordered_set<std::string> seen;
+        for (const auto& card : j) {
+            AutoDetectedPrint print;
+            print.name = trim(card.value("name", ""));
+            print.setNo = normalizeCollectorNumber(card.value("localId", ""));
+            print.rarity = trim(card.value("rarity", ""));
+            if (print.name.empty()) continue;
+            if (print.setNo.empty() && card.contains("id") && card.at("id").is_string()) {
+                const std::string id = card.at("id").get<std::string>();
+                const auto dash = id.rfind('-');
+                if (dash != std::string::npos) {
+                    print.setNo = normalizeCollectorNumber(id.substr(dash + 1));
+                }
+            }
+            // Defense-in-depth: TCGdex search can be fuzzy; never accept a
+            // different localId (e.g. "14" when the user asked for "4").
+            if (!localIdsMatch(print.setNo, num)) continue;
+            const std::string key = print.name + '\0' + print.setNo + '\0' + print.rarity;
+            if (!seen.insert(key).second) continue;
+            out.push_back(std::move(print));
+        }
+        if (out.empty()) {
+            return R::err("Could not auto-detect card name from set number.");
+        }
+        return R::ok(std::move(out));
     } catch (const std::exception& e) {
         return R::err(std::string("TCGdex EN cards search JSON parse error: ") + e.what());
     }

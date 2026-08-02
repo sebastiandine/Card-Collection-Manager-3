@@ -48,12 +48,39 @@ namespace ccm {
     return out;
 }
 
+// Digits from a full set code (after '-') or from a digits-only Set # field.
+[[nodiscard]] inline std::string ygoCollectorDigitsFromInput(std::string_view raw) {
+    const std::string_view s = trimAsciiSpaces(raw);
+    if (s.find('-') != std::string_view::npos) return ygoCollectorDigitsOnly(s);
+    std::string out;
+    out.reserve(s.size());
+    for (unsigned char c : s) {
+        if (std::isdigit(c) != 0) out.push_back(static_cast<char>(c));
+    }
+    return out;
+}
+
+[[nodiscard]] inline std::string ygoDigitsStripLeadingZeros(std::string digits) {
+    std::size_t i = 0;
+    while (i + 1 < digits.size() && digits[i] == '0') ++i;
+    if (i > 0) digits.erase(0, i);
+    return digits;
+}
+
+// True when both designate the same collector number, ignoring leading zeros
+// ("5" == "005") and accepting either a full set code or digits-only input.
+[[nodiscard]] inline bool ygoCollectorDigitsEqual(std::string_view a,
+                                                    std::string_view b) {
+    return ygoDigitsStripLeadingZeros(ygoCollectorDigitsFromInput(a)) ==
+           ygoDigitsStripLeadingZeros(ygoCollectorDigitsFromInput(b));
+}
+
 // True when both strings designate the same printed slot: same abbreviation
 // before the first '-' (ASCII case-insensitive) and the same ordered digit run
 // extracted from everything after that dash.
 [[nodiscard]] inline bool ygoPrintingSlotsMatch(std::string_view a, std::string_view b) {
     if (ygoAbbrevBeforeDash(a) != ygoAbbrevBeforeDash(b)) return false;
-    return ygoCollectorDigitsOnly(a) == ygoCollectorDigitsOnly(b);
+    return ygoCollectorDigitsEqual(a, b);
 }
 
 // YGOPRODeck sometimes lists European alternate numbering alongside NA prints under

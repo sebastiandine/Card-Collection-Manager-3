@@ -29,6 +29,12 @@ public:
     Result<std::vector<AutoDetectedPrint>> detectPrintVariants(std::string_view name,
                                                                std::string_view setId) override;
 
+    Result<AutoDetectedPrint> detectBySetNo(std::string_view setId,
+                                            std::string_view setNo) override;
+    Result<std::vector<AutoDetectedPrint>> detectVariantsBySetNo(
+        std::string_view setId,
+        std::string_view setNo) override;
+
     static std::string normalizeLocalId(std::string_view setNo);
     static std::string buildSetDetailUrl(std::string_view setId);
     static std::string buildCardUrl(std::string_view setId, std::string_view localId);
@@ -59,6 +65,15 @@ public:
         detectPrintVariantsFromCatalog(std::string_view setId,
                                        std::string_view wantedCardName,
                                        const JapanesePokemonEnCatalog& catalog);
+
+    // Reverse lookup: set + localId → name via catalog (no HTTP).
+    static Result<std::vector<AutoDetectedPrint>>
+        detectVariantsBySetNoFromCatalog(std::string_view setId,
+                                         std::string_view localId,
+                                         const JapanesePokemonEnCatalog& catalog);
+
+    // Parse TCGdex JA card-by-id JSON into print metadata.
+    static Result<AutoDetectedPrint> parsePrintFromCardResponse(const std::string& body);
 
 private:
     IHttpClient& http_;

@@ -126,6 +126,7 @@ public:
             std::make_unique<ccm::DigiBattle99SetCatalogService>(*fs_, *config_, &dirNameForGame);
         ygoCatalogStore_ =
             std::make_unique<ccm::YuGiOhSetCatalogService>(*fs_, *config_, &dirNameForGame);
+        ygoMod_->setCatalogService(ygoCatalogStore_.get());
         ygoBandaiCatalogStore_ =
             std::make_unique<ccm::YuGiOhBandaiSetCatalogService>(*fs_, *config_, &dirNameForGame);
         pokeCatalogStore_ =

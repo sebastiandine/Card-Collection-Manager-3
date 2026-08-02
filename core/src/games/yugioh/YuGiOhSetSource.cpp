@@ -166,7 +166,9 @@ Result<YuGiOhSetCatalog> YuGiOhSetSource::parseCatalog(const std::string&      b
                 const auto existing = build.slotIndex.find(slot);
                 if (existing == build.slotIndex.end()) {
                     build.slotIndex.emplace(slot, build.cards.size());
-                    build.cards.push_back(YuGiOhCatalogCard{setCode, cardName});
+                    const std::string setRarity(
+                        trimAsciiSpaces(printing.value("set_rarity", "")));
+                    build.cards.push_back(YuGiOhCatalogCard{setCode, cardName, setRarity});
                     continue;
                 }
 
@@ -175,6 +177,12 @@ Result<YuGiOhSetCatalog> YuGiOhSetSource::parseCatalog(const std::string&      b
                 if (!ygoHasEnRegionInfix(prev.setNo) && ygoHasEnRegionInfix(setCode)) {
                     prev.setNo = setCode;
                     if (!cardName.empty()) prev.name = cardName;
+                    const std::string setRarity(
+                        trimAsciiSpaces(printing.value("set_rarity", "")));
+                    if (!setRarity.empty()) prev.rarity = setRarity;
+                } else if (prev.rarity.empty()) {
+                    prev.rarity = std::string(
+                        trimAsciiSpaces(printing.value("set_rarity", "")));
                 }
             }
         }

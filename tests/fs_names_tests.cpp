@@ -28,6 +28,13 @@ TEST_SUITE("FsNames::formatTextForFs") {
     TEST_CASE("idempotent on already-clean strings") {
         CHECK(formatTextForFs("AlreadyClean") == "AlreadyClean");
     }
+
+    TEST_CASE("male and female signs become male/female") {
+        CHECK(formatTextForFs("\xE2\x99\x82") == "male");
+        CHECK(formatTextForFs("\xE2\x99\x80") == "female");
+        CHECK(formatTextForFs("Nidoran \xE2\x99\x82") == "Nidoranmale");
+        CHECK(formatTextForFs("Nidoran \xE2\x99\x80") == "Nidoranfemale");
+    }
 }
 
 TEST_SUITE("FsNames::parseIndexFromFilename") {

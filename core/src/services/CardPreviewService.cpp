@@ -263,6 +263,7 @@ Result<std::vector<AutoDetectedPrint>> CardPreviewService::detectPrintVariants(
 }
 
 Result<AutoDetectedPrint> CardPreviewService::detectBySetNo(Game game,
+                                                            std::string_view setId,
                                                             std::string_view setNo) {
     auto it = sources_.find(game);
     if (it == sources_.end() || it->second == nullptr) {
@@ -271,11 +272,12 @@ Result<AutoDetectedPrint> CardPreviewService::detectBySetNo(Game game,
     if (!it->second->supportsAutoDetectPrint()) {
         return Result<AutoDetectedPrint>::err("Auto-detect not enabled for this game.");
     }
-    return it->second->detectBySetNo(setNo);
+    return it->second->detectBySetNo(setId, setNo);
 }
 
 Result<std::vector<AutoDetectedPrint>> CardPreviewService::detectVariantsBySetNo(
     Game game,
+    std::string_view setId,
     std::string_view setNo) {
     auto it = sources_.find(game);
     if (it == sources_.end() || it->second == nullptr) {
@@ -286,7 +288,7 @@ Result<std::vector<AutoDetectedPrint>> CardPreviewService::detectVariantsBySetNo
         return Result<std::vector<AutoDetectedPrint>>::err(
             "Auto-detect not enabled for this game.");
     }
-    return it->second->detectVariantsBySetNo(setNo);
+    return it->second->detectVariantsBySetNo(setId, setNo);
 }
 
 Result<std::string> CardPreviewService::fetchImageBytesByUrl(std::string_view url) {

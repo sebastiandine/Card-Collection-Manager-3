@@ -124,6 +124,34 @@ TEST_SUITE("YuGiOhBandaiCardPreviewSource helpers") {
         CHECK(out.value()[0].setId == "ban1");
     }
 
+    TEST_CASE("parseAskResponse drops results whose Bandai number does not match") {
+        const std::string body = R"JSON({
+          "query": {
+            "results": {
+              "Card Eleven (Bandai)": {
+                "printouts": {
+                  "English name": ["Card Eleven"],
+                  "Bandai number": [11],
+                  "Rarity": [{"fulltext": "Common"}]
+                }
+              },
+              "Card One (Bandai)": {
+                "printouts": {
+                  "English name": ["Card One"],
+                  "Bandai number": [1],
+                  "Rarity": [{"fulltext": "Common"}]
+                }
+              }
+            }
+          }
+        })JSON";
+        auto out = YuGiOhBandaiCardPreviewSource::parseAskResponse(body, "ban1", "1");
+        REQUIRE(out);
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value()[0].name == "Card One");
+        CHECK(out.value()[0].setNo == "1");
+    }
+
     TEST_CASE("fetchImageUrl uses pageimages URL") {
         FixedHttpClient http;
         http.body = R"JSON({
@@ -182,7 +210,7 @@ TEST_SUITE("YuGiOhBandaiCardPreviewSource helpers") {
           }
         })JSON";
         YuGiOhBandaiCardPreviewSource src(http);
-        auto out = src.detectBySetNo("014");
+        auto out = src.detectBySetNo("ban1", "014");
         REQUIRE(out);
         CHECK(out.value().name == "Dark Magician");
         CHECK(http.lastUrl.find("action=ask") != std::string::npos);
@@ -196,7 +224,7 @@ TEST_SUITE("YuGiOhBandaiCardPreviewSource helpers") {
           }
         })JSON";
         YuGiOhBandaiCardPreviewSource src(http);
-        auto out = src.detectBySetNo("ta2");
+        auto out = src.detectBySetNo("banpromo-ta", "ta2");
         REQUIRE(out);
         CHECK(out.value().name == "Blue-Eyes White Dragon's 3-Body Connection");
         CHECK(out.value().setNo == "TA2");
@@ -204,6 +232,27 @@ TEST_SUITE("YuGiOhBandaiCardPreviewSource helpers") {
         CHECK(out.value().rarity == "Super Rare");
         CHECK(http.lastUrl.find("action=parse") != std::string::npos);
         CHECK(http.lastUrl.find("Promotional") != std::string::npos);
+    }
+
+    TEST_CASE("detectBySetNo filters out prints from other sets") {
+        FixedHttpClient http;
+        http.body = R"JSON({
+          "query": {
+            "results": {
+              "Dark Magician (Bandai)": {
+                "printouts": {
+                  "English name": ["Dark Magician"],
+                  "Bandai number": [14],
+                  "Rarity": [{"fulltext": "Rare"}]
+                }
+              }
+            }
+          }
+        })JSON";
+        YuGiOhBandaiCardPreviewSource src(http);
+        auto out = src.detectBySetNo("bansealdass", "14");
+        CHECK_FALSE(out);
+        CHECK(out.error().find("selected set") != std::string::npos);
     }
 
     TEST_CASE("isAlphanumericPromoNumber detects Jump and Toei codes") {

@@ -29,9 +29,11 @@ public:
     Result<std::vector<AutoDetectedPrint>> detectPrintVariants(std::string_view name,
                                                                std::string_view setId) override;
 
-    Result<AutoDetectedPrint> detectBySetNo(std::string_view setNo) override;
+    Result<AutoDetectedPrint> detectBySetNo(std::string_view setId,
+                                            std::string_view setNo) override;
 
     Result<std::vector<AutoDetectedPrint>> detectVariantsBySetNo(
+        std::string_view setId,
         std::string_view setNo) override;
 
     // Prefer "<Name> (Bandai)" / English / Sealdass page depending on setId.
@@ -58,7 +60,9 @@ public:
         parsePageImagesResponse(const std::string& body);
 
     static Result<std::vector<AutoDetectedPrint>>
-        parseAskResponse(const std::string& body, std::string_view preferredSetId);
+        parseAskResponse(const std::string& body,
+                         std::string_view preferredSetId,
+                         std::string_view wantedSetNo = {});
 
     static AutoDetectedPrint enrichPrint(AutoDetectedPrint print,
                                          std::string_view pageTitle);
@@ -69,7 +73,8 @@ private:
     Result<std::vector<AutoDetectedPrint>> askByName(std::string_view name,
                                                      std::string_view setId);
 
-    Result<std::vector<AutoDetectedPrint>> askByNumber(std::string_view setNo);
+    Result<std::vector<AutoDetectedPrint>> askByNumber(std::string_view setId,
+                                                       std::string_view setNo);
 
     IHttpClient& http_;
 };

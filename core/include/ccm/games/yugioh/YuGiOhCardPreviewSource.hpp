@@ -1,8 +1,11 @@
 #pragma once
 
+#include "ccm/domain/YuGiOhSetCatalog.hpp"
 #include "ccm/ports/ICardPreviewSource.hpp"
 #include "ccm/ports/IHttpClient.hpp"
+#include "ccm/services/YuGiOhSetCatalogService.hpp"
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -25,12 +28,21 @@ namespace ccm {
 // that endpoint returns a richer set listing (with rarities and release
 // dates) than Yugipedia, and we don't need image data for it.
 //
+// Reverse lookup (set + setNo → name) uses the offline set-completion catalog
+// written by Sets → Update Yu-Gi-Oh! (`YuGiOhSetCatalogService`).
+//
 // Region policy: always English (EN/NA/EU/AU) regardless of the card's
 // stored Language. Localized scans are intentionally not queried so the user
 // sees a consistent, well-stocked gallery (EN scans are the most complete).
 class YuGiOhCardPreviewSource final : public ICardPreviewSource {
 public:
     explicit YuGiOhCardPreviewSource(IHttpClient& http);
+
+    // Optional offline catalog for set+setNo → name reverse lookup. When null
+    // or empty, detectVariantsBySetNo returns a clear "Update Sets" error.
+    void setCatalogService(YuGiOhSetCatalogService* catalogStore) noexcept {
+        catalogStore_ = catalogStore;
+    }
 
     [[nodiscard]] bool supportsAutoDetectPrint() const noexcept override { return true; }
 
@@ -42,6 +54,12 @@ public:
                                                std::string_view setId) override;
     Result<std::vector<AutoDetectedPrint>> detectPrintVariants(std::string_view name,
                                                                std::string_view setId) override;
+
+    Result<AutoDetectedPrint> detectBySetNo(std::string_view setId,
+                                            std::string_view setNo) override;
+    Result<std::vector<AutoDetectedPrint>> detectVariantsBySetNo(
+        std::string_view setId,
+        std::string_view setNo) override;
 
     // ---- Yugipedia helpers (image preview path) ----------------------------
 
@@ -116,8 +134,29 @@ public:
                            std::string_view preferredSetName,
                            std::string_view wantedCardName);
 
+    // Offline reverse lookup against a set-completion catalog. `setId` is the
+    // pack's set code (e.g. "LOB"); `setNo` may be digits ("005") or a full
+    // collector code ("LOB-005" / "LOB-EN005").
+    static Result<std::vector<AutoDetectedPrint>>
+        detectVariantsBySetNoFromCatalog(const YuGiOhSetCatalog& catalog,
+                                         std::string_view setId,
+                                         std::string_view setNo);
+
+    // YGOPRODeck cardset= dump filtered by collector digits (HTTP fallback when
+    // the offline catalog is missing or has no match).
+    static Result<std::vector<AutoDetectedPrint>>
+        detectVariantsBySetNoFromCardset(const std::string& body,
+                                         std::string_view preferredSetName,
+                                         std::string_view setNo);
+
+    static std::string buildCardsetOnlyUrl(std::string_view setName);
+
 private:
-    IHttpClient& http_;
+    IHttpClient&               http_;
+    YuGiOhSetCatalogService*   catalogStore_{nullptr};
+    // Cached offline catalog so reverse auto-detect does not re-parse a
+    // multi-MB JSON file on every button click.
+    mutable std::optional<YuGiOhSetCatalog> catalogCache_;
 };
 
 }  // namespace ccm

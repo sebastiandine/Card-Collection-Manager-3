@@ -54,7 +54,8 @@ private:
     void prefetchVariantsForCurrentCardSilent(unsigned capturedEpoch);
     void requestByNameAsync(unsigned capturedEpoch, std::string name, std::string setId,
                             bool showFailureDialog);
-    void requestByNoAsync(unsigned capturedEpoch, std::string setNo, bool showFailureDialog);
+    void requestByNoAsync(unsigned capturedEpoch, std::string setId, std::string setNo,
+                          bool showFailureDialog);
     void applyDetectedList(unsigned capturedEpoch,
                            Result<std::vector<AutoDetectedPrint>> detected,
                            bool showFailureDialog, bool applyFirst);

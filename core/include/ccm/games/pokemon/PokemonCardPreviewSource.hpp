@@ -29,6 +29,12 @@ public:
     Result<std::vector<AutoDetectedPrint>> detectPrintVariants(std::string_view name,
                                                                std::string_view setId) override;
 
+    Result<AutoDetectedPrint> detectBySetNo(std::string_view setId,
+                                            std::string_view setNo) override;
+    Result<std::vector<AutoDetectedPrint>> detectVariantsBySetNo(
+        std::string_view setId,
+        std::string_view setNo) override;
+
     // Strip everything after the first '/' (e.g. "4/102" -> "4").
     static std::string normalizeCollectorNumber(std::string_view setNo);
 
@@ -60,6 +66,9 @@ public:
         parsePrintVariants(const std::string& body,
                            std::string_view setId,
                            std::string_view wantedCardName);
+
+    // Parse TCGdex card-by-id JSON into print metadata (name + localId + rarity).
+    static Result<AutoDetectedPrint> parsePrintFromCardById(const std::string& body);
 
 private:
     IHttpClient& http_;

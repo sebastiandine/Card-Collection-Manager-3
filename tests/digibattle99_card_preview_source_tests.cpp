@@ -177,3 +177,56 @@ TEST_SUITE("DigiBattle99CardPreviewSource::detectPrintVariants") {
         CHECK(out.value()[1].setNo == "ST-126");
     }
 }
+
+TEST_SUITE("DigiBattle99CardPreviewSource::detectVariantsBySetNo") {
+    TEST_CASE("card id search fills name within pack") {
+        FixedHttpClient http;
+        http.body = R"([
+            {"name":"Agumon","id":"ST-01","set_name":["Series 1 Starter Set"]}
+        ])";
+        DigiBattle99CardPreviewSource src{http};
+        const auto out = src.detectVariantsBySetNo("Series 1 Starter Set", "st-01");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value()[0].name == "Agumon");
+        CHECK(out.value()[0].setNo == "ST-01");
+        CHECK(http.lastUrl.find("card=ST-01") != std::string::npos);
+    }
+
+    TEST_CASE("digits-only 1 matches ST-01 not ST-11 from fuzzy API hits") {
+        FixedHttpClient http;
+        http.body = R"([
+            {"name":"Patamon","id":"ST-11","set_name":["Series 1 Starter Set"]},
+            {"name":"Agumon","id":"ST-01","set_name":["Series 1 Starter Set"]},
+            {"name":"Other","id":"BO-1","set_name":["Booster 1"]}
+        ])";
+        DigiBattle99CardPreviewSource src{http};
+        const auto out = src.detectVariantsBySetNo("Series 1 Starter Set", "1");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value()[0].name == "Agumon");
+        CHECK(out.value()[0].setNo == "ST-01");
+    }
+
+    TEST_CASE("digits-only 11 matches ST-11 not ST-01") {
+        FixedHttpClient http;
+        http.body = R"([
+            {"name":"Agumon","id":"ST-01","set_name":["Series 1 Starter Set"]},
+            {"name":"Patamon","id":"ST-11","set_name":["Series 1 Starter Set"]}
+        ])";
+        DigiBattle99CardPreviewSource src{http};
+        const auto out = src.detectVariantsBySetNo("Series 1 Starter Set", "11");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value()[0].name == "Patamon");
+        CHECK(out.value()[0].setNo == "ST-11");
+    }
+
+    TEST_CASE("empty pack is rejected") {
+        FixedHttpClient http;
+        DigiBattle99CardPreviewSource src{http};
+        const auto out = src.detectVariantsBySetNo("", "ST-01");
+        REQUIRE(out.isErr());
+        CHECK(out.error().find("set") != std::string::npos);
+    }
+}

@@ -404,19 +404,31 @@ TEST_SUITE("YuGiOhSetCatalog JSON") {
         YuGiOhSetCatalogPack pack;
         pack.setId = "LOB";
         pack.setName = "Legend of Blue Eyes White Dragon";
-        pack.cards.push_back(YuGiOhCatalogCard{"LOB-001", "Blue-Eyes White Dragon"});
-        pack.cards.push_back(YuGiOhCatalogCard{"LOB-EN005", "Dark Magician"});
+        pack.cards.push_back(YuGiOhCatalogCard{"LOB-001", "Blue-Eyes White Dragon", "Ultra Rare"});
+        pack.cards.push_back(YuGiOhCatalogCard{"LOB-EN005", "Dark Magician", "Ultra Rare"});
         catalog.packs.push_back(std::move(pack));
 
         nlohmann::json j = catalog;
         CHECK(j.at("packs").is_array());
         CHECK(j.at("packs").at(0).at("id") == "LOB");
         CHECK(j.at("packs").at(0).at("cards").at(0).at("setNo") == "LOB-001");
+        CHECK(j.at("packs").at(0).at("cards").at(0).at("rarity") == "Ultra Rare");
 
         const YuGiOhSetCatalog back = j.get<YuGiOhSetCatalog>();
         CHECK(back == catalog);
         CHECK(back.findPack("LOB") != nullptr);
         CHECK(back.findPack("missing") == nullptr);
+    }
+
+    TEST_CASE("legacy catalog JSON without rarity still loads") {
+        const auto j = nlohmann::json::parse(R"({
+          "packs":[{"id":"LOB","name":"Legend of Blue Eyes White Dragon",
+            "cards":[{"setNo":"LOB-001","name":"Blue-Eyes White Dragon"}]}]
+        })");
+        const YuGiOhSetCatalog back = j.get<YuGiOhSetCatalog>();
+        REQUIRE(back.packs.size() == 1);
+        REQUIRE(back.packs[0].cards.size() == 1);
+        CHECK(back.packs[0].cards[0].rarity.empty());
     }
 }
 

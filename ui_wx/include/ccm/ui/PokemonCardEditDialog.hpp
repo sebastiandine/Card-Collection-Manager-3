@@ -62,9 +62,14 @@ private:
                               std::string setId,
                               bool fillSetNoOnSuccess,
                               bool showFailureDialog);
+    void requestBySetNoAsync(unsigned capturedEpoch,
+                             std::string setId,
+                             std::string setNo,
+                             bool showFailureDialog);
     void applyDetectedVariants(unsigned capturedEpoch,
                                Result<std::vector<AutoDetectedPrint>> detected,
                                bool fillSetNoOnSuccess,
+                               bool fillNameOnSuccess,
                                bool showFailureDialog);
     void rebuildVariantRingFromCache();
     void syncRingPositionToControls();

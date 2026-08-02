@@ -40,8 +40,10 @@
 #include "ccm/ui/Theme.hpp"
 
 #include <wx/bitmap.h>
+#include <wx/clipbrd.h>
 #include <wx/colour.h>
 #include <wx/cursor.h>
+#include <wx/dataobj.h>
 #include <wx/event.h>
 #include <wx/image.h>
 #include <wx/listctrl.h>
@@ -73,6 +75,10 @@ wxDECLARE_EVENT(EVT_CARD_SELECTED, wxCommandEvent);
 // Raised on `wxEVT_LIST_ITEM_ACTIVATED` (double-click / Enter on a row).
 // `IGameView` implementations bind this to open Edit for `selected()`.
 wxDECLARE_EVENT(EVT_CARD_ACTIVATED, wxCommandEvent);
+
+// Raised when the list wants a short status-bar note (e.g. clipboard copy).
+// `event.GetString()` is the message; MainFrame shows it in the bottom strip.
+wxDECLARE_EVENT(EVT_UI_STATUS, wxCommandEvent);
 
 template <typename TCard, typename TSortColumn>
 class BaseCardListPanel : public wxPanel {
@@ -274,6 +280,7 @@ protected:
         list_->Bind(wxEVT_LIST_ITEM_SELECTED,   &BaseCardListPanel::onSelectionChanged, this);
         list_->Bind(wxEVT_LIST_ITEM_DESELECTED, &BaseCardListPanel::onSelectionChanged, this);
         list_->Bind(wxEVT_LIST_ITEM_ACTIVATED, &BaseCardListPanel::onListItemActivated, this);
+        list_->Bind(wxEVT_KEY_DOWN, &BaseCardListPanel::onListKeyDown, this);
     }
 
     // Forwarded helpers ------------------------------------------------------
@@ -703,6 +710,61 @@ private:
             ev.SetEventObject(this);
             ProcessWindowEvent(ev);
         });
+    }
+
+    void onListKeyDown(wxKeyEvent& event) {
+        const int key = event.GetKeyCode();
+        const bool copyChord =
+            (event.ControlDown() || event.CmdDown()) && (key == 'C' || key == 'c');
+        if (!copyChord) {
+            event.Skip();
+            return;
+        }
+        copySelectedRowToClipboard();
+    }
+
+    void copySelectedRowToClipboard() {
+        const auto card = selected();
+        if (!card) return;
+        if (textCols_.empty()) return;
+
+        std::string line;
+        auto appendCell = [&](std::string_view cell) {
+            if (!line.empty()) line.push_back('\t');
+            line.append(cell);
+        };
+
+        // Leading text columns (everything except trailing Note).
+        for (std::size_t i = 0; i + 1 < textCols_.size(); ++i) {
+            appendCell(renderTextCell(*card, i));
+        }
+        // Icon/flag columns — no list text; export as true/false.
+        for (std::size_t i = 0; i < iconCols_.size(); ++i) {
+            appendCell(isIconColumnSet(*card, i) ? "true" : "false");
+        }
+        // Trailing Note.
+        appendCell(renderTextCell(*card, textCols_.size() - 1));
+
+        wxClipboardLocker lock;
+        if (!lock) return;
+        if (!wxTheClipboard->SetData(
+                new wxTextDataObject(wxString::FromUTF8(line.c_str())))) {
+            return;
+        }
+        emitUiStatus("Saved entry to clipboard");
+    }
+
+    void emitUiStatus(const wxString& message) {
+        wxCommandEvent ev(EVT_UI_STATUS, GetId());
+        ev.SetEventObject(this);
+        ev.SetString(message);
+        // Same parent-hop as BaseSelectedCardPanel::emitPreviewStatus so the
+        // command event can propagate up to MainFrame's status strip.
+        if (auto* parent = GetParent()) {
+            parent->GetEventHandler()->ProcessEvent(ev);
+        } else {
+            ProcessWindowEvent(ev);
+        }
     }
 
     // ----- members ----------------------------------------------------------

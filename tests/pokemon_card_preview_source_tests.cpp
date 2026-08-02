@@ -323,3 +323,78 @@ TEST_SUITE("PokemonCardPreviewSource::detectPrintVariants") {
         CHECK(http.calls == 2);
     }
 }
+
+TEST_SUITE("PokemonCardPreviewSource::detectVariantsBySetNo") {
+    TEST_CASE("card-by-id fills name from TCGdex response") {
+        FixedHttpClient http;
+        http.body = R"({
+          "id":"base1-4",
+          "localId":"4",
+          "name":"Charmander",
+          "rarity":"Common",
+          "image":"https://assets.tcgdex.net/en/base/base1/4"
+        })";
+        PokemonCardPreviewSource src{http};
+        const auto out = src.detectVariantsBySetNo("base1", "4");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value()[0].name == "Charmander");
+        CHECK(out.value()[0].setNo == "4");
+        CHECK(out.value()[0].rarity == "Common");
+        CHECK(http.lastUrl.find("/v2/en/cards/base1-4") != std::string::npos);
+    }
+
+    TEST_CASE("search fallback rejects localIds that only share a digit prefix") {
+        struct ScriptedHttp : IHttpClient {
+            int n = 0;
+            Result<std::string> get(std::string_view) override {
+                ++n;
+                if (n == 1) {
+                    return Result<std::string>::err("not found");
+                }
+                // Fuzzy search returns both "14" and "4"; only "4" may be kept.
+                return Result<std::string>::ok(R"([
+                  {"id":"base1-14","localId":"14","name":"Wrong","rarity":"Common"},
+                  {"id":"base1-4","localId":"4","name":"Charmander","rarity":"Common"}
+                ])");
+            }
+        } http;
+        PokemonCardPreviewSource src{http};
+        const auto out = src.detectVariantsBySetNo("base1", "4");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value()[0].name == "Charmander");
+        CHECK(out.value()[0].setNo == "4");
+    }
+
+    TEST_CASE("card-by-id response with mismatched localId falls through to search") {
+        struct ScriptedHttp : IHttpClient {
+            int n = 0;
+            Result<std::string> get(std::string_view) override {
+                ++n;
+                if (n == 1) {
+                    return Result<std::string>::ok(R"({
+                      "id":"base1-14","localId":"14","name":"Wrong","rarity":"Rare"
+                    })");
+                }
+                return Result<std::string>::ok(R"([
+                  {"id":"base1-4","localId":"4","name":"Charmander","rarity":"Common"}
+                ])");
+            }
+        } http;
+        PokemonCardPreviewSource src{http};
+        const auto out = src.detectVariantsBySetNo("base1", "4");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value()[0].name == "Charmander");
+        CHECK(out.value()[0].setNo == "4");
+    }
+
+    TEST_CASE("empty set id is rejected") {
+        FixedHttpClient http;
+        PokemonCardPreviewSource src{http};
+        const auto out = src.detectVariantsBySetNo("", "4");
+        REQUIRE(out.isErr());
+        CHECK(out.error().find("set") != std::string::npos);
+    }
+}

@@ -76,6 +76,7 @@
     - Auto-detect actions in edit dialogs (e.g. detect set print number / rarity from API) are opt-in per game.
     - Keep shared templates game-agnostic: put buttons and detection behavior in `<Name>CardEditDialog`, not in `BaseCardEditDialog`. Yu-Gi-Oh!'s **Set code** entry (`SwitchCtrl` + text + **Auto detect** against cached sets) is wired through the template hook `customizeSetPickerRow` so Magic/Pokemon keep the default single-combo row unchanged.
     - For games that use composed print IDs (prefix + numeric suffix), allow user editing on the numeric portion and render the full code as a read-only derived label beside the input.
+    - Bidirectional identify (Yu-Gi-Oh!, Bandai, Pokémon West/Asia, Digi-Battle): Set is always required. Set # **Auto detect** fills set number from Name, or fills Name from Set #. When **both** fields are filled, the field the user last typed is the lookup key (`CardLookupEditField` / `preferDetectBySetNo` in `ccm/util/CardLookupDetect.hpp`, tracked by `BaseCardEditDialog::markNameLookupEdited` / `markSetNoLookupEdited`). Programmatic `ChangeValue` from a detect result does not flip the key.
 
 ## Required follow-ups
 

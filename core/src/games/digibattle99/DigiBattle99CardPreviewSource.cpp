@@ -35,6 +35,44 @@ bool cardInPack(const nlohmann::json& card, std::string_view packName) {
     return false;
 }
 
+// Numeric collector suffix: "ST-01" → "01", "01" → "01", "BO-115" → "115".
+std::string numericSuffix(std::string_view setNo) {
+    const std::string n = DigiBattle99CardPreviewSource::normalizeCardNumber(setNo);
+    const auto dash = n.find('-');
+    const std::string_view tail =
+        dash == std::string::npos ? std::string_view{n} : std::string_view{n}.substr(dash + 1);
+    std::string out;
+    out.reserve(tail.size());
+    for (unsigned char c : tail) {
+        if (std::isdigit(c) != 0) out.push_back(static_cast<char>(c));
+    }
+    return out;
+}
+
+std::string stripLeadingZeros(std::string digits) {
+    std::size_t i = 0;
+    while (i + 1 < digits.size() && digits[i] == '0') ++i;
+    if (i > 0) digits.erase(0, i);
+    return digits;
+}
+
+bool hasAlphabeticPrefix(std::string_view setNo) {
+    const std::string n = DigiBattle99CardPreviewSource::normalizeCardNumber(setNo);
+    return !n.empty() && std::isalpha(static_cast<unsigned char>(n.front())) != 0;
+}
+
+// Exact id match, or digits-only input matched to the numeric suffix with
+// leading zeros ignored ("1" ↔ "ST-01", but not "ST-11").
+bool cardNumbersMatch(std::string_view wanted, std::string_view actual) {
+    const std::string a = DigiBattle99CardPreviewSource::normalizeCardNumber(wanted);
+    const std::string b = DigiBattle99CardPreviewSource::normalizeCardNumber(actual);
+    if (a.empty() || b.empty()) return false;
+    if (a == b) return true;
+    // Full id typed (ST-01): require exact normalized equality only.
+    if (hasAlphabeticPrefix(a)) return false;
+    return stripLeadingZeros(numericSuffix(a)) == stripLeadingZeros(numericSuffix(b));
+}
+
 }  // namespace
 
 DigiBattle99CardPreviewSource::DigiBattle99CardPreviewSource(IHttpClient& http)
@@ -144,7 +182,8 @@ DigiBattle99CardPreviewSource::fetchImageUrl(std::string_view name,
 Result<std::vector<AutoDetectedPrint>> DigiBattle99CardPreviewSource::parsePrintVariants(
     const std::string& body,
     std::string_view setName,
-    std::string_view wantedCardName) {
+    std::string_view wantedCardName,
+    std::string_view wantedSetNo) {
     using R = Result<std::vector<AutoDetectedPrint>>;
     try {
         const auto j = nlohmann::json::parse(body);
@@ -157,6 +196,7 @@ Result<std::vector<AutoDetectedPrint>> DigiBattle99CardPreviewSource::parsePrint
 
         const std::string wantedPack = trim(std::string(setName));
         const std::string wantedNameLower = toLower(trim(std::string(wantedCardName)));
+        const std::string wantedNo = normalizeCardNumber(wantedSetNo);
 
         std::vector<AutoDetectedPrint> collected;
         for (const auto& card : j) {
@@ -166,13 +206,20 @@ Result<std::vector<AutoDetectedPrint>> DigiBattle99CardPreviewSource::parsePrint
             }
             if (!cardInPack(card, wantedPack)) continue;
             AutoDetectedPrint out;
+            out.name = trim(card.value("name", ""));
             out.setNo = normalizeCardNumber(card.value("id", ""));
             out.rarity = "";  // Digi-Battle UI is Pokémon-like; rarity not persisted.
             if (out.setNo.empty()) continue;
+            // digimoncard.io `card=` is fuzzy (card=1 can return ST-01 and ST-11).
+            // When the user typed a number, keep only exact / zero-padded matches.
+            if (!wantedNo.empty() && !cardNumbersMatch(wantedNo, out.setNo)) continue;
             collected.push_back(std::move(out));
         }
 
         if (collected.empty()) {
+            if (!wantedNo.empty()) {
+                return R::err("Could not auto-detect Digi-Battle card name from set number.");
+            }
             if (!wantedNameLower.empty() && !wantedPack.empty()) {
                 return R::err("Could not auto-detect Digi-Battle set print metadata.");
             }
@@ -217,6 +264,42 @@ Result<std::vector<AutoDetectedPrint>> DigiBattle99CardPreviewSource::detectPrin
     auto fallback = http_.get(fallbackUrl);
     if (!fallback) return R::err(fallback.error());
     return parsePrintVariants(fallback.value(), setName, name);
+}
+
+Result<AutoDetectedPrint> DigiBattle99CardPreviewSource::detectBySetNo(
+    std::string_view setName,
+    std::string_view setNo) {
+    auto list = detectVariantsBySetNo(setName, setNo);
+    if (!list) return Result<AutoDetectedPrint>::err(list.error());
+    if (list.value().empty()) {
+        return Result<AutoDetectedPrint>::err(
+            "Could not auto-detect Digi-Battle card name from set number.");
+    }
+    return Result<AutoDetectedPrint>::ok(list.value().front());
+}
+
+Result<std::vector<AutoDetectedPrint>> DigiBattle99CardPreviewSource::detectVariantsBySetNo(
+    std::string_view setName,
+    std::string_view setNo) {
+    using R = Result<std::vector<AutoDetectedPrint>>;
+    if (trim(std::string(setName)).empty()) return R::err("Select a set first.");
+    const std::string num = normalizeCardNumber(setNo);
+    if (num.empty()) return R::err("Card number is empty.");
+
+    const std::string url = buildSearchUrl("", setName, num);
+    auto resp = http_.get(url);
+    if (resp) {
+        auto parsed = parsePrintVariants(resp.value(), setName, "", num);
+        if (parsed && !parsed.value().empty()) return parsed;
+    }
+    // Retry number-only; still filter by pack + exact/padded number.
+    const std::string fallbackUrl = buildSearchUrl("", "", num);
+    auto fallback = http_.get(fallbackUrl);
+    if (!fallback) {
+        if (resp) return R::err("Could not auto-detect Digi-Battle card name from set number.");
+        return R::err(fallback.error());
+    }
+    return parsePrintVariants(fallback.value(), setName, "", num);
 }
 
 }  // namespace ccm
