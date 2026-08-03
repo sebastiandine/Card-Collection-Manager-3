@@ -16,6 +16,9 @@ namespace ccm {
 struct YuGiOhCatalogCard {
     std::string setNo;
     std::string name;
+    /// YGOPRODeck `set_rarity` for this printing when known (optional;
+    /// older `set-catalog.json` files omit it).
+    std::string rarity{};
 
     friend bool operator==(const YuGiOhCatalogCard&,
                            const YuGiOhCatalogCard&) = default;

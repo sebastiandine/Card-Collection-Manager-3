@@ -8,6 +8,7 @@
 #include <wx/app.h>
 #include <wx/panel.h>
 
+#include <cctype>
 #include <thread>
 #include <unordered_set>
 
@@ -115,6 +116,7 @@ void PokemonCardEditDialog::appendExtraRows(wxFlexGridSizer* grid) {
     nextSetNoBtn_ = new wxButton(setNoPanel, wxID_ANY, "Next");
     nextSetNoBtn_->Bind(wxEVT_BUTTON, &PokemonCardEditDialog::onNextSetNo, this);
     nextSetNoBtn_->Show(false);
+    setNoCtrl_->Bind(wxEVT_TEXT, [this](wxCommandEvent&) { markSetNoLookupEdited(); });
     auto* setNoRow = new wxBoxSizer(wxHORIZONTAL);
     setNoRow->Add(setNoCtrl_, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
     setNoRow->Add(autoSetNoBtn_, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
@@ -311,7 +313,32 @@ void PokemonCardEditDialog::requestVariantsAsync(unsigned capturedEpoch,
                              fillSetNoOnSuccess, showFailureDialog]() mutable {
             if (!state->alive.load()) return;
             self->applyDetectedVariants(capturedEpoch, std::move(detected),
-                                        fillSetNoOnSuccess, showFailureDialog);
+                                        fillSetNoOnSuccess, /*fillNameOnSuccess=*/false,
+                                        showFailureDialog);
+        });
+    }).detach();
+}
+
+void PokemonCardEditDialog::requestBySetNoAsync(unsigned capturedEpoch,
+                                                std::string setId,
+                                                std::string setNo,
+                                                bool showFailureDialog) {
+    if (capturedEpoch != variantFetchEpoch_) return;
+    if (showFailureDialog && autoSetNoBtn_) autoSetNoBtn_->Disable();
+
+    auto state = variantFetchState_;
+    CardPreviewService* svc = &cardPreview_;
+    PokemonCardEditDialog* self = this;
+    const Game game = backendGame();
+    std::thread([state, svc, self, capturedEpoch, setId = std::move(setId),
+                 setNo = std::move(setNo), showFailureDialog, game]() {
+        auto detected = svc->detectVariantsBySetNo(game, setId, setNo);
+        wxTheApp->CallAfter([state, self, capturedEpoch, detected = std::move(detected),
+                             showFailureDialog]() mutable {
+            if (!state->alive.load()) return;
+            self->applyDetectedVariants(capturedEpoch, std::move(detected),
+                                        /*fillSetNoOnSuccess=*/true,
+                                        /*fillNameOnSuccess=*/true, showFailureDialog);
         });
     }).detach();
 }
@@ -319,10 +346,11 @@ void PokemonCardEditDialog::requestVariantsAsync(unsigned capturedEpoch,
 void PokemonCardEditDialog::applyDetectedVariants(unsigned capturedEpoch,
                                                   Result<std::vector<AutoDetectedPrint>> detected,
                                                   bool fillSetNoOnSuccess,
+                                                  bool fillNameOnSuccess,
                                                   bool showFailureDialog) {
     if (capturedEpoch != variantFetchEpoch_) return;
 
-    if (fillSetNoOnSuccess && autoSetNoBtn_) {
+    if ((fillSetNoOnSuccess || fillNameOnSuccess) && autoSetNoBtn_) {
         autoSetNoBtn_->Enable();
     }
 
@@ -335,8 +363,16 @@ void PokemonCardEditDialog::applyDetectedVariants(unsigned capturedEpoch,
     }
 
     cachedVariants_ = std::move(detected).value();
-    if (fillSetNoOnSuccess && !cachedVariants_.empty()) {
-        applySelectedSetNo(cachedVariants_.front().setNo);
+    if (!cachedVariants_.empty()) {
+        const auto& first = cachedVariants_.front();
+        if (fillNameOnSuccess && !first.name.empty()) {
+            if (auto* name = nameControl()) {
+                name->ChangeValue(wxString::FromUTF8(first.name.c_str()));
+            }
+        }
+        if (fillSetNoOnSuccess) {
+            applySelectedSetNo(first.setNo);
+        }
     }
 
     rebuildVariantRingFromCache();
@@ -443,19 +479,40 @@ void PokemonCardEditDialog::onNextSetNo(wxCommandEvent&) {
 void PokemonCardEditDialog::autoDetectFromApi() {
     syncCardFromControls();
     const auto& card = constCard();
-    if (card.name.empty()) {
-        showThemedMessageDialog(this, "Enter a card name first.", "Auto detect",
-                                wxOK | wxICON_INFORMATION);
-        return;
-    }
     if (card.set.id.empty()) {
         showThemedMessageDialog(this, "Select a set first.", "Auto detect",
                                 wxOK | wxICON_INFORMATION);
         return;
     }
 
+    std::string name = card.name;
+    while (!name.empty() && std::isspace(static_cast<unsigned char>(name.front()))) {
+        name.erase(name.begin());
+    }
+    while (!name.empty() && std::isspace(static_cast<unsigned char>(name.back()))) {
+        name.pop_back();
+    }
+
+    const std::string setNo = isUnnumberedPromoSelected()
+                                  ? normalizedStoredSetNo(selectedSetNo_)
+                                  : (setNoCtrl_ ? storedSetNoFromControls(setNoCtrl_)
+                                                : normalizedStoredSetNo(selectedSetNo_));
+    const bool nameEmpty = name.empty();
+    const bool setNoEmpty = setNo.empty();
     const unsigned epoch = variantFetchEpoch_;
-    requestVariantsAsync(epoch, card.name, card.set.id, true, true);
+
+    if (nameEmpty && setNoEmpty) {
+        showThemedMessageDialog(this, "Enter a card name or set number.", "Auto detect",
+                                wxOK | wxICON_INFORMATION);
+        return;
+    }
+
+    if (shouldDetectBySetNo(nameEmpty, setNoEmpty)) {
+        requestBySetNoAsync(epoch, card.set.id, setNo, true);
+        return;
+    }
+
+    requestVariantsAsync(epoch, name, card.set.id, true, true);
 }
 
 void PokemonCardEditDialog::onSetSelectionChanged(wxCommandEvent& ev) {

@@ -3,6 +3,9 @@
 // BaseSelectedCardPanel.hpp is included for the shared EVT_PREVIEW_STATUS
 // declaration so MainFrame can subscribe to preview-status updates from any
 // active selected panel without depending on a specific game's view.
+// BaseCardListPanel.hpp provides EVT_UI_STATUS for list-driven status notes
+// (e.g. clipboard copy).
+#include "ccm/ui/BaseCardListPanel.hpp"
 #include "ccm/ui/BaseSelectedCardPanel.hpp"
 #include "ccm/ui/IGameView.hpp"
 #include "ccm/ui/AppVersion.hpp"
@@ -147,6 +150,9 @@ void MainFrame::buildLayout() {
     toolbar->Add(toolbarButtons_[0], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
     toolbar->Add(toolbarButtons_[1], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
     toolbar->Add(toolbarButtons_[2], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
+    for (auto* view : ctx_.gameViews) {
+        if (view != nullptr) view->attachSharedToolbarEdit(toolbarButtons_[1]);
+    }
     toolbar->AddStretchSpacer(1);
     filterInput_ = new wxTextCtrl(toolbarPanel_, wxID_ANY, "", wxDefaultPosition,
                                   wxSize(260, -1));
@@ -195,12 +201,14 @@ void MainFrame::buildLayout() {
 
     // Selection changes are handled per-view (each IGameView binds
     // EVT_CARD_SELECTED on its own typed list panel and pushes the typed
-    // selection into its selected panel). MainFrame only reacts to preview
-    // status updates from any active selected panel.
-    Bind(EVT_PREVIEW_STATUS, [this](wxCommandEvent& ev) {
+    // selection into its selected panel). MainFrame reacts to status-bar
+    // updates from preview fetches and list actions (e.g. clipboard copy).
+    auto onStatusMessage = [this](wxCommandEvent& ev) {
         const wxString msg = ev.GetString();
         setStatusTextUi(msg.IsEmpty() ? wxString("Ready") : msg);
-    });
+    };
+    Bind(EVT_PREVIEW_STATUS, onStatusMessage);
+    Bind(EVT_UI_STATUS, onStatusMessage);
 }
 
 IGameView* MainFrame::activeView() {

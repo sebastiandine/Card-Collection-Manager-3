@@ -22,6 +22,8 @@
 
 #include <unordered_map>
 #include <unordered_set>
+#include <string>
+#include <string_view>
 
 #ifdef __WXMSW__
 #include <windows.h>
@@ -774,6 +776,23 @@ int showThemedMessageDialog(wxWindow* parent, const wxString& message, const wxS
     dlg.SetForegroundColour(palette.text);
     dlg.CentreOnParent();
     return dlg.ShowModal();
+}
+
+void setToolbarEditVisible(wxBitmapButton* edit, bool visible) {
+    if (edit == nullptr) return;
+    edit->Show(visible);
+    if (auto* parent = edit->GetParent()) {
+        parent->Layout();
+    }
+}
+
+wxString deleteCardsConfirmMessage(std::size_t count, std::string_view singleCardName) {
+    if (count == 1) {
+        return wxString::Format(
+            "Delete \"%s\"?",
+            wxString::FromUTF8(singleCardName.data(), singleCardName.size()));
+    }
+    return wxString::Format("Delete %zu selected entries?", count);
 }
 
 int showThemedConfirmDialog(wxWindow* parent, const wxString& message, const wxString& caption) {

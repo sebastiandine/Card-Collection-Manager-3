@@ -439,4 +439,113 @@ JapanesePokemonCardPreviewSource::detectPrintVariants(std::string_view name,
     return parsed;
 }
 
+Result<AutoDetectedPrint> JapanesePokemonCardPreviewSource::parsePrintFromCardResponse(
+    const std::string& body) {
+    using R = Result<AutoDetectedPrint>;
+    try {
+        const auto j = nlohmann::json::parse(body);
+        if (!j.is_object()) {
+            return R::err("TCGdex JA card response is not a JSON object.");
+        }
+        AutoDetectedPrint print;
+        print.name = trim(j.value("name", ""));
+        print.setNo = normalizeLocalId(j.value("localId", ""));
+        print.rarity = trim(j.value("rarity", ""));
+        if (print.name.empty()) {
+            return R::err("TCGdex JA card has no name.");
+        }
+        if (print.setNo.empty() && j.contains("id") && j.at("id").is_string()) {
+            const std::string id = j.at("id").get<std::string>();
+            const auto dash = id.rfind('-');
+            if (dash != std::string::npos) {
+                print.setNo = normalizeLocalId(id.substr(dash + 1));
+            }
+        }
+        return R::ok(std::move(print));
+    } catch (const std::exception& e) {
+        return R::err(std::string("TCGdex JA card JSON parse error: ") + e.what());
+    }
+}
+
+Result<std::vector<AutoDetectedPrint>>
+JapanesePokemonCardPreviewSource::detectVariantsBySetNoFromCatalog(
+    std::string_view setId,
+    std::string_view localId,
+    const JapanesePokemonEnCatalog& catalog) {
+    using R = Result<std::vector<AutoDetectedPrint>>;
+    const std::string id = normalizeLocalId(localId);
+    if (setId.empty()) return R::err("Select a set first.");
+    if (id.empty()) return R::err("Card number is empty.");
+
+    // Prefer exact key, then leading-zero-insensitive scan ("1" ↔ "001").
+    auto found = catalog.findPrint(setId, id);
+    if (!found) {
+        for (const auto& print : catalog.printsForSet(setId)) {
+            if (localIdsMatch(print.localId, id)) {
+                found = print;
+                break;
+            }
+        }
+    }
+    if (!found) {
+        return R::err("Could not auto-detect card name from set number.");
+    }
+    AutoDetectedPrint print;
+    print.name = !found->nameEn.empty() ? found->nameEn : found->nameJa;
+    print.setNo = found->localId.empty() ? id : found->localId;
+    if (print.name.empty()) {
+        return R::err("Could not auto-detect card name from set number.");
+    }
+    std::vector<AutoDetectedPrint> out;
+    out.push_back(std::move(print));
+    return R::ok(std::move(out));
+}
+
+Result<AutoDetectedPrint> JapanesePokemonCardPreviewSource::detectBySetNo(
+    std::string_view setId,
+    std::string_view setNo) {
+    auto list = detectVariantsBySetNo(setId, setNo);
+    if (!list) return Result<AutoDetectedPrint>::err(list.error());
+    if (list.value().empty()) {
+        return Result<AutoDetectedPrint>::err(
+            "Could not auto-detect card name from set number.");
+    }
+    return Result<AutoDetectedPrint>::ok(list.value().front());
+}
+
+Result<std::vector<AutoDetectedPrint>>
+JapanesePokemonCardPreviewSource::detectVariantsBySetNo(std::string_view setId,
+                                                        std::string_view setNo) {
+    using R = Result<std::vector<AutoDetectedPrint>>;
+    if (setId.empty()) return R::err("Select a set first.");
+    const std::string id = normalizeLocalId(setNo);
+    if (id.empty()) return R::err("Card number is empty.");
+
+    auto cardResp = http_.get(buildCardUrl(setId, id));
+    if (cardResp) {
+        auto parsed = parsePrintFromCardResponse(cardResp.value());
+        if (parsed && localIdsMatch(parsed.value().setNo, id)) {
+            // Prefer EN catalog name when available (exact or zero-insensitive).
+            if (auto cat = catalog_.findPrint(setId, id); cat && !cat->nameEn.empty()) {
+                parsed.value().name = cat->nameEn;
+            } else {
+                for (const auto& p : catalog_.printsForSet(setId)) {
+                    if (localIdsMatch(p.localId, id) && !p.nameEn.empty()) {
+                        parsed.value().name = p.nameEn;
+                        break;
+                    }
+                }
+            }
+            std::vector<AutoDetectedPrint> out;
+            out.push_back(std::move(parsed).value());
+            return R::ok(std::move(out));
+        }
+    }
+
+    if (catalog_.hasPrintsForSet(setId)) {
+        return detectVariantsBySetNoFromCatalog(setId, id, catalog_);
+    }
+    return R::err("Could not auto-detect card name from set number.");
+}
+
 }  // namespace ccm

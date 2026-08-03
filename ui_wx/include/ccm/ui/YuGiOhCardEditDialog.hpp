@@ -8,6 +8,11 @@
 #include <wx/button.h>
 #include <wx/stattext.h>
 
+#include <atomic>
+#include <memory>
+#include <string>
+#include <vector>
+
 namespace ccm::ui {
 
 class YuGiOhCardEditDialog final : public BaseCardEditDialog<YuGiOhCard> {
@@ -19,6 +24,7 @@ public:
                          EditMode mode,
                          YuGiOhCard initial,
                          const std::vector<Set>* preloadedSets = nullptr);
+    ~YuGiOhCardEditDialog() override;
 
 protected:
     void buildFlagsRow(wxBoxSizer* flagsBox) override;
@@ -31,6 +37,10 @@ protected:
     void onSetSelectionApplied() override;
 
 private:
+    struct VariantFetchState {
+        std::atomic<bool> alive{true};
+    };
+
     void onAutoDetectSetNo(wxCommandEvent&);
     void onAutoDetectRarity(wxCommandEvent&);
     void onNextSetNo(wxCommandEvent&);
@@ -42,6 +52,10 @@ private:
     void onSetCodeAutoDetect(wxCommandEvent&);
     void syncSetModeHint();
     void autoDetectFromApi(bool fillSetNo, bool fillRarity);
+    void requestBySetNoAsync(unsigned capturedEpoch, std::string setId, std::string setName,
+                             std::string setNo);
+    void applyReverseDetectedList(unsigned capturedEpoch,
+                                  Result<std::vector<AutoDetectedPrint>> detected);
     void refreshSetNoFullPreview();
     void clearCachedPrintVariants();
     bool fetchAndCachePrintVariants();
@@ -59,6 +73,7 @@ private:
     EditMode                      dialogMode_;
     unsigned                      variantFetchEpoch_{0};
     CardPreviewService& cardPreview_;
+    std::shared_ptr<VariantFetchState> variantFetchState_;
     wxTextCtrl* setNoCtrl_{nullptr};
     wxStaticText* setNoFullPreview_{nullptr};
     wxChoice*   rarityChoice_{nullptr};

@@ -3,6 +3,7 @@
 #include "ccm/games/IGameModule.hpp"
 #include "ccm/games/yugioh/YuGiOhCardPreviewSource.hpp"
 #include "ccm/games/yugioh/YuGiOhSetSource.hpp"
+#include "ccm/services/YuGiOhSetCatalogService.hpp"
 
 namespace ccm {
 
@@ -16,6 +17,15 @@ public:
 
     ISetSource&         setSource()          override { return setSource_; }
     ICardPreviewSource* cardPreviewSource() noexcept override { return &previewSource_; }
+
+    // Wire offline set catalog for set+setNo → name reverse auto-detect.
+    void setCatalogService(YuGiOhSetCatalogService* catalogStore) noexcept {
+        previewSource_.setCatalogService(catalogStore);
+    }
+
+    [[nodiscard]] YuGiOhCardPreviewSource& previewSource() noexcept {
+        return previewSource_;
+    }
 
 private:
     YuGiOhSetSource          setSource_;

@@ -1,12 +1,16 @@
 #include "ccm/ui/YuGiOhCardEditDialog.hpp"
 #include "ccm/ui/SwitchCtrl.hpp"
+#include "ccm/ui/Theme.hpp"
 #include "ccm/domain/Enums.hpp"
+#include "ccm/util/CardLookupDetect.hpp"
 #include "ccm/util/YuGiOhPrintingSlot.hpp"
 #include "ccm/util/YuGiOhSetLookup.hpp"
 #include <wx/app.h>
 #include <wx/panel.h>
 #include <algorithm>
 #include <cctype>
+#include <string>
+#include <thread>
 #include <unordered_set>
 
 namespace ccm::ui {
@@ -39,11 +43,16 @@ YuGiOhCardEditDialog::YuGiOhCardEditDialog(wxWindow* parent,
           mode == EditMode::Create ? "Add Yu-Gi-Oh! Card" : "Edit Yu-Gi-Oh! Card",
           imageService, setService, mode, std::move(initial), Game::YuGiOh, preloadedSets),
       dialogMode_(mode),
-      cardPreview_(cardPreview) {
+      cardPreview_(cardPreview),
+      variantFetchState_(std::make_shared<VariantFetchState>()) {
     buildAndPopulate();
     if (dialogMode_ == EditMode::Edit) {
         scheduleDeferredVariantPrefetch();
     }
+}
+
+YuGiOhCardEditDialog::~YuGiOhCardEditDialog() {
+    if (variantFetchState_) variantFetchState_->alive = false;
 }
 
 void YuGiOhCardEditDialog::onCardLookupContextChanged() {
@@ -298,7 +307,97 @@ void YuGiOhCardEditDialog::refreshVariantNextControls() {
 }
 
 void YuGiOhCardEditDialog::onAutoDetectSetNo(wxCommandEvent&) {
-    autoDetectFromApi(true, false);
+    syncCardFromControls();
+    const auto& card = constCard();
+    if (card.set.id.empty()) {
+        showThemedMessageDialog(this, "Select a set first.", "Auto detect",
+                                wxOK | wxICON_INFORMATION);
+        return;
+    }
+
+    // Trim so a blank-looking Name field does not take the name→setNo path.
+    std::string name = card.name;
+    while (!name.empty() && std::isspace(static_cast<unsigned char>(name.front()))) {
+        name.erase(name.begin());
+    }
+    while (!name.empty() && std::isspace(static_cast<unsigned char>(name.back()))) {
+        name.pop_back();
+    }
+
+    const std::string setNoDigits =
+        setNoCtrl_ ? setNoCtrl_->GetValue().ToStdString(wxConvUTF8) : std::string();
+    const bool nameEmpty = name.empty();
+    const bool setNoEmpty = ygoCollectorDigitsFromInput(setNoDigits).empty();
+
+    if (nameEmpty && setNoEmpty) {
+        showThemedMessageDialog(this, "Enter a card name or set number.", "Auto detect",
+                                wxOK | wxICON_INFORMATION);
+        return;
+    }
+
+    if (shouldDetectBySetNo(nameEmpty, setNoEmpty)) {
+        const unsigned epoch = variantFetchEpoch_;
+        requestBySetNoAsync(epoch, card.set.id, card.set.name, setNoDigits);
+        return;
+    }
+
+    autoDetectFromApi(true, true);
+}
+
+void YuGiOhCardEditDialog::requestBySetNoAsync(unsigned capturedEpoch, std::string setId,
+                                               std::string setName, std::string setNo) {
+    if (capturedEpoch != variantFetchEpoch_) return;
+    if (autoSetNoBtn_) autoSetNoBtn_->Disable();
+
+    auto state = variantFetchState_;
+    CardPreviewService* svc = &cardPreview_;
+    YuGiOhCardEditDialog* self = this;
+    std::thread([state, svc, self, capturedEpoch, setId = std::move(setId),
+                 setName = std::move(setName), setNo = std::move(setNo)]() {
+        // Prefer set id (offline catalog pack key); fall back to display name
+        // for YGOPRODeck cardset= when the catalog is missing.
+        auto detected = svc->detectVariantsBySetNo(Game::YuGiOh, setId, setNo);
+        if (!detected && !setName.empty() && setName != setId) {
+            detected = svc->detectVariantsBySetNo(Game::YuGiOh, setName, setNo);
+        }
+        wxTheApp->CallAfter([state, self, capturedEpoch,
+                             detected = std::move(detected)]() mutable {
+            if (!state->alive.load()) return;
+            self->applyReverseDetectedList(capturedEpoch, std::move(detected));
+        });
+    }).detach();
+}
+
+void YuGiOhCardEditDialog::applyReverseDetectedList(
+    unsigned capturedEpoch,
+    Result<std::vector<AutoDetectedPrint>> detected) {
+    if (capturedEpoch != variantFetchEpoch_) return;
+    if (autoSetNoBtn_) autoSetNoBtn_->Enable();
+
+    if (!detected) {
+        showThemedMessageDialog(this, "Auto detect failed: " + detected.error(),
+                                "Auto detect", wxOK | wxICON_WARNING);
+        return;
+    }
+    if (detected.value().empty()) {
+        showThemedMessageDialog(this, "No matching Yu-Gi-Oh! card found.", "Auto detect",
+                                wxOK | wxICON_INFORMATION);
+        return;
+    }
+
+    cachedVariants_ = std::move(detected).value();
+    const auto& p = cachedVariants_.front();
+    if (auto* name = nameControl(); name && !p.name.empty()) {
+        name->ChangeValue(wxString::FromUTF8(p.name.c_str()));
+    }
+    if (setNoCtrl_ && !p.setNo.empty()) {
+        setNoCtrl_->ChangeValue(wxString::FromUTF8(extractSetNoNumeric(p.setNo).c_str()));
+    }
+    if (!p.rarity.empty()) applyRarityStringToChoice(p.rarity);
+    rebuildVariantRingsFromCache();
+    syncRingPositionsToControls();
+    refreshSetNoFullPreview();
+    refreshVariantNextControls();
 }
 
 void YuGiOhCardEditDialog::onAutoDetectRarity(wxCommandEvent&) {
@@ -360,6 +459,7 @@ void YuGiOhCardEditDialog::autoDetectFromApi(bool fillSetNo, bool fillRarity) {
 }
 
 void YuGiOhCardEditDialog::onSetNoTextChanged(wxCommandEvent&) {
+    markSetNoLookupEdited();
     refreshSetNoFullPreview();
     if (!cachedVariants_.empty()) {
         rebuildVariantRingsFromCache();

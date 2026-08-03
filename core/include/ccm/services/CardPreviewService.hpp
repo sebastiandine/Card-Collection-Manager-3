@@ -81,10 +81,14 @@ public:
                                                                std::string_view name,
                                                                std::string_view setId);
 
-    Result<AutoDetectedPrint> detectBySetNo(Game game, std::string_view setNo);
+    Result<AutoDetectedPrint> detectBySetNo(Game game,
+                                            std::string_view setId,
+                                            std::string_view setNo);
 
-    Result<std::vector<AutoDetectedPrint>> detectVariantsBySetNo(Game game,
-                                                                std::string_view setNo);
+    Result<std::vector<AutoDetectedPrint>> detectVariantsBySetNo(
+        Game game,
+        std::string_view setId,
+        std::string_view setNo);
 
     // Download image bytes from a fully-qualified URL without going through
     // per-game preview-source resolution. Cached by URL (same LRU bound).

@@ -33,7 +33,11 @@ Used by `PokemonCardPreviewSource` in two ways:
 
 1. **Preview lookup (`fetchImageUrl`).** When both set id and collector number are present, prefers `GET /v2/en/cards/{setId}-{localId}` (card object with `image` base). On HTTP failure or missing image, falls back to a filtered search `set.id=eq:…&localId=eq:…` (collector numbers are unique within a set). When Set # or set id is missing, uses `name=eq:…` with optional `set.id` / `localId`. Legacy set ids are canonicalized before URL build.
 
-2. **Auto-detect print (`detectFirstPrint` / `detectPrintVariants`, Pokémon edit dialog).** Prefers `GET /v2/en/sets/{setId}` and filters `cards[]` by exact case-insensitive card name. Maps `localId` → `AutoDetectedPrint::setNo` and `rarity` → `AutoDetectedPrint::rarity` (the edit dialog does not auto-sync holo flags from rarity). If set detail fails, falls back to a filtered cards search and still restricts rows to the chosen set id when present. Distinct `(setNo, rarity)` pairs are deduped. The edit dialog offers **Auto detect**, **Next**, silent prefetch on **Edit** open, and clears cached variants when **Name** or **Set** changes. The Set # field and persisted `PokemonCard::setNo` keep only the printed-number portion; values such as `4/104` are trimmed to `4` on load and save.
+2. **Auto-detect print (`detectFirstPrint` / `detectPrintVariants`, Pokémon edit dialog).** Prefers `GET /v2/en/sets/{setId}` and filters `cards[]` by exact case-insensitive card name. Maps `localId` → `AutoDetectedPrint::setNo` and `rarity` → `AutoDetectedPrint::rarity` (the edit dialog does not auto-sync holo flags from rarity). If set detail fails, falls back to a filtered cards search and still restricts rows to the chosen set id when present. Distinct `(setNo, rarity)` pairs are deduped.
+
+3. **Reverse auto-detect (`detectVariantsBySetNo`, same Set # Auto detect button).** Requires a selected set. When **Name** is blank and **Set #** is filled, uses `GET /v2/en/cards/{setId}-{localId}` (then filtered search) to fill the card **name**. Returned `localId`s are post-filtered so a fuzzy hit cannot win on a shared digit prefix (`4` must not accept `14`). When Name is filled, behavior stays name → setNo as above. Set is always required for either direction.
+
+The edit dialog offers **Auto detect**, **Next**, silent prefetch on **Edit** open, and clears cached variants when **Name** or **Set** changes. The Set # field and persisted `PokemonCard::setNo` keep only the printed-number portion; values such as `4/104` are trimmed to `4` on load and save.
 
 The preview path normalizes collector numbers before request build. For example, `4/102` is reduced to `4` because the remote `localId` path expects only the printed-number component.
 
@@ -96,6 +100,8 @@ Used in two situations:
 
 2. **Auto-detect print (`detectFirstPrint` / `detectPrintVariants`, Yu-Gi-Oh! edit dialog).** Uses `fname=` plus **`cardset=`** set to the **display set name** from the picker (must match `card_sets[].set_name` in the payload). If that request fails (for example unknown set label), it retries with **`fname=` only** and still filters prints by preferred `set_name`. `YuGiOhCardPreviewSource::parsePrintVariants(...)` walks every `(set_code, set_rarity)` pair for rows whose **card name matches exactly** (case-insensitive) so the dialog can offer ring-buffer **Next** controls: one cycles distinct `set_code` values for that name+set (and resets rarity to the first upstream rarity for the newly selected code); another cycles distinct `set_rarity` values for the **current** `set_code` without changing the collector number. Shared HTTP and parsing rules live beside `parseFirstPrint`. When the dialog passes both an exact card name and a display `set_name`, an upstream miss on that label returns an error instead of falling back to unfiltered `card_sets[]` rows — otherwise unrelated products (same card name, different `set_name` on each printing) could be blended into one bogus variant list. The Yu-Gi-Oh! edit dialog additionally drops European alternate `set_code` rows that use the `-E###` pattern (single `E` before digits, e.g. `LOB-E003`) when the card language is **English**, because YGOPRODeck keeps those alongside NA numbering (`LOB-005`) under the same English `set_name`; it also collapses `LOB-005`-style and `LOB-EN005`-style codes to one **Next** slot via digit-tail matching (`ccm/util/YuGiOhPrintingSlot.hpp`). No image data is needed for this path, so Yugipedia is not consulted.
 
+3. **Reverse auto-detect (`detectVariantsBySetNo`).** When **Name** is blank and **Set #** is filled, the Set # Auto detect button looks up the offline `yugioh/set-catalog.json` checklist (same file as Set Completion) by `Set.id` + collector digits / full code, and fills the card **name** (and **rarity** when present on the catalog row or when YGOPRODeck `cardset=` enrichment succeeds). Digit matching strips leading zeros but is not a prefix match (`5` ↔ `LOB-005`, `1` does not match `LOB-011`). Name→Set # Auto detect also applies the matched print’s rarity. When **both** Name and Set # are filled, the field last typed by the user is the lookup key (so editing Set # after a name detect and clicking Auto detect again resolves by set number, not by re-running the name path). Requires a prior **Sets → Update Yu-Gi-Oh!** so the catalog exists (re-run Update to refresh rarities on older catalogs). Set is always required for both directions.
+
 YGOPRODeck publishes rate limits and asks clients to cache responses and avoid abusive hotlinking; treat failures after burst traffic as an upstream policy signal, not an app bug. Yugipedia’s MediaWiki API is similarly polite — one batched call per preview lookup keeps us well under any normal threshold.
 
 ### Set-completion catalog (`cardinfo.php` all-cards dump)
@@ -105,7 +111,7 @@ YGOPRODeck publishes rate limits and asks clients to cache responses and avoid a
 1. The set list (`yugioh/sets.json`) from `cardsets.php` (same as before, including local 25th Anniversary aliases)
 2. A pack checklist at `<dataStorage>/yugioh/set-catalog.json` from the unfiltered `cardinfo.php` dump
 
-Each catalog pack stores `id` (YGOPRODeck product `set_code` / `Set.id`, e.g. `LOB`), `name` (display `set_name`), and `cards[]` of `{ setNo, name }` drawn from each card’s `card_sets[]`. European `-E###` alternate codes are dropped; `LOB-005` / `LOB-EN005`-style equivalents collapse to one checklist row (preferring an `EN`-embedded code when present). The Yu-Gi-Oh! **Set Completion** tab reads this file offline; ownership for a pack requires matching `card.set.id` plus a printing-slot match (`ygoPrintingSlotsMatch` — same abbrev + digit run). Rarity and 1st Edition are ignored for completion counts.
+Each catalog pack stores `id` (YGOPRODeck product `set_code` / `Set.id`, e.g. `LOB`), `name` (display `set_name`), and `cards[]` of `{ setNo, name, rarity? }` drawn from each card’s `card_sets[]` (`set_rarity` when present). European `-E###` alternate codes are dropped; `LOB-005` / `LOB-EN005`-style equivalents collapse to one checklist row (preferring an `EN`-embedded code when present). The Yu-Gi-Oh! **Set Completion** tab reads this file offline; ownership for a pack requires matching `card.set.id` plus a printing-slot match (`ygoPrintingSlotsMatch` — same abbrev + digit run). Rarity and 1st Edition are ignored for completion counts.
 
 If `set-catalog.json` is missing, the Set Completion tab prompts the user to run Update Yu-Gi-Oh!.
 
@@ -135,8 +141,8 @@ English Blue-Eyes is **not** a separate set — it is `ban3` card `#118` with la
 ### Asset API (preview + auto-detect)
 
 1. **Preview:** `pageimages` on preferred titles `Name (Bandai)` / `Name (English Bandai)` / `Name (Bandai Sealdass)`, falling back to SMW `ask` by English name then `pageimages` on the best hit.
-2. **Auto-detect by name:** SMW `ask` `[[Category:Bandai cards]][[English name::…]]` → fills `name`, `setId`/`setName`, `setNo`, `rarity`, `language`.
-3. **Auto-detect by number:** SMW `ask` `[[Bandai number::…]]` → same fields.
+2. **Auto-detect by name:** SMW `ask` `[[Category:Bandai cards]][[English name::…]]` → fills `name`, `setId`/`setName`, `setNo`, `rarity`, `language`. Requires a selected set.
+3. **Auto-detect by number:** SMW `ask` `[[Bandai number::…]]` (or promo gallery parse for `J*`/`TA*` codes) → same fields, then **filtered to the selected set**. Ask results are also dropped when the returned Bandai number does not match the requested one after normalization (`1` must not accept `11`). The Set # Auto detect button is bidirectional: blank name + number fills name; name filled fills number/rarity. Set is always required.
 
 Card-back fallback URL: `https://ms.yugipedia.com//3/34/Back-BAN-JP-1999.png`.
 
@@ -187,6 +193,8 @@ where `{id}` is the API card number (`ST-01`, `BO-115`, `MO-06`). The CDN also s
 **Preview key:** `(name, set.name, setNo)` — middle slot is the pack **display name** (same idea as Yu-Gi-Oh! passing `set.name` for YGOPRODeck `cardset=`), not the slug id.
 
 **Auto-detect** (`detectPrintVariants`): same search; distinct `id` values become `AutoDetectedPrint::setNo`. Digi-Battle UI is Pokémon-like (no persisted rarity).
+
+**Reverse auto-detect** (`detectVariantsBySetNo`): when Name is blank and Set # is filled, search with `card=` + `pack=` fills `AutoDetectedPrint::name` (and normalizes `setNo`). Hits are post-filtered so digits-only input matches the numeric suffix with leading zeros ignored (`1` ↔ `ST-01`, not `ST-11`). Set (pack display name) is always required for either direction.
 
 Empty search array / `{"error":"..."}` → `NotFound`; bad JSON / HTTP → `Transient`.
 
@@ -261,6 +269,8 @@ Preview is **local-id based**. `JapanesePokemonCardPreviewSource`:
 It does **not** substitute another printing of the same Pokémon when both TCGdex and the catalog lack an image. Then preview returns `NotFound` and the UI shows the Japanese TCG card-back.
 
 Auto-detect / Next uses the same set-detail `cards[]`, matching the typed name against catalog English names or TCGdex Japanese names. Catalog EN aliases are applied only when the catalog `name_ja` agrees with the TCGdex row (stale seed mappings like Charmander→`001` are ignored).
+
+Reverse auto-detect (`detectVariantsBySetNo`) uses `GET /v2/ja/cards/{setId}-{localId}` (preferring catalog `nameEn` when present) or a catalog scan with leading-zero-insensitive `localId` matching (`1` ↔ `001`, not `011`) for catalog-only sets, filling Name when Set # is known and Name is blank. Set is always required.
 
 Pokémon English aliases in the catalog come from National Dex → species table (`dexId`) for ordinary Pokémon. When `name_ja` carries a known owner / Rocket's / Dark / Light / Shining prefix, `enrich_preview_images.py` composes the **full English product title** (e.g. `エリカのナゾノクサ` → `Erika's Oddish`, `わるいリザードン` → `Dark Charizard`, `R団のサンダー` → `Rocket's Zapdos`, neo garbled `輝くセレビ` → `Shining Celebi`). Those rows use `name_en_source: "species-table-variant"`. Trainer/Energy English aliases come from the offline JA→EN map `tools/pokemon_jp/non_pokemon_en_by_ja.json` (e.g. Switch ← `ポケモンいれかえ`).
 

@@ -18,7 +18,7 @@ struct Replacement {
     std::string_view to;
 };
 
-constexpr std::array<Replacement, 14> kReplacements{{
+constexpr std::array<Replacement, 16> kReplacements{{
     {"'",  ""},
     {"`",  ""},
     {",",  ""},
@@ -34,6 +34,8 @@ constexpr std::array<Replacement, 14> kReplacements{{
     {"\xC3\xBB", "u"},  // u-circumflex
     // Remaining accented vowels appear in modern Scryfall data but were not
     // listed in the Rust source. Keeping behavior 1:1 deliberately.
+    {"\xE2\x99\x82", "male"},    // ♂ male sign
+    {"\xE2\x99\x80", "female"},  // ♀ female sign
 }};
 
 void replaceAllInPlace(std::string& s, std::string_view from, std::string_view to) {

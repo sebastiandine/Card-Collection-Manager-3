@@ -4,6 +4,7 @@
 #include "ccm/games/digibattle99/DigiBattle99CardPreviewSource.hpp"
 #include <wx/app.h>
 #include <wx/panel.h>
+#include <cctype>
 #include <thread>
 #include <unordered_set>
 
@@ -60,6 +61,7 @@ void DigiBattle99CardEditDialog::appendExtraRows(wxFlexGridSizer* grid) {
     nextSetNoBtn_ = new wxButton(setNoPanel, wxID_ANY, "Next");
     nextSetNoBtn_->Bind(wxEVT_BUTTON, &DigiBattle99CardEditDialog::onNextSetNo, this);
     nextSetNoBtn_->Show(false);
+    setNoCtrl_->Bind(wxEVT_TEXT, [this](wxCommandEvent&) { markSetNoLookupEdited(); });
     auto* setNoRow = new wxBoxSizer(wxHORIZONTAL);
     setNoRow->Add(setNoCtrl_, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
     setNoRow->Add(autoSetNoBtn_, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
@@ -148,7 +150,31 @@ void DigiBattle99CardEditDialog::requestVariantsAsync(unsigned capturedEpoch,
                              fillSetNoOnSuccess, showFailureDialog]() mutable {
             if (!state->alive.load()) return;
             self->applyDetectedVariants(capturedEpoch, std::move(detected),
-                                        fillSetNoOnSuccess, showFailureDialog);
+                                        fillSetNoOnSuccess, /*fillNameOnSuccess=*/false,
+                                        showFailureDialog);
+        });
+    }).detach();
+}
+
+void DigiBattle99CardEditDialog::requestBySetNoAsync(unsigned capturedEpoch,
+                                                     std::string setName,
+                                                     std::string setNo,
+                                                     bool showFailureDialog) {
+    if (capturedEpoch != variantFetchEpoch_) return;
+    if (showFailureDialog && autoSetNoBtn_) autoSetNoBtn_->Disable();
+
+    auto state = variantFetchState_;
+    CardPreviewService* svc = &cardPreview_;
+    DigiBattle99CardEditDialog* self = this;
+    std::thread([state, svc, self, capturedEpoch, setName = std::move(setName),
+                 setNo = std::move(setNo), showFailureDialog]() {
+        auto detected = svc->detectVariantsBySetNo(Game::DigiBattle99, setName, setNo);
+        wxTheApp->CallAfter([state, self, capturedEpoch, detected = std::move(detected),
+                             showFailureDialog]() mutable {
+            if (!state->alive.load()) return;
+            self->applyDetectedVariants(capturedEpoch, std::move(detected),
+                                        /*fillSetNoOnSuccess=*/true,
+                                        /*fillNameOnSuccess=*/true, showFailureDialog);
         });
     }).detach();
 }
@@ -157,10 +183,11 @@ void DigiBattle99CardEditDialog::applyDetectedVariants(
     unsigned capturedEpoch,
     Result<std::vector<AutoDetectedPrint>> detected,
     bool fillSetNoOnSuccess,
+    bool fillNameOnSuccess,
     bool showFailureDialog) {
     if (capturedEpoch != variantFetchEpoch_) return;
 
-    if (fillSetNoOnSuccess && autoSetNoBtn_) {
+    if ((fillSetNoOnSuccess || fillNameOnSuccess) && autoSetNoBtn_) {
         autoSetNoBtn_->Enable();
     }
 
@@ -173,9 +200,16 @@ void DigiBattle99CardEditDialog::applyDetectedVariants(
     }
 
     cachedVariants_ = std::move(detected).value();
-    if (fillSetNoOnSuccess && setNoCtrl_ && !cachedVariants_.empty()) {
-        setNoCtrl_->ChangeValue(
-            wxString::FromUTF8(cachedVariants_.front().setNo.c_str()));
+    if (!cachedVariants_.empty()) {
+        const auto& first = cachedVariants_.front();
+        if (fillNameOnSuccess && !first.name.empty()) {
+            if (auto* name = nameControl()) {
+                name->ChangeValue(wxString::FromUTF8(first.name.c_str()));
+            }
+        }
+        if (fillSetNoOnSuccess && setNoCtrl_) {
+            setNoCtrl_->ChangeValue(wxString::FromUTF8(first.setNo.c_str()));
+        }
     }
 
     rebuildVariantRingFromCache();
@@ -231,19 +265,38 @@ void DigiBattle99CardEditDialog::onNextSetNo(wxCommandEvent&) {
 void DigiBattle99CardEditDialog::autoDetectFromApi() {
     syncCardFromControls();
     const auto& card = constCard();
-    if (card.name.empty()) {
-        showThemedMessageDialog(this, "Enter a card name first.", "Auto detect",
-                                wxOK | wxICON_INFORMATION);
-        return;
-    }
     if (card.set.name.empty()) {
         showThemedMessageDialog(this, "Select a set first.", "Auto detect",
                                 wxOK | wxICON_INFORMATION);
         return;
     }
 
+    std::string name = card.name;
+    while (!name.empty() && std::isspace(static_cast<unsigned char>(name.front()))) {
+        name.erase(name.begin());
+    }
+    while (!name.empty() && std::isspace(static_cast<unsigned char>(name.back()))) {
+        name.pop_back();
+    }
+
+    const std::string setNo =
+        setNoCtrl_ ? storedSetNoFromControls(setNoCtrl_) : std::string();
+    const bool nameEmpty = name.empty();
+    const bool setNoEmpty = setNo.empty();
     const unsigned epoch = variantFetchEpoch_;
-    requestVariantsAsync(epoch, card.name, card.set.name, true, true);
+
+    if (nameEmpty && setNoEmpty) {
+        showThemedMessageDialog(this, "Enter a card name or set number.", "Auto detect",
+                                wxOK | wxICON_INFORMATION);
+        return;
+    }
+
+    if (shouldDetectBySetNo(nameEmpty, setNoEmpty)) {
+        requestBySetNoAsync(epoch, card.set.name, setNo, true);
+        return;
+    }
+
+    requestVariantsAsync(epoch, name, card.set.name, true, true);
 }
 
 void DigiBattle99CardEditDialog::onSetSelectionChanged(wxCommandEvent& ev) {

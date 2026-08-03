@@ -213,11 +213,16 @@ TEST_SUITE("YuGiOhSetSource::parseCatalog") {
         }
         CHECK(sawBe);
         CHECK(sawDm);
+        for (const auto& c : lob->cards) {
+            if (c.name == "Blue-Eyes White Dragon") CHECK(c.rarity == "Ultra Rare");
+            if (c.name == "Dark Magician") CHECK(c.rarity == "Ultra Rare");
+        }
 
         const auto* mrd = out.value().findPack("MRD");
         REQUIRE(mrd != nullptr);
         REQUIRE(mrd->cards.size() == 1);
         CHECK(mrd->cards[0].setNo == "MRD-010");
+        CHECK(mrd->cards[0].rarity == "Ultra Rare");
     }
 
     TEST_CASE("missing data array returns error") {

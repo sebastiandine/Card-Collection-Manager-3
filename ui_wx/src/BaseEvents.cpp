@@ -12,6 +12,7 @@ namespace ccm::ui {
 
 wxDEFINE_EVENT(EVT_CARD_SELECTED, wxCommandEvent);
 wxDEFINE_EVENT(EVT_CARD_ACTIVATED, wxCommandEvent);
+wxDEFINE_EVENT(EVT_UI_STATUS, wxCommandEvent);
 wxDEFINE_EVENT(EVT_PREVIEW_STATUS, wxCommandEvent);
 
 }  // namespace ccm::ui

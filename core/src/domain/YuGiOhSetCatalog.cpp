@@ -11,11 +11,13 @@ const YuGiOhSetCatalogPack* YuGiOhSetCatalog::findPack(std::string_view setId) c
 
 void to_json(nlohmann::json& j, const YuGiOhCatalogCard& c) {
     j = nlohmann::json{{"setNo", c.setNo}, {"name", c.name}};
+    if (!c.rarity.empty()) j["rarity"] = c.rarity;
 }
 
 void from_json(const nlohmann::json& j, YuGiOhCatalogCard& c) {
     j.at("setNo").get_to(c.setNo);
     j.at("name").get_to(c.name);
+    c.rarity = j.value("rarity", "");
 }
 
 void to_json(nlohmann::json& j, const YuGiOhSetCatalogPack& p) {

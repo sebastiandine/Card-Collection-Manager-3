@@ -64,6 +64,7 @@ public:
     }
 
 private:
+    void syncEditToolbarVisibility();
     void ensureSetsLoaded();
     // Fetches sets + checklist catalog from Yugipedia and persists both.
     // Returns false on failure (error dialogs already shown).

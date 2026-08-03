@@ -63,6 +63,7 @@ public:
     }
 
 private:
+    void syncEditToolbarVisibility();
     void ensureSetsLoaded();
     const std::vector<Set>& setsForDialog();
     void ensureSingleCardsMounted(wxWindow* splitterParent);

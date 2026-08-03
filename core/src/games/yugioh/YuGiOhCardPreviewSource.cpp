@@ -555,4 +555,176 @@ Result<std::vector<AutoDetectedPrint>> YuGiOhCardPreviewSource::detectPrintVaria
     return parsePrintVariants(fallback.value(), canonicalSetName, name);
 }
 
+Result<std::vector<AutoDetectedPrint>>
+YuGiOhCardPreviewSource::detectVariantsBySetNoFromCatalog(
+    const YuGiOhSetCatalog& catalog,
+    std::string_view setId,
+    std::string_view setNo) {
+    using R = Result<std::vector<AutoDetectedPrint>>;
+    const std::string packId = std::string(trimAsciiSpaces(setId));
+    if (packId.empty()) return R::err("Select a set first.");
+
+    const std::string rawNo = std::string(trimAsciiSpaces(setNo));
+    if (rawNo.empty()) return R::err("Card number is empty.");
+
+    const std::string wantDigits =
+        ygoDigitsStripLeadingZeros(ygoCollectorDigitsFromInput(rawNo));
+    if (wantDigits.empty()) return R::err("Card number is empty.");
+
+    const YuGiOhSetCatalogPack* pack = catalog.findPack(packId);
+    if (pack == nullptr) {
+        // Allow callers to pass the display set name (HTTP fallback path).
+        for (const auto& candidate : catalog.packs) {
+            if (candidate.setName == packId) {
+                pack = &candidate;
+                break;
+            }
+        }
+    }
+    if (pack == nullptr) {
+        return R::err("Set not found in offline catalog. Run Sets → Update Yu-Gi-Oh! first.");
+    }
+
+    std::vector<AutoDetectedPrint> out;
+    std::unordered_set<std::string> seenNames;
+    for (const auto& card : pack->cards) {
+        if (!ygoCollectorDigitsEqual(card.setNo, rawNo)) continue;
+        if (card.name.empty()) continue;
+        if (!seenNames.insert(card.name).second) continue;
+        AutoDetectedPrint print;
+        print.name = card.name;
+        print.setNo = card.setNo;
+        print.rarity = card.rarity;
+        out.push_back(std::move(print));
+    }
+    if (out.empty()) {
+        return R::err("Could not auto-detect card name from set number.");
+    }
+    return R::ok(std::move(out));
+}
+
+std::string YuGiOhCardPreviewSource::buildCardsetOnlyUrl(std::string_view setName) {
+    return std::string("https://db.ygoprodeck.com/api/v7/cardinfo.php?cardset=") +
+           rfc3986PercentEncode(setName);
+}
+
+Result<std::vector<AutoDetectedPrint>>
+YuGiOhCardPreviewSource::detectVariantsBySetNoFromCardset(
+    const std::string& body,
+    std::string_view preferredSetName,
+    std::string_view setNo) {
+    using R = Result<std::vector<AutoDetectedPrint>>;
+    const std::string wantDigits =
+        ygoDigitsStripLeadingZeros(ygoCollectorDigitsFromInput(setNo));
+    if (wantDigits.empty()) return R::err("Card number is empty.");
+
+    try {
+        const auto j = nlohmann::json::parse(body);
+        if (!j.contains("data") || !j.at("data").is_array()) {
+            return R::err("YGOPRODeck response missing 'data' array.");
+        }
+        const std::string preferredLower = toLower(trim(std::string(preferredSetName)));
+
+        std::vector<AutoDetectedPrint> out;
+        std::unordered_set<std::string> seen;
+        for (const auto& card : j.at("data")) {
+            const std::string cardName = trim(card.value("name", ""));
+            if (cardName.empty()) continue;
+            if (!card.contains("card_sets") || !card.at("card_sets").is_array()) continue;
+            for (const auto& printing : card.at("card_sets")) {
+                const std::string setName = trim(printing.value("set_name", ""));
+                const std::string setCode = trim(printing.value("set_code", ""));
+                if (setCode.empty()) continue;
+                if (ygoLikelyEuropeanRegionalSetCode(setCode)) continue;
+                if (!preferredLower.empty() && toLower(setName) != preferredLower) continue;
+                if (!ygoCollectorDigitsEqual(setCode, setNo)) continue;
+                AutoDetectedPrint print;
+                print.name = cardName;
+                print.setNo = setCode;
+                print.rarity = trim(printing.value("set_rarity", ""));
+                const std::string key = print.name + '\0' + print.setNo + '\0' + print.rarity;
+                if (!seen.insert(key).second) continue;
+                out.push_back(std::move(print));
+            }
+        }
+        if (out.empty()) {
+            return R::err("Could not auto-detect card name from set number.");
+        }
+        return R::ok(std::move(out));
+    } catch (const std::exception& e) {
+        return R::err(std::string("YGOPRODeck JSON parse error: ") + e.what());
+    }
+}
+
+Result<AutoDetectedPrint> YuGiOhCardPreviewSource::detectBySetNo(std::string_view setId,
+                                                                 std::string_view setNo) {
+    auto list = detectVariantsBySetNo(setId, setNo);
+    if (!list) return Result<AutoDetectedPrint>::err(list.error());
+    if (list.value().empty()) {
+        return Result<AutoDetectedPrint>::err(
+            "Could not auto-detect card name from set number.");
+    }
+    return Result<AutoDetectedPrint>::ok(list.value().front());
+}
+
+Result<std::vector<AutoDetectedPrint>> YuGiOhCardPreviewSource::detectVariantsBySetNo(
+    std::string_view setId,
+    std::string_view setNo) {
+    using R = Result<std::vector<AutoDetectedPrint>>;
+    const std::string setKey = std::string(trimAsciiSpaces(setId));
+    if (setKey.empty()) return R::err("Select a set first.");
+    if (ygoCollectorDigitsFromInput(setNo).empty()) {
+        return R::err("Card number is empty.");
+    }
+
+    // 1) Offline catalog (preferred — fast once cached).
+    if (catalogStore_ != nullptr) {
+        if (!catalogCache_) {
+            auto loaded = catalogStore_->load();
+            if (loaded) catalogCache_ = std::move(loaded).value();
+        }
+        if (catalogCache_ && !catalogCache_->empty()) {
+            auto fromCatalog =
+                detectVariantsBySetNoFromCatalog(*catalogCache_, setKey, setNo);
+
+            // Prefer YGOPRODeck when reachable so rarity (and multi-rarity
+            // variants) come through — the offline catalog may predate the
+            // rarity field or only keep one rarity per printing slot.
+            const YuGiOhSetCatalogPack* pack = catalogCache_->findPack(setKey);
+            std::string setName = setKey;
+            if (pack != nullptr) {
+                setName = pack->setName;
+            } else {
+                for (const auto& candidate : catalogCache_->packs) {
+                    if (candidate.setName == setKey) {
+                        setName = candidate.setName;
+                        break;
+                    }
+                }
+            }
+            if (!setName.empty()) {
+                auto resp = http_.get(buildCardsetOnlyUrl(setName));
+                if (resp) {
+                    auto fromHttp =
+                        detectVariantsBySetNoFromCardset(resp.value(), setName, setNo);
+                    if (fromHttp) return fromHttp;
+                }
+            }
+
+            if (fromCatalog) return fromCatalog;
+            // Prefer catalog miss text when HTTP also missed / was unreachable.
+            return fromCatalog;
+        }
+    }
+
+    // 2) No catalog: treat setKey as display set name and query YGOPRODeck.
+    auto resp = http_.get(buildCardsetOnlyUrl(setKey));
+    if (!resp) {
+        return R::err(
+            "Set catalog missing and YGOPRODeck lookup failed. "
+            "Run Sets → Update Yu-Gi-Oh! or check your network.");
+    }
+    return detectVariantsBySetNoFromCardset(resp.value(), setKey, setNo);
+}
+
 }  // namespace ccm

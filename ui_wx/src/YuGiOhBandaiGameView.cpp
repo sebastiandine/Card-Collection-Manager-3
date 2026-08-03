@@ -360,6 +360,7 @@ wxPanel* YuGiOhBandaiGameView::listPanel(wxWindow* parent) {
             if (selectedPanel_ != nullptr && listPanel_ != nullptr) {
                 selectedPanel_->setCard(listPanel_->selected());
             }
+            syncEditToolbarVisibility();
         });
         listPanel_->Bind(EVT_CARD_ACTIVATED, [this](wxCommandEvent&) {
             wxWindow* owner = wxGetTopLevelParent(listPanel_);
@@ -460,6 +461,11 @@ void YuGiOhBandaiGameView::onAddCard(wxWindow* parentWindow) {
 
 void YuGiOhBandaiGameView::onEditCard(wxWindow* parentWindow) {
     if (listPanel_ == nullptr) return;
+    if (listPanel_->selectedCount() != 1) {
+        showThemedMessageDialog(parentWindow, "Select a single card to edit.", "Edit",
+                                wxOK | wxICON_INFORMATION);
+        return;
+    }
     auto sel = listPanel_->selected();
     if (!sel) {
         showThemedMessageDialog(parentWindow, "Select a card first.", "Edit",
@@ -487,21 +493,25 @@ void YuGiOhBandaiGameView::onEditCard(wxWindow* parentWindow) {
 
 void YuGiOhBandaiGameView::onDeleteCard(wxWindow* parentWindow) {
     if (listPanel_ == nullptr) return;
-    auto sel = listPanel_->selected();
-    if (!sel) {
+    const auto cards = listPanel_->selectedCards();
+    if (cards.empty()) {
         showThemedMessageDialog(parentWindow, "Select a card first.", "Delete",
                                 wxOK | wxICON_INFORMATION);
         return;
     }
-    if (showThemedConfirmDialog(parentWindow, "Delete \"" + sel->name + "\"?",
+    if (showThemedConfirmDialog(parentWindow,
+                                deleteCardsConfirmMessage(cards.size(), cards.front().name),
                                 "Confirm") != wxID_YES) {
         return;
     }
-    auto removed = collection_.remove(Game::YuGiOhBandai, sel->id);
-    if (!removed) {
-        showThemedMessageDialog(parentWindow, "Failed to delete card: " + removed.error(),
-                                "Error", wxOK | wxICON_ERROR);
-        return;
+    for (const auto& card : cards) {
+        auto removed = collection_.remove(Game::YuGiOhBandai, card.id);
+        if (!removed) {
+            showThemedMessageDialog(parentWindow, "Failed to delete card: " + removed.error(),
+                                    "Error", wxOK | wxICON_ERROR);
+            refreshCollection();
+            return;
+        }
     }
     refreshCollection();
 }
@@ -537,6 +547,11 @@ void YuGiOhBandaiGameView::setFilter(std::string_view filter) {
 
 void YuGiOhBandaiGameView::nudgeSelection(int delta) {
     if (listPanel_) listPanel_->nudgeSelection(delta);
+}
+
+void YuGiOhBandaiGameView::syncEditToolbarVisibility() {
+    const bool showEdit = listPanel_ == nullptr || listPanel_->selectedCount() <= 1;
+    setToolbarEditVisible(toolbarButtons_[1], showEdit);
 }
 
 void YuGiOhBandaiGameView::applyTheme(const ThemePalette& palette) {

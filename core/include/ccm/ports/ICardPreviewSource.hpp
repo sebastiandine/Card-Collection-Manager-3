@@ -86,14 +86,19 @@ public:
             "Print variant listing not supported by this game.");
     }
 
-    // Optional lookup by collector / Bandai number (fills name + set + rarity).
-    virtual Result<AutoDetectedPrint> detectBySetNo(std::string_view /*setNo*/) {
+    // Optional lookup by set + collector / Bandai number (fills name + rarity).
+    // `setId` uses the same meaning as detectPrintVariants for the game
+    // (set id for Pokémon/Bandai; set display name for Digi-Battle; set code
+    // id for Yu-Gi-Oh! catalog reverse lookup).
+    virtual Result<AutoDetectedPrint> detectBySetNo(std::string_view /*setId*/,
+                                                    std::string_view /*setNo*/) {
         return Result<AutoDetectedPrint>::err(
             "Detect-by-number not supported by this game.");
     }
 
     virtual Result<std::vector<AutoDetectedPrint>>
-        detectVariantsBySetNo(std::string_view /*setNo*/) {
+        detectVariantsBySetNo(std::string_view /*setId*/,
+                              std::string_view /*setNo*/) {
         return Result<std::vector<AutoDetectedPrint>>::err(
             "Detect-by-number variants not supported by this game.");
     }

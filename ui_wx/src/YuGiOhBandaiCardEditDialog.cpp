@@ -94,6 +94,7 @@ void YuGiOhBandaiCardEditDialog::appendExtraRows(wxFlexGridSizer* grid) {
     nextSetNoBtn_ = new wxButton(setNoPanel, wxID_ANY, "Next");
     nextSetNoBtn_->Bind(wxEVT_BUTTON, &YuGiOhBandaiCardEditDialog::onNextSetNo, this);
     nextSetNoBtn_->Show(false);
+    setNoCtrl_->Bind(wxEVT_TEXT, [this](wxCommandEvent&) { markSetNoLookupEdited(); });
     auto* setNoRow = new wxBoxSizer(wxHORIZONTAL);
     setNoRow->Add(setNoCtrl_, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
     setNoRow->Add(autoSetNoBtn_, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
@@ -265,17 +266,17 @@ void YuGiOhBandaiCardEditDialog::requestByNameAsync(unsigned capturedEpoch, std:
     }).detach();
 }
 
-void YuGiOhBandaiCardEditDialog::requestByNoAsync(unsigned capturedEpoch, std::string setNo,
-                                                  bool showFailureDialog) {
+void YuGiOhBandaiCardEditDialog::requestByNoAsync(unsigned capturedEpoch, std::string setId,
+                                                  std::string setNo, bool showFailureDialog) {
     if (capturedEpoch != variantFetchEpoch_) return;
     if (showFailureDialog && autoSetNoBtn_) autoSetNoBtn_->Disable();
 
     auto state = variantFetchState_;
     CardPreviewService* svc = &cardPreview_;
     YuGiOhBandaiCardEditDialog* self = this;
-    std::thread([state, svc, self, capturedEpoch, setNo = std::move(setNo),
-                 showFailureDialog]() {
-        auto detected = svc->detectVariantsBySetNo(Game::YuGiOhBandai, setNo);
+    std::thread([state, svc, self, capturedEpoch, setId = std::move(setId),
+                 setNo = std::move(setNo), showFailureDialog]() {
+        auto detected = svc->detectVariantsBySetNo(Game::YuGiOhBandai, setId, setNo);
         wxTheApp->CallAfter([state, self, capturedEpoch, detected = std::move(detected),
                              showFailureDialog]() mutable {
             if (!state->alive.load()) return;
@@ -318,15 +319,40 @@ void YuGiOhBandaiCardEditDialog::applyDetectedList(
 
 void YuGiOhBandaiCardEditDialog::onAutoDetectBySetNo(wxCommandEvent&) {
     syncCardFromControls();
-    const std::string setNo =
-        setNoCtrl_ ? setNoCtrl_->GetValue().ToStdString(wxConvUTF8) : std::string();
-    if (setNo.empty()) {
-        showThemedMessageDialog(this, "Enter a Bandai number first.", "Auto detect",
+    const auto& card = constCard();
+    std::string setId;
+    if (const Set* set = selectedSetFromControls()) setId = set->id;
+    if (setId.empty()) {
+        showThemedMessageDialog(this, "Select a set first.", "Auto detect",
                                 wxOK | wxICON_INFORMATION);
         return;
     }
+
+    std::string name = card.name;
+    while (!name.empty() && std::isspace(static_cast<unsigned char>(name.front()))) {
+        name.erase(name.begin());
+    }
+    while (!name.empty() && std::isspace(static_cast<unsigned char>(name.back()))) {
+        name.pop_back();
+    }
+    const std::string setNo =
+        setNoCtrl_ ? setNoCtrl_->GetValue().ToStdString(wxConvUTF8) : std::string();
+    const bool nameEmpty = name.empty();
+    const bool setNoEmpty =
+        YuGiOhBandaiSetSource::normalizeCardNumber(setNo).empty();
+
+    if (nameEmpty && setNoEmpty) {
+        showThemedMessageDialog(this, "Enter a card name or Bandai number.", "Auto detect",
+                                wxOK | wxICON_INFORMATION);
+        return;
+    }
+
     const unsigned epoch = variantFetchEpoch_;
-    requestByNoAsync(epoch, setNo, true);
+    if (shouldDetectBySetNo(nameEmpty, setNoEmpty)) {
+        requestByNoAsync(epoch, setId, setNo, true);
+        return;
+    }
+    requestByNameAsync(epoch, name, setId, true);
 }
 
 void YuGiOhBandaiCardEditDialog::onNextSetNo(wxCommandEvent&) {
@@ -345,6 +371,11 @@ void YuGiOhBandaiCardEditDialog::onAutoDetectByName(wxCommandEvent&) {
     }
     std::string setId;
     if (const Set* set = selectedSetFromControls()) setId = set->id;
+    if (setId.empty()) {
+        showThemedMessageDialog(this, "Select a set first.", "Auto detect",
+                                wxOK | wxICON_INFORMATION);
+        return;
+    }
 
     const unsigned epoch = variantFetchEpoch_;
     requestByNameAsync(epoch, card.name, setId, true);

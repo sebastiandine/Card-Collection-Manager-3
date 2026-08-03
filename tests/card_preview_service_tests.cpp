@@ -34,6 +34,7 @@ public:
     std::string lastSetNo;
     std::string detectLastName;
     std::string detectLastSetId;
+    std::string detectLastSetNo;
     AutoDetectedPrint detectedPrint{"LOB-001", "Ultra Rare"};
     bool allowAutoDetect{true};
 
@@ -62,6 +63,23 @@ public:
                                                                std::string_view setId) override {
         detectLastName  = std::string(name);
         detectLastSetId = std::string(setId);
+        std::vector<AutoDetectedPrint> v;
+        v.push_back(detectedPrint);
+        return Result<std::vector<AutoDetectedPrint>>::ok(std::move(v));
+    }
+
+    Result<AutoDetectedPrint> detectBySetNo(std::string_view setId,
+                                            std::string_view setNo) override {
+        detectLastSetId = std::string(setId);
+        detectLastSetNo = std::string(setNo);
+        return Result<AutoDetectedPrint>::ok(detectedPrint);
+    }
+
+    Result<std::vector<AutoDetectedPrint>> detectVariantsBySetNo(
+        std::string_view setId,
+        std::string_view setNo) override {
+        detectLastSetId = std::string(setId);
+        detectLastSetNo = std::string(setNo);
         std::vector<AutoDetectedPrint> v;
         v.push_back(detectedPrint);
         return Result<std::vector<AutoDetectedPrint>>::ok(std::move(v));
@@ -990,5 +1008,43 @@ TEST_SUITE("CardPreviewService::detectPrintVariants") {
         CHECK(out.isErr());
         CHECK(out.error().find("No preview source registered") !=
               std::string::npos);
+    }
+}
+
+TEST_SUITE("CardPreviewService::detectVariantsBySetNo") {
+    TEST_CASE("routes set-scoped reverse lookup to registered source") {
+        FakeSource source;
+        source.detectedPrint = AutoDetectedPrint{"4", "Rare", "Pikachu"};
+        FakeGameModule module;
+        module.gameId = Game::Pokemon;
+        module.preview = &source;
+
+        FixedHttpClient http;
+        CardPreviewService svc{http};
+        svc.registerModule(module);
+
+        const auto out = svc.detectVariantsBySetNo(Game::Pokemon, "base1", "4");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value()[0].name == "Pikachu");
+        CHECK(out.value()[0].setNo == "4");
+        CHECK(source.detectLastSetId == "base1");
+        CHECK(source.detectLastSetNo == "4");
+    }
+
+    TEST_CASE("returns error when game does not enable auto-detect") {
+        FakeSource source;
+        source.allowAutoDetect = false;
+        FakeGameModule module;
+        module.gameId = Game::Magic;
+        module.preview = &source;
+
+        FixedHttpClient http;
+        CardPreviewService svc{http};
+        svc.registerModule(module);
+
+        const auto out = svc.detectVariantsBySetNo(Game::Magic, "lea", "1");
+        CHECK(out.isErr());
+        CHECK(out.error().find("not enabled") != std::string::npos);
     }
 }

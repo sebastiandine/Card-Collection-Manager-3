@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 
+#include "ccm/domain/YuGiOhSetCatalog.hpp"
 #include "ccm/games/yugioh/YuGiOhCardPreviewSource.hpp"
 #include "ccm/ports/IHttpClient.hpp"
 #include "ccm/util/YuGiOhPrintingSlot.hpp"
@@ -84,6 +85,15 @@ TEST_SUITE("ygoPrintingSlotsMatch") {
     TEST_CASE("matches German-style and digits-only suffix variants") {
         CHECK(ygoPrintingSlotsMatch("LOB-005", "LOB-DE005"));
         CHECK(ygoPrintingSlotsMatch("RA04-001", "RA04-EN001"));
+    }
+
+    TEST_CASE("matches collector numbers ignoring leading zeros") {
+        CHECK(ygoPrintingSlotsMatch("LOB-5", "LOB-005"));
+        CHECK(ygoPrintingSlotsMatch("LOB-EN005", "LOB-5"));
+        CHECK(ygoCollectorDigitsEqual("005", "5"));
+        CHECK(ygoCollectorDigitsEqual("LOB-EN005", "5"));
+        CHECK(ygoCollectorDigitsFromInput("005") == "005");
+        CHECK(ygoCollectorDigitsFromInput("LOB-EN005") == "005");
     }
 
     TEST_CASE("detects European alternate numbering suffix E+digit vs EN/DE") {
@@ -933,5 +943,108 @@ TEST_SUITE("YuGiOhCardPreviewSource::detectFirstPrint") {
         const auto out = src.detectFirstPrint("Any", "Any Set");
         REQUIRE(out.isErr());
         CHECK(out.error() == "offline");
+    }
+}
+
+TEST_SUITE("YuGiOhCardPreviewSource::detectVariantsBySetNoFromCatalog") {
+    TEST_CASE("matches digits within pack to card name") {
+        YuGiOhSetCatalog catalog;
+        YuGiOhSetCatalogPack pack;
+        pack.setId = "LOB";
+        pack.setName = "Legend of Blue Eyes White Dragon";
+        pack.cards.push_back(YuGiOhCatalogCard{"LOB-005", "Dark Magician", "Ultra Rare"});
+        pack.cards.push_back(YuGiOhCatalogCard{"LOB-EN001", "Blue-Eyes White Dragon", "Ultra Rare"});
+        catalog.packs.push_back(std::move(pack));
+
+        const auto byDigits =
+            YuGiOhCardPreviewSource::detectVariantsBySetNoFromCatalog(catalog, "LOB", "005");
+        REQUIRE(byDigits.isOk());
+        REQUIRE(byDigits.value().size() == 1);
+        CHECK(byDigits.value()[0].name == "Dark Magician");
+        CHECK(byDigits.value()[0].setNo == "LOB-005");
+        CHECK(byDigits.value()[0].rarity == "Ultra Rare");
+
+        const auto byUnpadded =
+            YuGiOhCardPreviewSource::detectVariantsBySetNoFromCatalog(catalog, "LOB", "5");
+        REQUIRE(byUnpadded.isOk());
+        REQUIRE(byUnpadded.value().size() == 1);
+        CHECK(byUnpadded.value()[0].name == "Dark Magician");
+
+        const auto byRegionCode =
+            YuGiOhCardPreviewSource::detectVariantsBySetNoFromCatalog(catalog, "LOB", "LOB-001");
+        REQUIRE(byRegionCode.isOk());
+        REQUIRE(byRegionCode.value().size() == 1);
+        CHECK(byRegionCode.value()[0].name == "Blue-Eyes White Dragon");
+    }
+
+    TEST_CASE("digits-only 1 does not match collector 011") {
+        YuGiOhSetCatalog catalog;
+        YuGiOhSetCatalogPack pack;
+        pack.setId = "LOB";
+        pack.cards.push_back(YuGiOhCatalogCard{"LOB-005", "Dark Magician"});
+        pack.cards.push_back(YuGiOhCatalogCard{"LOB-011", "Hitotsu-Me Giant"});
+        catalog.packs.push_back(std::move(pack));
+
+        CHECK(YuGiOhCardPreviewSource::detectVariantsBySetNoFromCatalog(catalog, "LOB", "1")
+                  .isErr());
+
+        const auto byEleven =
+            YuGiOhCardPreviewSource::detectVariantsBySetNoFromCatalog(catalog, "LOB", "11");
+        REQUIRE(byEleven.isOk());
+        REQUIRE(byEleven.value().size() == 1);
+        CHECK(byEleven.value()[0].name == "Hitotsu-Me Giant");
+    }
+
+    TEST_CASE("unknown pack or number returns error") {
+        YuGiOhSetCatalog catalog;
+        YuGiOhSetCatalogPack pack;
+        pack.setId = "LOB";
+        pack.cards.push_back(YuGiOhCatalogCard{"LOB-005", "Dark Magician"});
+        catalog.packs.push_back(std::move(pack));
+
+        CHECK(YuGiOhCardPreviewSource::detectVariantsBySetNoFromCatalog(catalog, "SDK", "001")
+                  .isErr());
+        CHECK(YuGiOhCardPreviewSource::detectVariantsBySetNoFromCatalog(catalog, "LOB", "999")
+                  .isErr());
+    }
+
+    TEST_CASE("detectVariantsBySetNo falls back to cardset HTTP without catalog") {
+        FixedHttpClient http;
+        http.body = R"({
+          "data":[
+            {"name":"Dark Magician",
+             "card_sets":[
+               {"set_name":"Legend of Blue Eyes White Dragon","set_code":"LOB-EN005","set_rarity":"Ultra Rare"}
+             ]}
+          ]
+        })";
+        YuGiOhCardPreviewSource src{http};
+        const auto out = src.detectVariantsBySetNo("Legend of Blue Eyes White Dragon", "5");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value()[0].name == "Dark Magician");
+        CHECK(out.value()[0].setNo == "LOB-EN005");
+        CHECK(out.value()[0].rarity == "Ultra Rare");
+        CHECK(http.lastUrl.find("cardset=") != std::string::npos);
+        CHECK(http.lastUrl.find("fname=") == std::string::npos);
+    }
+
+    TEST_CASE("cardset reverse keeps distinct rarities for the same set code") {
+        const std::string body = R"({
+          "data":[
+            {"name":"Elemental HERO Bubbleman",
+             "card_sets":[
+               {"set_name":"Soul of the Duelist","set_code":"SOD-EN015","set_rarity":"Ultra Rare"},
+               {"set_name":"Soul of the Duelist","set_code":"SOD-EN015","set_rarity":"Ultimate Rare"}
+             ]}
+          ]
+        })";
+        const auto out = YuGiOhCardPreviewSource::detectVariantsBySetNoFromCardset(
+            body, "Soul of the Duelist", "15");
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 2);
+        CHECK(out.value()[0].name == "Elemental HERO Bubbleman");
+        CHECK(out.value()[0].rarity == "Ultra Rare");
+        CHECK(out.value()[1].rarity == "Ultimate Rare");
     }
 }

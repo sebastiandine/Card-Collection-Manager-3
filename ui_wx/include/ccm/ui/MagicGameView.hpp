@@ -42,6 +42,7 @@ public:
     void onAddCard(wxWindow* parentWindow) override;
     void onEditCard(wxWindow* parentWindow) override;
     void onDeleteCard(wxWindow* parentWindow) override;
+    void attachSharedToolbarEdit(wxBitmapButton* edit) override;
     std::string onUpdateSets(wxWindow* parentWindow) override;
     void setFilter(std::string_view filter) override;
     void nudgeSelection(int delta) override;
@@ -51,6 +52,7 @@ public:
 private:
     void ensureSetsLoaded();
     const std::vector<Set>& setsForDialog();
+    void syncEditToolbarVisibility();
 
     ConfigService&                config_;
     CollectionService<MagicCard>& collection_;
@@ -61,6 +63,7 @@ private:
 
     MagicCardListPanel*     listPanel_{nullptr};
     MagicSelectedCardPanel* selectedPanel_{nullptr};
+    wxBitmapButton*         sharedEditButton_{nullptr};
     std::vector<Set>        setsCache_;
     bool                    attemptedInitialSetLoad_{false};
 };

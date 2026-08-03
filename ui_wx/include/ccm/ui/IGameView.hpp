@@ -19,6 +19,7 @@
 #include <string_view>
 #include <vector>
 
+class wxBitmapButton;
 class wxPanel;
 class wxWindow;
 
@@ -66,6 +67,10 @@ public:
     virtual void onAddCard(wxWindow* parentWindow) = 0;
     virtual void onEditCard(wxWindow* parentWindow) = 0;
     virtual void onDeleteCard(wxWindow* parentWindow) = 0;
+
+    // Magic uses MainFrame's shared Edit button; hostsOwnLayout games ignore
+    // this and manage their own toolbar. Default no-op.
+    virtual void attachSharedToolbarEdit(wxBitmapButton* edit) { (void)edit; }
 
     // Sets menu action ("Update Magic" / "Update Pokemon"). Returns the
     // user-visible status string for the parent's status bar.

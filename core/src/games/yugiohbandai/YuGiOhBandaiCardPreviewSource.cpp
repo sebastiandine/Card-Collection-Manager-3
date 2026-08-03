@@ -238,7 +238,8 @@ YuGiOhBandaiCardPreviewSource::parsePageImagesResponse(const std::string& body) 
 
 Result<std::vector<AutoDetectedPrint>>
 YuGiOhBandaiCardPreviewSource::parseAskResponse(const std::string& body,
-                                                std::string_view preferredSetId) {
+                                                std::string_view preferredSetId,
+                                                std::string_view wantedSetNo) {
     using R = Result<std::vector<AutoDetectedPrint>>;
     try {
         const auto j = nlohmann::json::parse(body);
@@ -249,6 +250,8 @@ YuGiOhBandaiCardPreviewSource::parseAskResponse(const std::string& body,
         if (!results.is_object() || results.empty()) {
             return R::ok({});
         }
+
+        const std::string wantNo = YuGiOhBandaiSetSource::normalizeCardNumber(wantedSetNo);
 
         std::vector<std::pair<int, AutoDetectedPrint>> ranked;
         for (auto it = results.begin(); it != results.end(); ++it) {
@@ -267,6 +270,12 @@ YuGiOhBandaiCardPreviewSource::parseAskResponse(const std::string& body,
                     print.setNo =
                         YuGiOhBandaiSetSource::normalizeCardNumber(num.get<std::string>());
                 }
+            }
+            // Defense-in-depth: SMW ask should be exact, but never accept a
+            // different Bandai number (e.g. #11 when the user asked for #1).
+            if (!wantNo.empty() &&
+                YuGiOhBandaiSetSource::normalizeCardNumber(print.setNo) != wantNo) {
+                continue;
             }
             if (printouts.contains("Rarity") && printouts.at("Rarity").is_array() &&
                 !printouts.at("Rarity").empty()) {
@@ -328,6 +337,7 @@ Result<std::vector<AutoDetectedPrint>> YuGiOhBandaiCardPreviewSource::askByName(
 }
 
 Result<std::vector<AutoDetectedPrint>> YuGiOhBandaiCardPreviewSource::askByNumber(
+    std::string_view setId,
     std::string_view setNo) {
     using R = Result<std::vector<AutoDetectedPrint>>;
     const std::string n = YuGiOhBandaiSetSource::normalizeCardNumber(setNo);
@@ -336,19 +346,52 @@ Result<std::vector<AutoDetectedPrint>> YuGiOhBandaiCardPreviewSource::askByNumbe
     // Promo codes (J1, TA2, …) are not valid values for SMW's numeric
     // `Bandai number` property — ask returns a type error. Resolve them from
     // the promotional set gallery instead.
-    if (isAlphanumericPromoNumber(n)) {
-        static constexpr const char* kPromoGallery =
-            "Set Card Galleries:Promotional Cards (Bandai)";
-        const std::string url = YuGiOhBandaiSetSource::buildGalleryParseUrl(kPromoGallery);
+    R list = [&]() -> R {
+        if (isAlphanumericPromoNumber(n)) {
+            static constexpr const char* kPromoGallery =
+                "Set Card Galleries:Promotional Cards (Bandai)";
+            const std::string url = YuGiOhBandaiSetSource::buildGalleryParseUrl(kPromoGallery);
+            auto resp = http_.get(url);
+            if (!resp) return R::err(resp.error());
+            return parsePromoGalleryResponse(resp.value(), n);
+        }
+        const std::string url = buildAskByNumberUrl(n);
         auto resp = http_.get(url);
         if (!resp) return R::err(resp.error());
-        return parsePromoGalleryResponse(resp.value(), n);
-    }
+        return parseAskResponse(resp.value(), setId, n);
+    }();
+    if (!list) return list;
 
-    const std::string url = buildAskByNumberUrl(n);
-    auto resp = http_.get(url);
-    if (!resp) return R::err(resp.error());
-    return parseAskResponse(resp.value(), {});
+    const std::string wantSet = trimCopy(setId);
+    if (wantSet.empty()) return list;
+
+    std::vector<AutoDetectedPrint> filtered;
+    filtered.reserve(list.value().size());
+    for (auto& print : list.value()) {
+        if (print.setId == wantSet) filtered.push_back(std::move(print));
+    }
+    if (filtered.empty()) {
+        return R::err("No Bandai card matched that number in the selected set.");
+    }
+    return R::ok(std::move(filtered));
+}
+
+Result<AutoDetectedPrint> YuGiOhBandaiCardPreviewSource::detectBySetNo(
+    std::string_view setId,
+    std::string_view setNo) {
+    auto list = detectVariantsBySetNo(setId, setNo);
+    if (!list) return Result<AutoDetectedPrint>::err(list.error());
+    if (list.value().empty()) {
+        return Result<AutoDetectedPrint>::err(
+            "Could not auto-detect Bandai card from number.");
+    }
+    return Result<AutoDetectedPrint>::ok(list.value().front());
+}
+
+Result<std::vector<AutoDetectedPrint>>
+YuGiOhBandaiCardPreviewSource::detectVariantsBySetNo(std::string_view setId,
+                                                     std::string_view setNo) {
+    return askByNumber(setId, setNo);
 }
 
 Result<std::string, PreviewLookupError>
@@ -405,22 +448,6 @@ Result<std::vector<AutoDetectedPrint>>
 YuGiOhBandaiCardPreviewSource::detectPrintVariants(std::string_view name,
                                                     std::string_view setId) {
     return askByName(name, setId);
-}
-
-Result<AutoDetectedPrint> YuGiOhBandaiCardPreviewSource::detectBySetNo(
-    std::string_view setNo) {
-    auto list = detectVariantsBySetNo(setNo);
-    if (!list) return Result<AutoDetectedPrint>::err(list.error());
-    if (list.value().empty()) {
-        return Result<AutoDetectedPrint>::err(
-            "Could not auto-detect Bandai card from number.");
-    }
-    return Result<AutoDetectedPrint>::ok(list.value().front());
-}
-
-Result<std::vector<AutoDetectedPrint>>
-YuGiOhBandaiCardPreviewSource::detectVariantsBySetNo(std::string_view setNo) {
-    return askByNumber(setNo);
 }
 
 }  // namespace ccm

@@ -35,6 +35,12 @@ public:
     Result<std::vector<AutoDetectedPrint>> detectPrintVariants(std::string_view name,
                                                                std::string_view setName) override;
 
+    Result<AutoDetectedPrint> detectBySetNo(std::string_view setName,
+                                            std::string_view setNo) override;
+    Result<std::vector<AutoDetectedPrint>> detectVariantsBySetNo(
+        std::string_view setName,
+        std::string_view setNo) override;
+
     // Uppercase the alphabetic prefix of a Digi-Battle card number (bo-88 -> BO-88).
     // Does not invent zero-padding — CDN keys match API ids literally.
     static std::string normalizeCardNumber(std::string_view setNo);
@@ -58,7 +64,8 @@ public:
     static Result<std::vector<AutoDetectedPrint>>
         parsePrintVariants(const std::string& body,
                            std::string_view setName,
-                           std::string_view wantedCardName);
+                           std::string_view wantedCardName,
+                           std::string_view wantedSetNo = {});
 
 private:
     IHttpClient& http_;

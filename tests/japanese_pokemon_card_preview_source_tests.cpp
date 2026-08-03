@@ -591,3 +591,58 @@ TEST_SUITE("JapanesePokemonCardPreviewSource::detectPrintVariants catalog-only")
         CHECK(shining.value()[0].setNo == "013");
     }
 }
+
+TEST_SUITE("JapanesePokemonCardPreviewSource::detectVariantsBySetNoFromCatalog") {
+    TEST_CASE("resolves English name from setId + localId") {
+        const auto catalog = JapanesePokemonEnCatalog::parse(R"({
+          "sets": {},
+          "prints": [
+            {"set_id":"PMCG1","local_id":"001","name_en":"Bulbasaur","name_ja":"フシギダネ"}
+          ]
+        })");
+        REQUIRE(catalog.isOk());
+        const auto out = JapanesePokemonCardPreviewSource::detectVariantsBySetNoFromCatalog(
+            "PMCG1", "001", catalog.value());
+        REQUIRE(out.isOk());
+        REQUIRE(out.value().size() == 1);
+        CHECK(out.value()[0].name == "Bulbasaur");
+        CHECK(out.value()[0].setNo == "001");
+    }
+
+    TEST_CASE("leading-zero-insensitive localId still resolves") {
+        const auto catalog = JapanesePokemonEnCatalog::parse(R"({
+          "sets": {},
+          "prints": [
+            {"set_id":"PMCG1","local_id":"001","name_en":"Bulbasaur","name_ja":"フシギダネ"},
+            {"set_id":"PMCG1","local_id":"011","name_en":"Weedle","name_ja":"ビードル"}
+          ]
+        })");
+        REQUIRE(catalog.isOk());
+        const auto byOne = JapanesePokemonCardPreviewSource::detectVariantsBySetNoFromCatalog(
+            "PMCG1", "1", catalog.value());
+        REQUIRE(byOne.isOk());
+        REQUIRE(byOne.value().size() == 1);
+        CHECK(byOne.value()[0].name == "Bulbasaur");
+        CHECK(byOne.value()[0].setNo == "001");
+
+        const auto byEleven =
+            JapanesePokemonCardPreviewSource::detectVariantsBySetNoFromCatalog(
+                "PMCG1", "11", catalog.value());
+        REQUIRE(byEleven.isOk());
+        REQUIRE(byEleven.value().size() == 1);
+        CHECK(byEleven.value()[0].name == "Weedle");
+    }
+
+    TEST_CASE("unknown localId is an error") {
+        const auto catalog = JapanesePokemonEnCatalog::parse(R"({
+          "sets": {},
+          "prints": [
+            {"set_id":"PMCG1","local_id":"001","name_en":"Bulbasaur","name_ja":"フシギダネ"}
+          ]
+        })");
+        REQUIRE(catalog.isOk());
+        const auto out = JapanesePokemonCardPreviewSource::detectVariantsBySetNoFromCatalog(
+            "PMCG1", "999", catalog.value());
+        REQUIRE(out.isErr());
+    }
+}

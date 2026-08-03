@@ -22,6 +22,7 @@
 #include "ccm/services/SetService.hpp"
 #include "ccm/ui/ImageViewerDialog.hpp"
 #include "ccm/ui/Theme.hpp"
+#include "ccm/util/CardLookupDetect.hpp"
 
 #include <wx/arrstr.h>
 #include <wx/button.h>
@@ -136,6 +137,26 @@ protected:
     // controls cannot outlive the lookup identity.
     virtual void onCardLookupContextChanged() {}
 
+    // Bidirectional Set # Auto detect: track which of Name / Set # the user
+    // last typed so a second detect uses that field as the lookup key.
+    void markNameLookupEdited() { lastLookupEditField_ = CardLookupEditField::Name; }
+
+    // Subclasses bind Set # `wxEVT_TEXT` to this (or call it from their handler).
+    // Also clears print-variant caches via `onCardLookupContextChanged`.
+    void markSetNoLookupEdited() {
+        lastLookupEditField_ = CardLookupEditField::SetNo;
+        onCardLookupContextChanged();
+    }
+
+    [[nodiscard]] CardLookupEditField lastLookupEditField() const noexcept {
+        return lastLookupEditField_;
+    }
+
+    // `nameEmpty` / `setNoEmpty` must already be trimmed/normalized by the caller.
+    [[nodiscard]] bool shouldDetectBySetNo(bool nameEmpty, bool setNoEmpty) const noexcept {
+        return preferDetectBySetNo(nameEmpty, setNoEmpty, lastLookupEditField_);
+    }
+
     // Extra validation after name/set checks and writeFromControls(). Return
     // false to block OK (subclass should show its own themed dialog).
     [[nodiscard]] virtual bool validateExtraFields() { return true; }
@@ -210,6 +231,7 @@ private:
 
         nameCtrl_  = new wxTextCtrl(this, wxID_ANY, wxString::FromUTF8(card_.name.c_str()));
         nameCtrl_->Bind(wxEVT_TEXT, [this](wxCommandEvent& ev) {
+            markNameLookupEdited();
             onCardLookupContextChanged();
             ev.Skip();
         });
@@ -626,6 +648,7 @@ private:
     const std::vector<Set>* preloadedSets_{nullptr};
 
     wxTextCtrl* nameCtrl_{nullptr};
+    CardLookupEditField lastLookupEditField_{CardLookupEditField::None};
     wxComboBox* setCombo_{nullptr};
     wxSpinCtrl* amountCtrl_{nullptr};
     wxChoice*   languageChoice_{nullptr};

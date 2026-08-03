@@ -40,8 +40,10 @@
 #include "ccm/ui/Theme.hpp"
 
 #include <wx/bitmap.h>
+#include <wx/clipbrd.h>
 #include <wx/colour.h>
 #include <wx/cursor.h>
+#include <wx/dataobj.h>
 #include <wx/event.h>
 #include <wx/image.h>
 #include <wx/listctrl.h>
@@ -59,6 +61,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -74,6 +77,10 @@ wxDECLARE_EVENT(EVT_CARD_SELECTED, wxCommandEvent);
 // `IGameView` implementations bind this to open Edit for `selected()`.
 wxDECLARE_EVENT(EVT_CARD_ACTIVATED, wxCommandEvent);
 
+// Raised when the list wants a short status-bar note (e.g. clipboard copy).
+// `event.GetString()` is the message; MainFrame shows it in the bottom strip.
+wxDECLARE_EVENT(EVT_UI_STATUS, wxCommandEvent);
+
 template <typename TCard, typename TSortColumn>
 class BaseCardListPanel : public wxPanel {
 public:
@@ -81,14 +88,18 @@ public:
     using sort_column_type = TSortColumn;
 
     // Replace the displayed rows. When preferSelectId is set, selects that
-    // card if present (used after Add). Otherwise preserves the previously
-    // selected card by id when still present; the first-row CallAfter path in
-    // rebuildRows() runs only when there was no prior selection (startup).
+    // card exclusively if present (used after Add). Otherwise preserves the
+    // previously selected card ids when still present; the first-row CallAfter
+    // path in rebuildRows() runs only when there was no prior selection
+    // (startup).
     void setCards(std::vector<TCard> cards,
                   std::optional<std::uint32_t> preferSelectId = std::nullopt) {
-        std::optional<std::uint32_t> keepId = preferSelectId;
-        if (!keepId) {
-            if (auto sel = selected()) keepId = sel->id;
+        std::optional<std::vector<std::uint32_t>> keepIds;
+        if (preferSelectId) {
+            keepIds = std::vector<std::uint32_t>{*preferSelectId};
+        } else {
+            auto ids = selectedIds();
+            if (!ids.empty()) keepIds = std::move(ids);
         }
         cards_ = std::move(cards);
         // Drop sort state when the underlying data is replaced - the indicator
@@ -96,7 +107,7 @@ public:
         // wxListCtrl keeps the indicator across DeleteAllItems().
         nextDirByCol_.clear();
         list_->RemoveSortIndicator();
-        rebuildRows(keepId);
+        rebuildRows(keepIds);
         if (!autoSizedOnce_ && !cards_.empty()) {
             autoSizeAllColumns();
             autoSizedOnce_ = true;
@@ -104,16 +115,17 @@ public:
     }
 
     // Update the filter string and rebuild the visible rows in place. The
-    // panel preserves the previously-selected card across the rebuild when
-    // it still matches the new filter; otherwise the first remaining row is
+    // panel preserves previously-selected cards across the rebuild when they
+    // still match the new filter; otherwise the first remaining row is
     // selected, or none if the filter excluded everything. A single
     // EVT_CARD_SELECTED is emitted afterwards so the parent re-syncs.
     void setFilter(std::string_view filter) {
         if (filter_ == filter) return;
         filter_.assign(filter);
-        std::optional<std::uint32_t> keepId;
-        if (auto sel = selected()) keepId = sel->id;
-        rebuildRows(keepId);
+        auto ids = selectedIds();
+        std::optional<std::vector<std::uint32_t>> keepIds;
+        if (!ids.empty()) keepIds = std::move(ids);
+        rebuildRows(keepIds);
     }
 
     void applyTheme(const ThemePalette& palette) {
@@ -123,22 +135,52 @@ public:
         SetForegroundColour(palette.text);
         rebuildIconBitmaps(palette.inputText, wxColour(255, 255, 255));
         refreshHeaderTheme(palette);
-        std::optional<std::uint32_t> keepId;
-        if (auto sel = selected()) keepId = sel->id;
-        rebuildRows(keepId);
+        auto ids = selectedIds();
+        std::optional<std::vector<std::uint32_t>> keepIds;
+        if (!ids.empty()) keepIds = std::move(ids);
+        rebuildRows(keepIds);
         Refresh();
     }
 
     [[nodiscard]] const std::vector<TCard>& cards() const noexcept { return cards_; }
     [[nodiscard]] const std::string&        filter() const noexcept { return filter_; }
+    // First selected card (detail panel / single-edit primary).
     [[nodiscard]] std::optional<TCard>      selected() const {
         const long sel = list_->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
         if (const TCard* c = cardForRow(sel)) return *c;
         return std::nullopt;
     }
+    [[nodiscard]] std::size_t selectedCount() const {
+        if (list_ == nullptr) return 0;
+        std::size_t n = 0;
+        long row = -1;
+        while ((row = list_->GetNextItem(row, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED)) >= 0) {
+            ++n;
+        }
+        return n;
+    }
+    [[nodiscard]] std::vector<TCard> selectedCards() const {
+        std::vector<TCard> out;
+        if (list_ == nullptr) return out;
+        long row = -1;
+        while ((row = list_->GetNextItem(row, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED)) >= 0) {
+            if (const TCard* c = cardForRow(row)) out.push_back(*c);
+        }
+        return out;
+    }
+    [[nodiscard]] std::vector<std::uint32_t> selectedIds() const {
+        std::vector<std::uint32_t> out;
+        if (list_ == nullptr) return out;
+        long row = -1;
+        while ((row = list_->GetNextItem(row, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED)) >= 0) {
+            if (const TCard* c = cardForRow(row)) out.push_back(c->id);
+        }
+        return out;
+    }
 
-    // Ensure the selected row is actively focused so Windows uses the active
-    // highlight color (blue in light mode), keeping selected-row icons legible.
+    // Ensure the first selected row is actively focused so Windows uses the
+    // active highlight color (blue in light mode), keeping selected-row icons
+    // legible. Does not clear a multi-selection.
     void activateSelection() {
         if (list_ == nullptr || list_->GetItemCount() <= 0) return;
         long row = list_->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
@@ -151,8 +193,9 @@ public:
     }
 
     // Move the selection by `delta` rows (+1 / -1). Used when Up/Down are
-    // pressed while focus is on the filter box. Clamps to the visible range;
-    // leaves list HWND focus alone so the caret can stay in the filter.
+    // pressed while focus is on the filter box. Collapses any multi-selection
+    // to a single row. Clamps to the visible range; leaves list HWND focus
+    // alone so the caret can stay in the filter.
     void nudgeSelection(int delta) {
         if (list_ == nullptr || list_->GetItemCount() <= 0 || delta == 0) return;
         long row = list_->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
@@ -161,12 +204,12 @@ public:
         long next = row + delta;
         if (next < 0) next = 0;
         if (next >= count) next = count - 1;
-        if (next == row) {
-            list_->EnsureVisible(next);
-            return;
-        }
         suppressListFocus_ = true;
-        list_->SetItemState(row, 0, wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED);
+        // Clear every selected row so filter nudge is always single-select.
+        long sel = -1;
+        while ((sel = list_->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED)) >= 0) {
+            list_->SetItemState(sel, 0, wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED);
+        }
         list_->SetItemState(next,
                             wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED,
                             wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED);
@@ -215,8 +258,10 @@ protected:
     // Subclass calls this once from its constructor body (after virtual hooks
     // are reachable) to wire up columns + the header row + custom-draw hooks.
     void buildLayout() {
+        // Multi-select: native Ctrl (toggle) and Shift (range) without
+        // wxLC_SINGLE_SEL. Set-completion tables keep single-select separately.
         list_ = new IconListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-                                 wxLC_REPORT | wxLC_SINGLE_SEL | wxLC_NO_HEADER);
+                                 wxLC_REPORT | wxLC_NO_HEADER);
 
         textCols_ = declareTextColumns();
         iconCols_ = declareIconColumns();
@@ -274,6 +319,7 @@ protected:
         list_->Bind(wxEVT_LIST_ITEM_SELECTED,   &BaseCardListPanel::onSelectionChanged, this);
         list_->Bind(wxEVT_LIST_ITEM_DESELECTED, &BaseCardListPanel::onSelectionChanged, this);
         list_->Bind(wxEVT_LIST_ITEM_ACTIVATED, &BaseCardListPanel::onListItemActivated, this);
+        list_->Bind(wxEVT_KEY_DOWN, &BaseCardListPanel::onListKeyDown, this);
     }
 
     // Forwarded helpers ------------------------------------------------------
@@ -523,11 +569,12 @@ private:
         const bool ascending = (it == nextDirByCol_.end()) ? true : it->second;
         nextDirByCol_[*sortCol] = !ascending;
 
-        std::optional<std::uint32_t> keepId;
-        if (auto sel = selected()) keepId = sel->id;
+        auto ids = selectedIds();
+        std::optional<std::vector<std::uint32_t>> keepIds;
+        if (!ids.empty()) keepIds = std::move(ids);
 
         sortBy(*sortCol, ascending);
-        rebuildRows(keepId);
+        rebuildRows(keepIds);
         if (list_ != nullptr) list_->SetFocus();
     }
 
@@ -590,7 +637,9 @@ private:
 
     // ----- row rendering -----------------------------------------------------
 
-    void rebuildRows(std::optional<std::uint32_t> keepId = std::nullopt) {
+    // nullopt keepIds → no prior selection (startup / empty): defer first-row
+    // select. Otherwise restore every id that is still visible after filter.
+    void rebuildRows(std::optional<std::vector<std::uint32_t>> keepIds = std::nullopt) {
         // Suppress wxListCtrl's natural DESELECTED (from DeleteAllItems) and
         // SELECTED (from the SetItemState below) events while we churn through
         // the rebuild. See `ui_wx/AGENTS.md` for the rate-limit rationale.
@@ -605,10 +654,16 @@ private:
             }
         }
 
+        std::unordered_set<std::uint32_t> keepSet;
+        if (keepIds) {
+            keepSet.insert(keepIds->begin(), keepIds->end());
+        }
+
         long row = 0;
-        long rowToSelect = -1;
+        long firstRestored = -1;
         const int firstText = firstTextColIdx();
         const int noteCol   = noteColIdx();
+        std::vector<long> rowsToSelect;
         for (std::size_t srcIdx : filteredIndices_) {
             const auto& c = cards_[srcIdx];
             // Insert via the hidden column-0 spacer. We never set sub-item
@@ -632,16 +687,22 @@ private:
             const std::string note = renderTextCell(c, textCols_.size() - 1);
             list_->SetItem(idx, noteCol, wxString::FromUTF8(note.c_str()));
 
-            if (keepId && c.id == *keepId) rowToSelect = idx;
+            if (!keepSet.empty() && keepSet.count(c.id) != 0) {
+                rowsToSelect.push_back(idx);
+                if (firstRestored < 0) firstRestored = idx;
+            }
             ++row;
         }
         bool deferredInitialSelect = false;
-        if (!filteredIndices_.empty() && rowToSelect >= 0) {
-            list_->SetItemState(rowToSelect,
-                                wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED,
-                                wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED);
-            list_->EnsureVisible(rowToSelect);
-        } else if (!filteredIndices_.empty() && !keepId.has_value()) {
+        if (!filteredIndices_.empty() && !rowsToSelect.empty()) {
+            for (long r : rowsToSelect) {
+                const long flags = (r == firstRestored)
+                                       ? (wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED)
+                                       : wxLIST_STATE_SELECTED;
+                list_->SetItemState(r, flags, wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED);
+            }
+            list_->EnsureVisible(firstRestored);
+        } else if (!filteredIndices_.empty() && !keepIds.has_value()) {
             // Defer the initial selection to the next event turn so first
             // paint stays responsive.
             deferredInitialSelect = true;
@@ -703,6 +764,72 @@ private:
             ev.SetEventObject(this);
             ProcessWindowEvent(ev);
         });
+    }
+
+    void onListKeyDown(wxKeyEvent& event) {
+        const int key = event.GetKeyCode();
+        const bool copyChord =
+            (event.ControlDown() || event.CmdDown()) && (key == 'C' || key == 'c');
+        if (!copyChord) {
+            event.Skip();
+            return;
+        }
+        copySelectedRowsToClipboard();
+    }
+
+    void copySelectedRowsToClipboard() {
+        const auto cards = selectedCards();
+        if (cards.empty() || textCols_.empty()) return;
+
+        auto formatRow = [&](const TCard& card) {
+            std::string line;
+            auto appendCell = [&](std::string_view cell) {
+                if (!line.empty()) line.push_back('\t');
+                line.append(cell);
+            };
+            // Leading text columns (everything except trailing Note).
+            for (std::size_t i = 0; i + 1 < textCols_.size(); ++i) {
+                appendCell(renderTextCell(card, i));
+            }
+            // Icon/flag columns — no list text; export as true/false.
+            for (std::size_t i = 0; i < iconCols_.size(); ++i) {
+                appendCell(isIconColumnSet(card, i) ? "true" : "false");
+            }
+            // Trailing Note.
+            appendCell(renderTextCell(card, textCols_.size() - 1));
+            return line;
+        };
+
+        std::string payload = formatRow(cards.front());
+        for (std::size_t i = 1; i < cards.size(); ++i) {
+            payload.push_back('\n');
+            payload.append(formatRow(cards[i]));
+        }
+
+        wxClipboardLocker lock;
+        if (!lock) return;
+        if (!wxTheClipboard->SetData(
+                new wxTextDataObject(wxString::FromUTF8(payload.c_str())))) {
+            return;
+        }
+        if (cards.size() == 1) {
+            emitUiStatus("Saved entry to clipboard");
+        } else {
+            emitUiStatus(wxString::Format("Saved %zu entries to clipboard", cards.size()));
+        }
+    }
+
+    void emitUiStatus(const wxString& message) {
+        wxCommandEvent ev(EVT_UI_STATUS, GetId());
+        ev.SetEventObject(this);
+        ev.SetString(message);
+        // Same parent-hop as BaseSelectedCardPanel::emitPreviewStatus so the
+        // command event can propagate up to MainFrame's status strip.
+        if (auto* parent = GetParent()) {
+            parent->GetEventHandler()->ProcessEvent(ev);
+        } else {
+            ProcessWindowEvent(ev);
+        }
     }
 
     // ----- members ----------------------------------------------------------
