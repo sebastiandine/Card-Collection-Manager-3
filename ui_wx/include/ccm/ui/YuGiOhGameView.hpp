@@ -61,6 +61,7 @@ public:
     [[nodiscard]] std::string updateSetsMenuLabel() const override { return "Update Yu-Gi-Oh!"; }
 
 private:
+    void syncEditToolbarVisibility();
     void ensureSetsLoaded();
     const std::vector<Set>& setsForDialog();
     void ensureSingleCardsMounted(wxWindow* splitterParent);

@@ -66,6 +66,7 @@ public:
     [[nodiscard]] std::string updateSetsMenuLabel() const override { return "Update Pokemon"; }
 
 private:
+    void syncEditToolbarVisibility();
     void ensureSetsLoaded();
     const std::vector<Set>& setsForDialog(PokemonRegion region);
     void ensureSingleCardsMounted(wxWindow* splitterParent);

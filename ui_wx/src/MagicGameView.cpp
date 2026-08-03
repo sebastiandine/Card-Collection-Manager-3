@@ -55,6 +55,7 @@ wxPanel* MagicGameView::listPanel(wxWindow* parent) {
             if (selectedPanel_ != nullptr && listPanel_ != nullptr) {
                 selectedPanel_->setCard(listPanel_->selected());
             }
+            syncEditToolbarVisibility();
         });
         listPanel_->Bind(EVT_CARD_ACTIVATED, [this](wxCommandEvent&) {
             wxWindow* owner = wxGetTopLevelParent(listPanel_);
@@ -69,6 +70,16 @@ wxPanel* MagicGameView::selectedPanel(wxWindow* parent) {
         selectedPanel_ = new MagicSelectedCardPanel(parent, images_, cardPreview_);
     }
     return selectedPanel_;
+}
+
+void MagicGameView::attachSharedToolbarEdit(wxBitmapButton* edit) {
+    sharedEditButton_ = edit;
+    syncEditToolbarVisibility();
+}
+
+void MagicGameView::syncEditToolbarVisibility() {
+    const bool showEdit = listPanel_ == nullptr || listPanel_->selectedCount() <= 1;
+    setToolbarEditVisible(sharedEditButton_, showEdit);
 }
 
 void MagicGameView::refreshCollection(std::optional<std::uint32_t> selectId) {
@@ -139,6 +150,11 @@ void MagicGameView::onAddCard(wxWindow* parentWindow) {
 
 void MagicGameView::onEditCard(wxWindow* parentWindow) {
     if (listPanel_ == nullptr) return;
+    if (listPanel_->selectedCount() != 1) {
+        showThemedMessageDialog(parentWindow, "Select a single card to edit.", "Edit",
+                                wxOK | wxICON_INFORMATION);
+        return;
+    }
     auto sel = listPanel_->selected();
     if (!sel) {
         showThemedMessageDialog(parentWindow, "Select a card first.", "Edit", wxOK | wxICON_INFORMATION);
@@ -165,20 +181,24 @@ void MagicGameView::onEditCard(wxWindow* parentWindow) {
 
 void MagicGameView::onDeleteCard(wxWindow* parentWindow) {
     if (listPanel_ == nullptr) return;
-    auto sel = listPanel_->selected();
-    if (!sel) {
+    const auto cards = listPanel_->selectedCards();
+    if (cards.empty()) {
         showThemedMessageDialog(parentWindow, "Select a card first.", "Delete", wxOK | wxICON_INFORMATION);
         return;
     }
-    if (showThemedConfirmDialog(parentWindow, "Delete \"" + sel->name + "\"?",
+    if (showThemedConfirmDialog(parentWindow,
+                                deleteCardsConfirmMessage(cards.size(), cards.front().name),
                                 "Confirm") != wxID_YES) {
         return;
     }
-    auto removed = collection_.remove(Game::Magic, sel->id);
-    if (!removed) {
-        showThemedMessageDialog(parentWindow, "Failed to delete card: " + removed.error(),
-                                "Error", wxOK | wxICON_ERROR);
-        return;
+    for (const auto& card : cards) {
+        auto removed = collection_.remove(Game::Magic, card.id);
+        if (!removed) {
+            showThemedMessageDialog(parentWindow, "Failed to delete card: " + removed.error(),
+                                    "Error", wxOK | wxICON_ERROR);
+            refreshCollection();
+            return;
+        }
     }
     refreshCollection();
 }
@@ -207,6 +227,7 @@ void MagicGameView::nudgeSelection(int delta) {
 void MagicGameView::applyTheme(const ThemePalette& palette) {
     if (listPanel_)     listPanel_->applyTheme(palette);
     if (selectedPanel_) selectedPanel_->applyTheme(palette);
+    syncEditToolbarVisibility();
 }
 
 }  // namespace ccm::ui

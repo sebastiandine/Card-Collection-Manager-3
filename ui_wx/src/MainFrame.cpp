@@ -150,6 +150,9 @@ void MainFrame::buildLayout() {
     toolbar->Add(toolbarButtons_[0], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
     toolbar->Add(toolbarButtons_[1], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
     toolbar->Add(toolbarButtons_[2], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
+    for (auto* view : ctx_.gameViews) {
+        if (view != nullptr) view->attachSharedToolbarEdit(toolbarButtons_[1]);
+    }
     toolbar->AddStretchSpacer(1);
     filterInput_ = new wxTextCtrl(toolbarPanel_, wxID_ANY, "", wxDefaultPosition,
                                   wxSize(260, -1));
