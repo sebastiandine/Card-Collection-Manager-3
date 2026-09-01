@@ -155,8 +155,8 @@ void MainFrame::buildLayout() {
     }
     toolbar->AddStretchSpacer(1);
     filterInput_ = new wxTextCtrl(toolbarPanel_, wxID_ANY, "", wxDefaultPosition,
-                                  wxSize(260, -1));
-    filterInput_->SetHint(kFilterInputHint);
+                                  wxSize(260, -1), wxTE_RICH2);
+    installTextCtrlPlaceholder(filterInput_, kFilterInputHint);
     toolbar->Add(filterInput_, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxTOP | wxBOTTOM, 4);
     toolbarPanel_->SetSizer(toolbar);
     root->Add(toolbarPanel_, 0, wxEXPAND);
@@ -295,7 +295,6 @@ void MainFrame::switchGame(Game g) {
     if (auto* view = activeView()) {
         if (filterInput_ != nullptr) {
             filterInput_->ChangeValue(wxString{});
-            filterInput_->SetHint(kFilterInputHint);
             filterInput_->Refresh();
         }
         view->setFilter("");

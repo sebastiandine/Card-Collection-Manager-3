@@ -22,6 +22,8 @@
 
 #include <unordered_map>
 #include <unordered_set>
+#include <cstring>
+#include <cwchar>
 #include <string>
 #include <string_view>
 
@@ -229,7 +231,7 @@ std::unordered_set<wxTextCtrl*> gPaletteTextCtrlDestroyBound;
 
 LRESULT CALLBACK editColorParentSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
                                          UINT_PTR /*subclassId*/, DWORD_PTR /*refData*/) {
-    if (msg == WM_CTLCOLOREDIT) {
+    if (msg == WM_CTLCOLOREDIT || msg == WM_CTLCOLORSTATIC) {
         const HWND editHwnd = reinterpret_cast<HWND>(lParam);
         const auto it = gPaletteTextCtrls.find(editHwnd);
         if (it != gPaletteTextCtrls.end() && it->second != nullptr) {
@@ -251,10 +253,22 @@ LRESULT CALLBACK editColorParentSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPA
     return ::DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
-void ensureEditColorParentSubclass(wxTextCtrl* text) {
-    if (text == nullptr) return;
-    const HWND editHwnd = reinterpret_cast<HWND>(text->GetHandle());
-    if (editHwnd == nullptr) return;
+HWND resolveNativeEditHwnd(wxTextCtrl* text) {
+    if (text == nullptr) return nullptr;
+    const HWND wxHwnd = reinterpret_cast<HWND>(text->GetHandle());
+    if (wxHwnd == nullptr) return nullptr;
+    static const wchar_t* kClasses[] = {
+        L"Edit", L"RICHEDIT50W", L"RichEdit50W", L"RICHEDIT20W", L"RichEdit20W",
+    };
+    for (const wchar_t* cls : kClasses) {
+        HWND child = ::FindWindowExW(wxHwnd, nullptr, cls, nullptr);
+        if (child != nullptr) return child;
+    }
+    return wxHwnd;
+}
+
+void ensureEditColorParentSubclass(wxTextCtrl* text, HWND editHwnd) {
+    if (text == nullptr || editHwnd == nullptr) return;
     gPaletteTextCtrls[editHwnd] = text;
     if (gPaletteTextCtrlDestroyBound.insert(text).second) {
         text->Bind(wxEVT_DESTROY, [text, editHwnd](wxWindowDestroyEvent& event) {
@@ -271,25 +285,127 @@ void ensureEditColorParentSubclass(wxTextCtrl* text) {
     }
 }
 
+constexpr UINT_PTR kPlaceholderSubclassId = 0x43434d50;  // 'CCMP'
+struct PlaceholderState {
+    wxTextCtrl* text{nullptr};
+    std::wstring hint;
+};
+std::unordered_map<HWND, PlaceholderState> gPlaceholders;
+std::unordered_set<HWND> gPlaceholderSubclassed;
+
+wxColour mixColours(const wxColour& a, const wxColour& b, int aParts, int total) {
+    const int bParts = total - aParts;
+    auto mix = [&](unsigned char ca, unsigned char cb) -> unsigned char {
+        return static_cast<unsigned char>((static_cast<int>(ca) * aParts +
+                                           static_cast<int>(cb) * bParts) /
+                                          total);
+    };
+    return wxColour(mix(a.Red(), b.Red()), mix(a.Green(), b.Green()), mix(a.Blue(), b.Blue()));
+}
+
+void paintEmptyPlaceholder(HWND hwnd, HDC suppliedDc) {
+    const auto it = gPlaceholders.find(hwnd);
+    if (it == gPlaceholders.end() || it->second.hint.empty()) return;
+    if (::GetWindowTextLengthW(hwnd) > 0) return;
+    // Native cue banners hide as soon as the caret is in the box, even if empty.
+    const HWND focus = ::GetFocus();
+    if (focus == hwnd) return;
+    if (it->second.text != nullptr && it->second.text->HasFocus()) return;
+
+    HDC hdc = suppliedDc;
+    if (hdc == nullptr) hdc = ::GetDC(hwnd);
+    if (hdc == nullptr) return;
+
+    RECT rc{};
+    ::GetClientRect(hwnd, &rc);
+    rc.left += 4;
+
+    wxColour fg(160, 160, 160);
+    wxColour bg(45, 45, 45);
+    if (it->second.text != nullptr) {
+        const wxColour textFg = it->second.text->GetForegroundColour();
+        const wxColour textBg = it->second.text->GetBackgroundColour();
+        if (textFg.IsOk()) fg = textFg;
+        if (textBg.IsOk()) bg = textBg;
+    }
+    const wxColour muted = mixColours(fg, bg, 2, 5);
+
+    const HFONT source = reinterpret_cast<HFONT>(::SendMessageW(hwnd, WM_GETFONT, 0, 0));
+    HFONT hintFont = nullptr;
+    if (source != nullptr) {
+        LOGFONTW lf{};
+        if (::GetObjectW(source, sizeof(lf), &lf) != 0) {
+            // Cue text should read lighter than typed input. RichEdit's WM_GETFONT
+            // is often a heavy face; Segoe UI Light keeps the hint thin on MSW.
+            wcsncpy(lf.lfFaceName, L"Segoe UI Light", LF_FACESIZE - 1);
+            lf.lfFaceName[LF_FACESIZE - 1] = 0;
+            lf.lfWeight = FW_LIGHT;
+            lf.lfItalic = FALSE;
+            lf.lfQuality = CLEARTYPE_QUALITY;
+            if (lf.lfHeight < -1) lf.lfHeight += 1;
+            hintFont = ::CreateFontIndirectW(&lf);
+        }
+    }
+    const HFONT useFont = hintFont != nullptr ? hintFont : source;
+    const HGDIOBJ oldFont = (useFont != nullptr) ? ::SelectObject(hdc, useFont) : nullptr;
+    ::SetBkMode(hdc, TRANSPARENT);
+    ::SetTextColor(hdc, RGB(muted.Red(), muted.Green(), muted.Blue()));
+    ::DrawTextW(hdc, it->second.hint.c_str(), -1, &rc,
+                DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
+    if (oldFont != nullptr) ::SelectObject(hdc, oldFont);
+    if (hintFont != nullptr) ::DeleteObject(hintFont);
+    if (suppliedDc == nullptr) ::ReleaseDC(hwnd, hdc);
+}
+
+LRESULT CALLBACK placeholderEditSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                                         UINT_PTR /*subclassId*/, DWORD_PTR /*refData*/) {
+    if (msg == WM_PAINT || msg == WM_PRINTCLIENT) {
+        const LRESULT result = ::DefSubclassProc(hwnd, msg, wParam, lParam);
+        paintEmptyPlaceholder(hwnd, msg == WM_PRINTCLIENT ? reinterpret_cast<HDC>(wParam) : nullptr);
+        return result;
+    }
+    if (msg == WM_SETFOCUS || msg == WM_KILLFOCUS) {
+        const LRESULT result = ::DefSubclassProc(hwnd, msg, wParam, lParam);
+        ::InvalidateRect(hwnd, nullptr, TRUE);
+        return result;
+    }
+    if (msg == WM_NCDESTROY) {
+        gPlaceholders.erase(hwnd);
+        gPlaceholderSubclassed.erase(hwnd);
+        ::RemoveWindowSubclass(hwnd, placeholderEditSubclass, kPlaceholderSubclassId);
+    }
+    return ::DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
 void hardenTextCtrlNativeTheme(wxTextCtrl* text, Theme theme) {
     if (text == nullptr) return;
     const bool darkLike = isDarkLikeTheme(theme);
-    text->SetThemeEnabled(!darkLike);
 
-    const HWND hwnd = reinterpret_cast<HWND>(text->GetHandle());
-    if (hwnd == nullptr) return;
+    const HWND wxHwnd = reinterpret_cast<HWND>(text->GetHandle());
+    if (wxHwnd == nullptr) return;
 
-    // Opt this EDIT out of immersive dark mode so typed text uses our palette.
+    HWND editHwnd = resolveNativeEditHwnd(text);
+
+    // Enable native dark mode on the EDIT so its themed renderer paints
+    // light-on-dark.  The app-wide preferred mode is already ForceDark
+    // (set in applyFrameTitlebarTheme); individual windows opt in here.
+    // DarkMode_Explorer explicitly selects the dark text variant in the
+    // visual-style theme — plain "Explorer" gave dark background but the
+    // text colour stayed dark on some Windows 10/11 builds.
     if (auto allowDarkModeForWindow = resolveAllowDarkModeForWindow()) {
-        allowDarkModeForWindow(hwnd, FALSE);
+        allowDarkModeForWindow(editHwnd, darkLike ? TRUE : FALSE);
+        if (editHwnd != wxHwnd)
+            allowDarkModeForWindow(wxHwnd, darkLike ? TRUE : FALSE);
     }
-    if (darkLike) {
-        if (auto setWindowTheme = resolveSetWindowTheme()) {
-            // Empty theme class disables visual-style painting of the EDIT contents.
-            setWindowTheme(hwnd, L"", L"");
-        }
+    if (auto setWindowTheme = resolveSetWindowTheme()) {
+        const wchar_t* cls = darkLike ? L"DarkMode_Explorer" : L"Explorer";
+        setWindowTheme(editHwnd, cls, nullptr);
+        if (editHwnd != wxHwnd)
+            setWindowTheme(wxHwnd, cls, nullptr);
     }
-    ensureEditColorParentSubclass(text);
+    ::SendMessageW(editHwnd, WM_THEMECHANGED, 0, 0);
+    ensureEditColorParentSubclass(text, editHwnd);
+    ::InvalidateRect(editHwnd, nullptr, TRUE);
 }
 
 COLORREF toColorRef(const wxColour& c) {
@@ -728,7 +844,40 @@ void applyPaletteToTextCtrl(wxTextCtrl* text, const ThemePalette& palette, Theme
     text->SetForegroundColour(palette.inputText);
     text->SetOwnBackgroundColour(palette.inputBg);
     text->SetOwnForegroundColour(palette.inputText);
+    // For RichEdit-backed controls (wxTE_RICH2) the character format must be
+    // set explicitly — SetForegroundColour alone does not propagate to the
+    // native EM_SETCHARFORMAT on all wx builds.
+    wxTextAttr attr;
+    attr.SetTextColour(palette.inputText);
+    text->SetDefaultStyle(attr);
+    if (text->GetLastPosition() > 0)
+        text->SetStyle(0, text->GetLastPosition(), attr);
     text->Refresh();
+}
+
+void installTextCtrlPlaceholder(wxTextCtrl* text, const wxString& hint) {
+    if (text == nullptr) return;
+#ifdef __WXMSW__
+    // RichEdit (wxTE_RICH2) ignores EM_SETCUEBANNER; wx's SetHint fallback
+    // writes the cue into GetValue(). Paint the hint ourselves when empty.
+    const HWND editHwnd = resolveNativeEditHwnd(text);
+    if (editHwnd == nullptr) {
+        text->CallAfter([text, hint]() { installTextCtrlPlaceholder(text, hint); });
+        return;
+    }
+    gPlaceholders[editHwnd] = PlaceholderState{text, hint.ToStdWstring()};
+    if (gPlaceholderSubclassed.insert(editHwnd).second) {
+        if (::SetWindowSubclass(editHwnd, placeholderEditSubclass, kPlaceholderSubclassId, 0) ==
+            FALSE) {
+            gPlaceholderSubclassed.erase(editHwnd);
+            gPlaceholders.erase(editHwnd);
+            return;
+        }
+    }
+    ::InvalidateRect(editHwnd, nullptr, TRUE);
+#else
+    text->SetHint(hint);
+#endif
 }
 
 void themeModalDialog(wxDialog* dlg, Theme theme) {
