@@ -107,8 +107,8 @@ void DigiBattle99GameView::buildSingleCardsToolbar(wxWindow* parent, wxBoxSizer*
     toolbar->Add(toolbarButtons_[1], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
     toolbar->Add(toolbarButtons_[2], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
     toolbar->AddStretchSpacer(1);
-    filterInput_ = new wxTextCtrl(parent, wxID_ANY, "", wxDefaultPosition, wxSize(260, -1));
-    filterInput_->SetHint(kDigiFilterHint);
+    filterInput_ = new wxTextCtrl(parent, wxID_ANY, "", wxDefaultPosition, wxSize(260, -1), wxTE_RICH2);
+    installTextCtrlPlaceholder(filterInput_, kDigiFilterHint);
     toolbar->Add(filterInput_, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxTOP | wxBOTTOM, 4);
     pageSizer->Add(toolbar, 0, wxEXPAND);
 
@@ -509,7 +509,6 @@ void DigiBattle99GameView::setFilter(std::string_view filter) {
         if (filterInput_->GetValue() != wanted) {
             filterInput_->ChangeValue(wanted);
             if (filter.empty()) {
-                filterInput_->SetHint(kDigiFilterHint);
                 filterInput_->Refresh();
             }
         }

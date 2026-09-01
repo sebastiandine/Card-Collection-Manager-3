@@ -49,6 +49,7 @@
 #include <wx/listctrl.h>
 #include <wx/panel.h>
 #include <wx/sizer.h>
+#include <wx/textctrl.h>
 #include <wx/statbmp.h>
 #include <wx/stattext.h>
 #include <wx/utils.h>
@@ -125,7 +126,9 @@ public:
         auto ids = selectedIds();
         std::optional<std::vector<std::uint32_t>> keepIds;
         if (!ids.empty()) keepIds = std::move(ids);
+        suppressListFocus_ = true;
         rebuildRows(keepIds);
+        suppressListFocus_ = false;
     }
 
     void applyTheme(const ThemePalette& palette) {
@@ -189,7 +192,8 @@ public:
                             wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED,
                             wxLIST_STATE_SELECTED | wxLIST_STATE_FOCUSED);
         list_->EnsureVisible(row);
-        list_->SetFocus();
+        if (dynamic_cast<wxTextCtrl*>(wxWindow::FindFocus()) == nullptr)
+            list_->SetFocus();
     }
 
     // Move the selection by `delta` rows (+1 / -1). Used when Up/Down are
@@ -750,7 +754,13 @@ private:
         if (inRebuild_) return;
         // Row click / native arrow keys: keep HWND focus on the list. Filter
         // nudge sets suppressListFocus_ so the caret stays in the text box.
-        if (!suppressListFocus_ && list_ != nullptr) list_->SetFocus();
+        // Also skip the focus grab when any wxTextCtrl already has focus
+        // (covers the deferred CallAfter select that fires after setFilter
+        // has reset suppressListFocus_).
+        if (!suppressListFocus_ && list_ != nullptr) {
+            if (dynamic_cast<wxTextCtrl*>(wxWindow::FindFocus()) == nullptr)
+                list_->SetFocus();
+        }
         notifySelectionChanged();
     }
 

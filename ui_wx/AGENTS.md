@@ -62,6 +62,7 @@
     - Center popup dialogs on the app window (`CentreOnParent()`) so confirmations/info boxes open relative to the current app window.
     - Include `wxSpinCtrl` in themed input controls (Amount field) or it will keep a mismatched native background.
     - Do not call `applyNativeClassTheme(..., "DarkMode_Explorer", "Explorer")` for `wxTextCtrl`; on some Windows builds this causes black typed text in dark mode. Keep text inputs palette-driven (`SetThemeEnabled(false)` in dark/high-contrast as needed).
+    - The collection **filter** boxes use `wxTE_RICH2` so typed text can take palette colours on MSW. Do **not** call `SetHint()` on those controls: RichEdit has no cue banner, and wx's fallback writes the hint into `GetValue()`. Use `installTextCtrlPlaceholder` (paints the cue only while empty).
     - Text inputs are hardened in `Theme.cpp` via `applyPaletteToTextCtrl` / `hardenTextCtrlNativeTheme`: opt the EDIT HWND out of immersive dark mode, clear its visual style, and subclass the **parent** to answer `WM_CTLCOLOREDIT` (that message goes to the parent, not the frame — an earlier frame-level handler never ran for the toolbar filter).
     - Keep toolbar button behavior stable under dark/high-contrast: avoid changes that break click/tooltip affordances while experimenting with hover contrast fixes.
     - For dark/high-contrast button readability, do not trust native hover/pressed rendering on Windows; custom state painting in `Theme.cpp` is allowed when native visuals ignore configured colors.
