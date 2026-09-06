@@ -31,6 +31,7 @@ add_executable(ccm_core_tests
     yugiohbandai_set_completion_tests.cpp
     yugioh_set_completion_tests.cpp
     pokemon_set_completion_tests.cpp
+    magic_deck_check_tests.cpp
     set_no_natural_tests.cpp
     japanese_pokemon_en_catalog_tests.cpp
     japanese_pokemon_set_source_tests.cpp

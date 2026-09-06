@@ -1,8 +1,8 @@
 #pragma once
 
-// MainFrame: top-level window. Hosts the menu bar (File / Game / Sets), the
-// toolbar (Add / Edit / Delete + filter input), and the splitter that swaps
-// the active `IGameView`'s panels in and out as the user switches games.
+// MainFrame: top-level window. Hosts the menu bar (File / Game / Sets), a
+// shared toolbar (hidden when the active game hostsOwnLayout), and a
+// contentHost that mounts either the shared splitter or a game's contentPanel.
 
 #include "ccm/domain/Enums.hpp"
 #include "ccm/ui/AppContext.hpp"

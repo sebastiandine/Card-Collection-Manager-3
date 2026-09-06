@@ -34,6 +34,11 @@ extern const char* const kSvgToolbarAdd;
 extern const char* const kSvgToolbarEdit;
 extern const char* const kSvgToolbarDelete;
 
+// Status glyphs for Magic Deck Check (and similar result lists).
+// Triangle+bang and checkmark; fill is the status color (red / yellow / green).
+extern const char* const kSvgAlert;
+extern const char* const kSvgCheck;
+
 // Rasterize an SVG template into a wxBitmap of `size`x`size` pixels. The
 // `@FILL@` placeholder in the template is replaced with `fillHex` (any CSS
 // color string accepted by NanoSVG, e.g. "#000000" or "white").

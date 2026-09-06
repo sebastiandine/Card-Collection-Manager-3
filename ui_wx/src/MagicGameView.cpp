@@ -3,16 +3,46 @@
 #include "ccm/ui/CardEditModalGuard.hpp"
 #include "ccm/ui/MagicCardEditDialog.hpp"
 #include "ccm/ui/MagicCardListPanel.hpp"
+#include "ccm/ui/MagicDeckCheckPanel.hpp"
 #include "ccm/ui/MagicSelectedCardPanel.hpp"
+#include "ccm/ui/SvgIcons.hpp"
 #include "ccm/ui/Theme.hpp"
 
-#include <wx/msgdlg.h>
+#include <wx/bmpbuttn.h>
+#include <wx/cursor.h>
+#include <wx/dcclient.h>
+#include <wx/panel.h>
+#include <wx/simplebook.h>
+#include <wx/sizer.h>
+#include <wx/splitter.h>
+#include <wx/stattext.h>
+#include <wx/textctrl.h>
 #include <wx/window.h>
 
-#include <optional>
 #include <string>
 
 namespace ccm::ui {
+
+namespace {
+constexpr int kMagicToolbarIconPx = 18;
+constexpr const char kMagicFilterHint[] = "Filter";
+
+wxColour lighten(const wxColour& c, int amount) {
+    auto lift = [amount](unsigned char channel) -> unsigned char {
+        const int raised = static_cast<int>(channel) + amount;
+        return static_cast<unsigned char>(raised > 255 ? 255 : raised);
+    };
+    return wxColour(lift(c.Red()), lift(c.Green()), lift(c.Blue()));
+}
+
+wxColour darken(const wxColour& c, int amount) {
+    auto drop = [amount](unsigned char channel) -> unsigned char {
+        const int lowered = static_cast<int>(channel) - amount;
+        return static_cast<unsigned char>(lowered < 0 ? 0 : lowered);
+    };
+    return wxColour(drop(c.Red()), drop(c.Green()), drop(c.Blue()));
+}
+}  // namespace
 
 MagicGameView::MagicGameView(ConfigService&                       config,
                              CollectionService<MagicCard>&        collection,
@@ -45,12 +75,218 @@ void MagicGameView::ensureSetsLoaded() {
     }
 }
 
+void MagicGameView::ensureSingleCardsMounted(wxWindow* splitterParent) {
+    if (singleSplitter_ == nullptr) {
+        singleSplitter_ = new wxSplitterWindow(splitterParent, wxID_ANY, wxDefaultPosition,
+                                               wxDefaultSize, wxSP_LIVE_UPDATE);
+        singleSplitter_->SetMinimumPaneSize(280);
+    }
+    auto* list = listPanel(singleSplitter_);
+    auto* selected = selectedPanel(singleSplitter_);
+    if (!singleSplitter_->IsSplit()) {
+        singleSplitter_->SplitVertically(selected, list, 360);
+    }
+}
+
+void MagicGameView::buildSingleCardsToolbar(wxWindow* parent, wxBoxSizer* pageSizer) {
+    auto* toolbar = new wxBoxSizer(wxHORIZONTAL);
+    auto makeToolBtn = [&](const char* svg, const wxString& tip) {
+        wxBitmap bmp = svgIconBitmap(svg, kMagicToolbarIconPx, "#000000");
+        auto* b = new wxBitmapButton(parent, wxID_ANY, bmp, wxDefaultPosition, wxDefaultSize,
+                                     wxBU_EXACTFIT);
+        b->SetToolTip(tip);
+        return b;
+    };
+    toolbarButtons_[0] = makeToolBtn(kSvgToolbarAdd,    "Add Card");
+    toolbarButtons_[1] = makeToolBtn(kSvgToolbarEdit,   "Edit");
+    toolbarButtons_[2] = makeToolBtn(kSvgToolbarDelete, "Delete");
+    toolbar->AddSpacer(4);
+    toolbar->Add(toolbarButtons_[0], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
+    toolbar->Add(toolbarButtons_[1], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
+    toolbar->Add(toolbarButtons_[2], 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
+    toolbar->AddStretchSpacer(1);
+    filterInput_ = new wxTextCtrl(parent, wxID_ANY, "", wxDefaultPosition, wxSize(260, -1), wxTE_RICH2);
+    installTextCtrlPlaceholder(filterInput_, kMagicFilterHint);
+    toolbar->Add(filterInput_, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxTOP | wxBOTTOM, 4);
+    pageSizer->Add(toolbar, 0, wxEXPAND);
+
+    toolbarButtons_[0]->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+        wxWindow* owner = wxGetTopLevelParent(contentPanel_);
+        onAddCard(owner != nullptr ? owner : contentPanel_);
+    });
+    toolbarButtons_[1]->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+        wxWindow* owner = wxGetTopLevelParent(contentPanel_);
+        onEditCard(owner != nullptr ? owner : contentPanel_);
+    });
+    toolbarButtons_[2]->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+        wxWindow* owner = wxGetTopLevelParent(contentPanel_);
+        onDeleteCard(owner != nullptr ? owner : contentPanel_);
+    });
+    filterInput_->Bind(wxEVT_TEXT, [this](wxCommandEvent&) {
+        if (filterInput_ == nullptr) return;
+        setFilter(filterInput_->GetValue().ToStdString(wxConvUTF8));
+    });
+    filterInput_->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent& ev) {
+        const int code = ev.GetKeyCode();
+        if (code == WXK_UP || code == WXK_DOWN) {
+            nudgeSelection(code == WXK_UP ? -1 : 1);
+            return;
+        }
+        ev.Skip();
+    });
+}
+
+void MagicGameView::refreshToolbarIcons(const ThemePalette& palette) {
+    const std::string tbHex = palette.buttonText.GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
+    if (toolbarButtons_[0]) {
+        toolbarButtons_[0]->SetBitmap(
+            svgIconBitmap(kSvgToolbarAdd, kMagicToolbarIconPx, tbHex.c_str()));
+    }
+    if (toolbarButtons_[1]) {
+        toolbarButtons_[1]->SetBitmap(
+            svgIconBitmap(kSvgToolbarEdit, kMagicToolbarIconPx, tbHex.c_str()));
+    }
+    if (toolbarButtons_[2]) {
+        toolbarButtons_[2]->SetBitmap(
+            svgIconBitmap(kSvgToolbarDelete, kMagicToolbarIconPx, tbHex.c_str()));
+    }
+}
+
+void MagicGameView::selectTab(int index) {
+    if (index < 0 || index > 1 || book_ == nullptr) return;
+    activeTab_ = index;
+    book_->SetSelection(index);
+    refreshTabBarTheme(paletteForTheme(config_.current().theme));
+}
+
+void MagicGameView::refreshTabBarTheme(const ThemePalette& palette) {
+    if (tabBar_ == nullptr) return;
+
+    const wxColour barBg = palette.panelBg;
+    const wxColour tabBg = palette.buttonBg;
+
+    tabBar_->SetBackgroundColour(barBg);
+    tabBar_->SetOwnBackgroundColour(barBg);
+
+    for (int i = 0; i < 2; ++i) {
+        auto* tab = tabPanels_[i];
+        auto* label = tabLabels_[i];
+        if (tab == nullptr || label == nullptr) continue;
+        const bool selected = (i == activeTab_);
+        tab->SetBackgroundColour(tabBg);
+        tab->SetOwnBackgroundColour(tabBg);
+        label->SetBackgroundColour(tabBg);
+        label->SetOwnBackgroundColour(tabBg);
+        label->SetForegroundColour(palette.text);
+        label->SetOwnForegroundColour(palette.text);
+        wxFont font = label->GetFont();
+        font.SetWeight(selected ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL);
+        label->SetFont(font);
+        tab->Refresh();
+        label->Refresh();
+    }
+    tabBar_->Layout();
+    tabBar_->Refresh();
+}
+
+void MagicGameView::buildTabBar(wxWindow* parent, wxBoxSizer* rootSizer) {
+    tabBar_ = new wxPanel(parent, wxID_ANY);
+    tabBar_->SetBackgroundStyle(wxBG_STYLE_PAINT);
+    auto* tabSizer = new wxBoxSizer(wxHORIZONTAL);
+    tabSizer->AddSpacer(4);
+
+    const char* labels[2] = {"Single Cards", "Deck Check"};
+    for (int i = 0; i < 2; ++i) {
+        auto* tab = new wxPanel(tabBar_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+        tab->SetCursor(wxCursor(wxCURSOR_HAND));
+        tab->SetBackgroundStyle(wxBG_STYLE_PAINT);
+        auto* label = new wxStaticText(tab, wxID_ANY, wxString::FromUTF8(labels[i]));
+        auto* inner = new wxBoxSizer(wxVERTICAL);
+        inner->Add(label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, 5);
+        tab->SetSizer(inner);
+
+        auto onClick = [this, i](wxMouseEvent&) { selectTab(i); };
+        tab->Bind(wxEVT_LEFT_DOWN, onClick);
+        label->Bind(wxEVT_LEFT_DOWN, onClick);
+        tab->Bind(wxEVT_ERASE_BACKGROUND, [](wxEraseEvent&) {});
+        tab->Bind(wxEVT_PAINT, [this, tab, i](wxPaintEvent&) {
+            wxPaintDC dc(tab);
+            const ThemePalette palette = paletteForTheme(config_.current().theme);
+            const bool dark = config_.current().theme == Theme::Dark;
+            const bool selected = (i == activeTab_);
+            const wxColour bg = palette.buttonBg;
+            const wxColour frame =
+                dark ? lighten(palette.panelBg, 55) : darken(palette.panelBg, 45);
+            const wxColour frameSel = dark ? lighten(palette.panelBg, 85) : darken(palette.panelBg, 70);
+            const wxRect r = tab->GetClientRect();
+            dc.SetPen(wxPen(selected ? frameSel : frame, 1));
+            dc.SetBrush(wxBrush(bg));
+            dc.DrawRectangle(r.x, r.y, r.width, r.height);
+            if (selected) {
+                dc.SetPen(wxPen(palette.text, 2));
+                dc.DrawLine(r.GetLeft() + 4, r.GetBottom() - 1, r.GetRight() - 4,
+                            r.GetBottom() - 1);
+            }
+        });
+
+        tabPanels_[i] = tab;
+        tabLabels_[i] = label;
+        if (i > 0) tabSizer->AddSpacer(4);
+        tabSizer->Add(tab, 0, wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM, 3);
+    }
+    tabSizer->AddStretchSpacer(1);
+
+    tabBar_->Bind(wxEVT_PAINT, [this](wxPaintEvent&) {
+        wxPaintDC dc(tabBar_);
+        const ThemePalette palette = paletteForTheme(config_.current().theme);
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(palette.panelBg));
+        dc.DrawRectangle(tabBar_->GetClientRect());
+        dc.SetPen(wxPen(darken(palette.text, 120), 1));
+        const wxRect r = tabBar_->GetClientRect();
+        dc.DrawLine(r.GetLeft(), r.GetBottom(), r.GetRight(), r.GetBottom());
+    });
+    tabBar_->Bind(wxEVT_ERASE_BACKGROUND, [](wxEraseEvent&) {});
+
+    tabBar_->SetSizer(tabSizer);
+    rootSizer->Add(tabBar_, 0, wxEXPAND);
+    refreshTabBarTheme(paletteForTheme(config_.current().theme));
+}
+
+wxPanel* MagicGameView::contentPanel(wxWindow* parent) {
+    if (contentPanel_ == nullptr) {
+        contentPanel_ = new wxPanel(parent);
+        auto* root = new wxBoxSizer(wxVERTICAL);
+
+        buildTabBar(contentPanel_, root);
+
+        book_ = new wxSimplebook(contentPanel_, wxID_ANY);
+        auto* singlePage = new wxPanel(book_);
+        auto* singleSizer = new wxBoxSizer(wxVERTICAL);
+        buildSingleCardsToolbar(singlePage, singleSizer);
+        ensureSingleCardsMounted(singlePage);
+        singleSizer->Add(singleSplitter_, 1, wxEXPAND);
+        singlePage->SetSizer(singleSizer);
+        book_->AddPage(singlePage, "Single Cards");
+
+        deckCheckPanel_ = new MagicDeckCheckPanel(book_);
+        book_->AddPage(deckCheckPanel_, "Deck Check");
+
+        root->Add(book_, 1, wxEXPAND | wxTOP, 5);
+        contentPanel_->SetSizer(root);
+
+        selectTab(0);
+        refreshToolbarIcons(paletteForTheme(config_.current().theme));
+        contentPanel_->CallAfter([this]() {
+            refreshTabBarTheme(paletteForTheme(config_.current().theme));
+        });
+    }
+    return contentPanel_;
+}
+
 wxPanel* MagicGameView::listPanel(wxWindow* parent) {
     if (listPanel_ == nullptr) {
         listPanel_ = new MagicCardListPanel(parent);
-        // Selection in the list -> push the typed card to the selected panel.
-        // Binding here (in the view, not in MainFrame) keeps the typed wiring
-        // local to the per-game implementation - MainFrame only sees IGameView.
         listPanel_->Bind(EVT_CARD_SELECTED, [this](wxCommandEvent&) {
             if (selectedPanel_ != nullptr && listPanel_ != nullptr) {
                 selectedPanel_->setCard(listPanel_->selected());
@@ -72,27 +308,29 @@ wxPanel* MagicGameView::selectedPanel(wxWindow* parent) {
     return selectedPanel_;
 }
 
-void MagicGameView::attachSharedToolbarEdit(wxBitmapButton* edit) {
-    sharedEditButton_ = edit;
-    syncEditToolbarVisibility();
-}
-
 void MagicGameView::syncEditToolbarVisibility() {
     const bool showEdit = listPanel_ == nullptr || listPanel_->selectedCount() <= 1;
-    setToolbarEditVisible(sharedEditButton_, showEdit);
+    setToolbarEditVisible(toolbarButtons_[1], showEdit);
 }
 
 void MagicGameView::refreshCollection(std::optional<std::uint32_t> selectId) {
-    if (listPanel_ == nullptr) return;
+    if (contentPanel_ == nullptr && listPanel_ == nullptr) return;
+
     auto loaded = collection_.list(Game::Magic);
     if (!loaded) {
         showThemedMessageDialog(nullptr, "Failed to load Magic collection: " + loaded.error(),
                                 "Error", wxOK | wxICON_ERROR);
         return;
     }
-    listPanel_->setCards(std::move(loaded).value(), selectId);
-    listPanel_->activateSelection();
-    if (selectedPanel_) selectedPanel_->setCard(listPanel_->selected());
+    auto cards = std::move(loaded).value();
+    if (listPanel_ != nullptr) {
+        listPanel_->setCards(cards, selectId);
+        listPanel_->activateSelection();
+        if (selectedPanel_) selectedPanel_->setCard(listPanel_->selected());
+    }
+    if (deckCheckPanel_ != nullptr) {
+        deckCheckPanel_->setCollection(std::move(cards));
+    }
 }
 
 const std::vector<Set>& MagicGameView::setsForDialog() {
@@ -217,6 +455,15 @@ std::string MagicGameView::onUpdateSets(wxWindow* parentWindow) {
 }
 
 void MagicGameView::setFilter(std::string_view filter) {
+    if (filterInput_ != nullptr) {
+        const wxString wanted = wxString::FromUTF8(std::string(filter).c_str());
+        if (filterInput_->GetValue() != wanted) {
+            filterInput_->ChangeValue(wanted);
+            if (filter.empty()) {
+                filterInput_->Refresh();
+            }
+        }
+    }
     if (listPanel_) listPanel_->setFilter(filter);
 }
 
@@ -225,9 +472,13 @@ void MagicGameView::nudgeSelection(int delta) {
 }
 
 void MagicGameView::applyTheme(const ThemePalette& palette) {
-    if (listPanel_)     listPanel_->applyTheme(palette);
-    if (selectedPanel_) selectedPanel_->applyTheme(palette);
-    syncEditToolbarVisibility();
+    if (contentPanel_) applyThemeToWindowTree(contentPanel_, palette, config_.current().theme);
+    if (listPanel_)      listPanel_->applyTheme(palette);
+    if (selectedPanel_)  selectedPanel_->applyTheme(palette);
+    if (deckCheckPanel_) deckCheckPanel_->applyTheme(palette);
+    refreshToolbarIcons(palette);
+    refreshTabBarTheme(palette);
+    applyPaletteToTextCtrl(filterInput_, palette, config_.current().theme);
 }
 
 }  // namespace ccm::ui

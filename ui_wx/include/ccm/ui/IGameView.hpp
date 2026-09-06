@@ -6,8 +6,9 @@
 // (config, sets, images, card preview) come from the shared `AppContext`,
 // so a new game implementation does not need its own copy of any of them.
 //
-// New games extend this interface — see `MagicGameView` and
-// `PokemonGameView` for the canonical patterns.
+// New games extend this interface — see `MagicGameView` (Single Cards |
+// Deck Check notebook) and `PokemonGameView` (Single Cards | Set Completion)
+// for the canonical patterns.
 
 #include "ccm/domain/Enums.hpp"
 #include "ccm/domain/Set.hpp"
@@ -39,9 +40,9 @@ public:
     virtual wxPanel* selectedPanel(wxWindow* parent) = 0;
 
     // When non-null, MainFrame mounts this as the sole content under the
-    // toolbar instead of the shared selected|list splitter. Digimon, Yu-Gi-Oh!,
-    // and Pokemon use this for Single Cards / Set Completion notebooks.
-    // Default: no custom host.
+    // toolbar instead of the shared selected|list splitter. Magic, Digimon,
+    // Yu-Gi-Oh!, and Pokemon use this for in-game notebooks (Single Cards
+    // plus Set Completion or Deck Check). Default: no custom host.
     virtual wxPanel* contentPanel(wxWindow* parent) {
         (void)parent;
         return nullptr;
@@ -55,6 +56,7 @@ public:
 
     // Games that own their layout via contentPanel must not have their
     // list/selected panels parented onto MainFrame's shared splitter.
+    // Magic, Pokemon, Yu-Gi-Oh!, and Digimon all return true.
     [[nodiscard]] virtual bool hostsOwnLayout() const noexcept { return false; }
 
     // Reload the active collection from disk and refresh the panels. When
@@ -68,8 +70,8 @@ public:
     virtual void onEditCard(wxWindow* parentWindow) = 0;
     virtual void onDeleteCard(wxWindow* parentWindow) = 0;
 
-    // Magic uses MainFrame's shared Edit button; hostsOwnLayout games ignore
-    // this and manage their own toolbar. Default no-op.
+    // Legacy hook for a MainFrame-owned Edit button. hostsOwnLayout games
+    // (including Magic) ignore this and manage their own toolbar. Default no-op.
     virtual void attachSharedToolbarEdit(wxBitmapButton* edit) { (void)edit; }
 
     // Sets menu action ("Update Magic" / "Update Pokemon"). Returns the

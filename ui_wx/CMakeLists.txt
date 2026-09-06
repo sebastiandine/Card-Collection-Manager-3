@@ -10,6 +10,7 @@ add_library(ccm_ui_wx STATIC
     src/MagicSelectedCardPanel.cpp
     src/MagicCardEditDialog.cpp
     src/MagicGameView.cpp
+    src/MagicDeckCheckPanel.cpp
 
     src/PokemonCardListPanel.cpp
     src/PokemonSelectedCardPanel.cpp

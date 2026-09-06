@@ -373,6 +373,8 @@ Implement the virtuals:
 
 The reference implementation is `ui_wx/src/PokemonGameView.cpp`. It's about 160 lines and is the same shape for every game.
 
+Optional extra in-game tabs (Magic’s **Deck Check**, Pokémon/Yu-Gi-Oh!/Digimon **Set Completion**) are **not** required. When a game needs one, override `contentPanel` / `hostsOwnLayout` and host a themed tab strip + `wxSimplebook` inside the view — see `MagicGameView` and `PokemonGameView`. Do not add a second `Game` menu entry or a MainFrame-level tab.
+
 ### 5.7 Register the new UI sources
 
 Add **all** new UI `.cpp` files to `ui_wx/CMakeLists.txt`:

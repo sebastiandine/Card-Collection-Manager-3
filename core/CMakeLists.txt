@@ -30,6 +30,7 @@ add_library(ccm_core STATIC
     src/services/YuGiOhBandaiSetCatalogService.cpp
     src/services/PokemonSetCompletion.cpp
     src/services/PokemonSetCatalogService.cpp
+    src/services/MagicDeckCheck.cpp
 
     src/infra/CprHttpClient.cpp
     src/infra/StdFileSystem.cpp

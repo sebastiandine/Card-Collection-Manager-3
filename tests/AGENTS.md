@@ -27,6 +27,7 @@
 - `digibattle99_set_completion_tests.cpp` — `computeDigiBattle99SetCompletion` / `digiBattle99ChecklistForSet` ownership rules + `DigiBattle99SetCatalogService` round-trip against `InMemoryFileSystem`.
 - `yugioh_set_completion_tests.cpp` — `computeYuGiOhSetCompletion` / `yuGiOhChecklistForSet` ownership rules (printing-slot match) + `YuGiOhSetCatalogService` round-trip against `InMemoryFileSystem`.
 - `pokemon_set_completion_tests.cpp` — `computePokemonSetCompletion` / `pokemonChecklistForSet` West/Asia ownership isolation + region/language filters + `PokemonSetCatalogService` dual-path FS round-trip.
+- `magic_deck_check_tests.cpp` — `parseMagicDeckList` (`N` / `Nx`, Arena suffix, headers/comments, duplicate merge) + `analyzeMagicDeckCheck` (zero / exact / partial / surplus / multi-printing sums).
 - `digibattle99_card_preview_source_tests.cpp` — CDN image URL from `setNo`, search URL encoding (`series`/`n`/`pack`/`card`), `parseImageUrlFromSearch` NotFound vs Transient, and auto-detect print variants. Drives `fetchImageUrl` / `detectPrintVariants` via `FixedHttpClient`.
 - `yugioh_set_source_tests.cpp` — `YuGiOhSetSource::parseResponse` for YGOPRODeck `cardsets.php` (`set_code`, `set_name`, `tcg_date`) including `YYYY-MM-DD` -> `YYYY/MM/DD` rewrite and chronological sort checks. Also `parseCatalog` / `fetchAllWithCatalog` for the set-completion checklist from `cardinfo.php`.
 - `yugioh_set_lookup_tests.cpp` — `lookupYuGiOhSetByShorthand` / helpers in `ccm/util/YuGiOhSetLookup.hpp` (trim, ASCII case-fold, exact `Set.id` match, not-found vs ambiguous).
