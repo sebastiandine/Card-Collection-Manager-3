@@ -14,7 +14,6 @@ Currently, the application supports the following TCGs:
 
 ## Screenshots
 
-
 <details open>
 <summary>Magic The Gathering</summary>
 
