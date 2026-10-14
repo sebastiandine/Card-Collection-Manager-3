@@ -90,9 +90,12 @@ public:
 
     // Replace the displayed rows. When preferSelectId is set, selects that
     // card exclusively if present (used after Add). Otherwise preserves the
-    // previously selected card ids when still present; the first-row CallAfter
-    // path in rebuildRows() runs only when there was no prior selection
-    // (startup).
+    // previously selected card ids when still present. When none of those ids
+    // remain (delete), selects the visible row above the topmost removed row,
+    // or the next remaining visible row when that row was first. The first-row
+    // CallAfter path in rebuildRows() runs only when there was no prior
+    // selection (startup). An active header sort is reapplied so the on-screen
+    // order survives the reload.
     void setCards(std::vector<TCard> cards,
                   std::optional<std::uint32_t> preferSelectId = std::nullopt) {
         std::optional<std::vector<std::uint32_t>> keepIds;
@@ -100,14 +103,10 @@ public:
             keepIds = std::vector<std::uint32_t>{*preferSelectId};
         } else {
             auto ids = selectedIds();
-            if (!ids.empty()) keepIds = std::move(ids);
+            if (!ids.empty()) keepIds = keepIdsAfterReload(ids, cards);
         }
         cards_ = std::move(cards);
-        // Drop sort state when the underlying data is replaced - the indicator
-        // shown in the header should match the order actually rendered, and
-        // wxListCtrl keeps the indicator across DeleteAllItems().
-        nextDirByCol_.clear();
-        list_->RemoveSortIndicator();
+        if (activeSort_) sortBy(activeSort_->column, activeSort_->ascending);
         rebuildRows(keepIds);
         if (!autoSizedOnce_ && !cards_.empty()) {
             autoSizeAllColumns();
@@ -572,6 +571,7 @@ private:
         auto it = nextDirByCol_.find(*sortCol);
         const bool ascending = (it == nextDirByCol_.end()) ? true : it->second;
         nextDirByCol_[*sortCol] = !ascending;
+        activeSort_ = ActiveSort{*sortCol, ascending};
 
         auto ids = selectedIds();
         std::optional<std::vector<std::uint32_t>> keepIds;
@@ -639,10 +639,69 @@ private:
         headerRow_->Refresh();
     }
 
+    // Ids to restore after `incoming` replaces `cards_`. Keeps selections that
+    // are still present. When none survive, picks the visible row above the
+    // topmost removed row, or the next remaining visible row when that row
+    // was first. An empty vector (value present, no ids) means select nothing,
+    // so rebuildRows does not take the startup first-row path.
+    [[nodiscard]] std::vector<std::uint32_t> keepIdsAfterReload(
+        const std::vector<std::uint32_t>& previousIds,
+        const std::vector<TCard>& incoming) const {
+        std::unordered_set<std::uint32_t> incomingIds;
+        incomingIds.reserve(incoming.size());
+        for (const auto& card : incoming) incomingIds.insert(card.id);
+
+        std::vector<std::uint32_t> stillThere;
+        std::unordered_set<std::uint32_t> vanished;
+        stillThere.reserve(previousIds.size());
+        for (const std::uint32_t id : previousIds) {
+            if (incomingIds.count(id) != 0) stillThere.push_back(id);
+            else vanished.insert(id);
+        }
+        if (!stillThere.empty()) return stillThere;
+        if (auto neighbor = neighborIdForVanished(vanished, incomingIds)) {
+            return std::vector<std::uint32_t>{*neighbor};
+        }
+        return {};
+    }
+
+    // Visible-row neighbor of `vanished` ids in the current filtered view.
+    // Prefers the row above the topmost removed row. That card is not itself
+    // removed. When the topmost removed row is first, returns the first
+    // remaining visible row whose id is still in `incomingIds`.
+    [[nodiscard]] std::optional<std::uint32_t> neighborIdForVanished(
+        const std::unordered_set<std::uint32_t>& vanished,
+        const std::unordered_set<std::uint32_t>& incomingIds) const {
+        std::vector<std::size_t> removedRows;
+        removedRows.reserve(vanished.size());
+        for (std::size_t row = 0; row < filteredIndices_.size(); ++row) {
+            const std::uint32_t id = cards_[filteredIndices_[row]].id;
+            if (vanished.count(id) != 0) removedRows.push_back(row);
+        }
+        if (removedRows.empty()) return std::nullopt;
+
+        auto idAt = [this](std::size_t row) {
+            return cards_[filteredIndices_[row]].id;
+        };
+        const std::size_t top = removedRows.front();
+        if (top > 0) {
+            const std::uint32_t above = idAt(top - 1);
+            if (incomingIds.count(above) != 0) return above;
+        }
+        std::unordered_set<std::size_t> removed(removedRows.begin(), removedRows.end());
+        for (std::size_t row = 0; row < filteredIndices_.size(); ++row) {
+            if (removed.count(row) != 0) continue;
+            const std::uint32_t id = idAt(row);
+            if (incomingIds.count(id) != 0) return id;
+        }
+        return std::nullopt;
+    }
+
     // ----- row rendering -----------------------------------------------------
 
     // nullopt keepIds → no prior selection (startup / empty): defer first-row
     // select. Otherwise restore every id that is still visible after filter.
+    // An empty vector selects nothing.
     void rebuildRows(std::optional<std::vector<std::uint32_t>> keepIds = std::nullopt) {
         // Suppress wxListCtrl's natural DESELECTED (from DeleteAllItems) and
         // SELECTED (from the SetItemState below) events while we churn through
@@ -872,7 +931,15 @@ private:
     // When true, onSelectionChanged skips list_->SetFocus (filter Up/Down nudge).
     bool suppressListFocus_{false};
 
+    struct ActiveSort {
+        TSortColumn column;
+        bool        ascending;
+    };
+
+    // Next header-click direction per column. `activeSort_` is the sort
+    // currently applied to `cards_`; setCards reapplies it after a reload.
     std::map<TSortColumn, bool> nextDirByCol_;
+    std::optional<ActiveSort>   activeSort_;
 
     // Per-icon-column cached bitmaps consumed by `IconListCtrl`'s NM_CUSTOMDRAW
     // path. Index aligns with `iconCols_`.
